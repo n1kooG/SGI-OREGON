@@ -1,59 +1,40 @@
-import { Navigate, Outlet, Route, Routes, NavLink, useLocation } from 'react-router-dom';
-import { useAuth, HOME } from './auth.jsx';
-import Login from './pages/Login.jsx';
-import Dashboard from './pages/Dashboard.jsx';
-import Productos from './pages/Productos.jsx';
-import Auditoria from './pages/Auditoria.jsx';
-import Bodega from './pages/Bodega.jsx';
-import Ruta from './pages/Ruta.jsx';
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { useSesion, HOME } from './sesion.jsx';
+import { Movil, Oficina } from './componentes/Layouts.jsx';
+import Login from './paginas/Login.jsx';
+import Inicio from './paginas/Inicio.jsx';
+import Catalogo from './paginas/Catalogo.jsx';
+import Usuarios from './paginas/Usuarios.jsx';
 
-// Ruta protegida: exige sesión y el permiso indicado. Es solo UX; el backend aplica el control real (default deny).
-function Protegida({ permiso }) {
-  const { usuario, cargando, puede } = useAuth();
+// Ruta protegida por rol: es solo UX; el backend aplica el control real (denegación por defecto).
+function Protegida({ rol }) {
+  const { usuario, cargando } = useSesion();
   const loc = useLocation();
-  if (cargando) return <p className="centro">Cargando…</p>;
+  if (cargando) return <p className="vacio">Cargando…</p>;
   if (!usuario) return <Navigate to="/login" state={{ desde: loc.pathname }} replace />;
-  if (permiso && !puede(permiso)) return <Navigate to={HOME[usuario.rol] ?? '/login'} replace />;
+  if (usuario.rol !== rol) return <Navigate to={HOME[usuario.rol] ?? '/login'} replace />;
   return <Outlet />;
 }
 
-function Shell() {
-  const { usuario, logout, puede } = useAuth();
-  const enlaces = [
-    puede('inventario:leer') && ['/dashboard', 'Dashboard'],
-    puede('catalogo:leer') && ['/productos', 'Catálogo'],
-    puede('auditoria:leer') && ['/auditoria', 'Auditoría'],
-    puede('inventario:consultar') && ['/bodega', 'Bodega'],
-    puede('ruta:leer') && ['/ruta', 'Mi ruta'],
-  ].filter(Boolean);
-  return (
-    <>
-      <header className="top">
-        <strong className="marca">SGI · Tienda Oregón</strong>
-        <nav>{enlaces.map(([to, txt]) => <NavLink key={to} to={to}>{txt}</NavLink>)}</nav>
-        <span className="quien">{usuario.nombre} <em>{usuario.rol}</em></span>
-        <button className="sec" onClick={logout}>Salir</button>
-      </header>
-      <main><Outlet /></main>
-    </>
-  );
-}
-
 export default function App() {
-  const { usuario } = useAuth();
+  const { usuario, cargando } = useSesion();
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route element={<Protegida />}>
-        <Route element={<Shell />}>
-          <Route element={<Protegida permiso="inventario:leer" />}><Route path="/dashboard" element={<Dashboard />} /></Route>
-          <Route element={<Protegida permiso="catalogo:leer" />}><Route path="/productos" element={<Productos />} /></Route>
-          <Route element={<Protegida permiso="auditoria:leer" />}><Route path="/auditoria" element={<Auditoria />} /></Route>
-          <Route element={<Protegida permiso="inventario:consultar" />}><Route path="/bodega" element={<Bodega />} /></Route>
-          <Route element={<Protegida permiso="ruta:leer" />}><Route path="/ruta" element={<Ruta />} /></Route>
+      <Route path="/login" element={usuario ? <Navigate to={HOME[usuario.rol] ?? '/login'} replace /> : <Login />} />
+      <Route element={<Protegida rol="ADMINISTRADOR" />}>
+        <Route element={<Oficina />}>
+          <Route path="/dashboard" element={<Inicio />} />
+          <Route path="/catalogo" element={<Catalogo />} />
+          <Route path="/usuarios" element={<Usuarios />} />
         </Route>
       </Route>
-      <Route path="*" element={<Navigate to={usuario ? HOME[usuario.rol] ?? '/login' : '/login'} replace />} />
+      <Route element={<Protegida rol="BODEGA" />}>
+        <Route path="/bodega" element={<Movil panel="Panel bodega" texto="Aquí aparecerán el buscador de stock, los pedidos y la descarga de camión cuando estén habilitados." />} />
+      </Route>
+      <Route element={<Protegida rol="CHOFER" />}>
+        <Route path="/ruta" element={<Movil panel="Panel chofer" texto="Aquí aparecerá tu hoja de ruta cuando esté habilitada." />} />
+      </Route>
+      <Route path="*" element={cargando ? null : <Navigate to={usuario ? HOME[usuario.rol] ?? '/login' : '/login'} replace />} />
     </Routes>
   );
 }
