@@ -1,14 +1,16 @@
 import { query } from '../db.js';
 
 // Datos de login + verificación de clave (bcrypt vía pgcrypto) en una sola consulta.
-export async function buscarParaLogin(email, password, db = { query }) {
+// Con `bloquear` (dentro de una transacción) toma FOR UPDATE de la fila: los intentos concurrentes de una misma
+// cuenta se serializan y cada uno ve el contador/bloqueo ya actualizado por el anterior.
+export async function buscarParaLogin(email, password, db = { query }, bloquear = false) {
   const { rows } = await db.query(
     `SELECT u.id_usuario, u.nombre_completo, u.email, u.activo, u.intentos_fallidos, u.bloqueado_hasta,
             r.nombre_rol AS rol, r.permisos,
             (u.password_hash = crypt($2, u.password_hash)) AS clave_ok,
             (u.bloqueado_hasta IS NOT NULL AND u.bloqueado_hasta > now()) AS bloqueada
        FROM usuario u JOIN rol r ON r.id_rol = u.id_rol
-      WHERE lower(u.email) = lower($1)`,
+      WHERE lower(u.email) = lower($1)${bloquear ? ' FOR UPDATE OF u' : ''}`,
     [email, password],
   );
   return rows[0];
