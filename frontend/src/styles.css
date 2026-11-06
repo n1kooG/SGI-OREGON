@@ -197,3 +197,33 @@ td.dato { white-space: nowrap; }
   .precio-fila { grid-template-columns: 1fr 1fr; }
   .precio-fila .canal { grid-column: 1 / -1; padding-bottom: 0; }
 }
+
+/* Sprint 2: recepción, carga masiva y descarga */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; max-width: 960px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 16px; }
+.linea-fila { display: grid; grid-template-columns: 1.4fr 1fr 1.4fr auto; gap: 0 12px; align-items: end; }
+.linea-fila .btn { margin-bottom: 16px; }
+.totales { margin: 24px 0 8px auto; width: 280px; }
+.totales > div { display: flex; justify-content: space-between; padding: 6px 0; }
+.totales dt { color: var(--ink-3); }
+.totales dd { margin: 0; }
+.totales .total { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 12px; font-weight: 600; }
+.totales .total dt { color: var(--ink); }
+.acciones { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+.zona-carga { border: 2px dashed var(--line-strong); border-radius: 14px; padding: 32px 16px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 20px; }
+.zona-carga .btn { margin-top: 10px; }
+.zona-carga.activa { border-color: var(--ink); background: var(--bg); }
+.canal-sel { max-width: 320px; }
+.movil-pagina { padding: 20px; max-width: 520px; }
+.movil-pagina h1 { font-size: 24px; line-height: 30px; margin-bottom: 4px; }
+.bulto-fila { display: grid; grid-template-columns: 1.4fr 1fr auto; gap: 0 10px; align-items: end; }
+.bulto-fila .btn { margin-bottom: 16px; }
+.movil.con-nav { padding-bottom: 72px; }
+.nav-inferior { position: fixed; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 1fr 1fr; background: var(--surface); border-top: 1px solid var(--line); z-index: 20; }
+.nav-inferior a { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 0 12px; color: var(--ink-3); text-decoration: none; font-size: 12px; font-weight: 500; }
+.nav-inferior a.active { color: var(--ink); box-shadow: inset 0 3px 0 var(--accent); }
+@media (max-width: 899px) {
+  .grid3, .linea-fila { grid-template-columns: 1fr 1fr; }
+  .linea-fila > :first-child { grid-column: 1 / -1; }
+  .totales { width: 100%; }
+}

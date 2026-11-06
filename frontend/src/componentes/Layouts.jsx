@@ -5,8 +5,8 @@ import { Boton, Icono, Logo } from './ui.jsx';
 
 export const ROL = { ADMINISTRADOR: 'Administrador', BODEGA: 'Bodega', CHOFER: 'Chofer' };
 
-// Panel de oficina: solo los módulos del Sprint 1.
-const ITEMS = [['/catalogo', 'Catálogo Maestro', 'caja'], ['/usuarios', 'Usuarios y Roles', 'usuarios']];
+// Panel de oficina: módulos de los Sprints 1 y 2.
+const ITEMS = [['/catalogo', 'Catálogo Maestro', 'caja'], ['/compras', 'Recepción de Compras', 'factura'], ['/importacion', 'Carga de Pedidos', 'subir'], ['/usuarios', 'Usuarios y Roles', 'usuarios']];
 
 export function Oficina() {
   const { usuario, logout } = useSesion();
@@ -36,23 +36,45 @@ export function Oficina() {
   );
 }
 
-// Bodega y Chofer: móvil, solo bienvenida por ahora.
-export function Movil({ panel, texto }) {
-  const { usuario, logout } = useSesion();
+export function Bienvenida({ texto }) {
+  const { usuario } = useSesion();
   return (
-    <div className="movil">
-      <header className="movil-cab">
-        <Logo />
-        <div className="quien"><strong>Tienda Oregón</strong><small>{panel}</small></div>
-        <Boton icono="salir" onClick={logout}>Salir</Boton>
-      </header>
-      <main className="bienvenida">
-        <span className="etiqueta">Bienvenido</span>
-        <h1>{usuario.nombre}</h1>
-        <span className="badge">{ROL[usuario.rol] ?? usuario.rol}</span>
-        <hr />
-        <p className="tenue">{texto}</p>
-      </main>
+    <section className="bienvenida">
+      <span className="etiqueta">Bienvenido</span>
+      <h1>{usuario.nombre}</h1>
+      <span className="badge">{ROL[usuario.rol] ?? usuario.rol}</span>
+      <hr />
+      <p className="tenue">{texto}</p>
+    </section>
+  );
+}
+
+function CabMovil({ panel }) {
+  const { logout } = useSesion();
+  return (
+    <header className="movil-cab">
+      <Logo />
+      <div className="quien"><strong>Tienda Oregón</strong><small>{panel}</small></div>
+      <Boton icono="salir" onClick={logout}>Salir</Boton>
+    </header>
+  );
+}
+
+// Chofer: móvil, solo bienvenida por ahora.
+export function Movil({ panel, texto }) {
+  return <div className="movil"><CabMovil panel={panel} /><main><Bienvenida texto={texto} /></main></div>;
+}
+
+// Bodega: cabecera + contenido + navegación inferior (solo lo habilitado en el Sprint 2).
+export function MovilBodega() {
+  return (
+    <div className="movil con-nav">
+      <CabMovil panel="Panel bodega" />
+      <main><Outlet /></main>
+      <nav className="nav-inferior" aria-label="Navegación de bodega">
+        <NavLink to="/bodega" end><Icono n="casa" />Inicio</NavLink>
+        <NavLink to="/bodega/descarga"><Icono n="camion" />Descarga</NavLink>
+      </nav>
     </div>
   );
 }
