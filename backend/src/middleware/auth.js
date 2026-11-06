@@ -4,6 +4,7 @@ import { buscarActivoPorId } from '../repositories/usuarios.js';
 import { sesionInactiva, registrarActividad } from '../session.js';
 import { auditar } from '../audit.js';
 import { ah } from '../errors.js';
+import { filtrarCostos } from './costos.js';
 
 // 1) Valida firma y vencimiento del JWT (solo lleva `sub`) y la inactividad en CADA petición; renueva la actividad.
 // 2) El rol y los permisos se leen de la base de datos (no del token): si el Administrador cambia
@@ -27,6 +28,7 @@ export const autenticar = ah(async (req, res, next) => {
   if (!usuario) return res.status(401).json({ error: 'Sesión inválida', codigo: 'SESION_INVALIDA' });
   await registrarActividad(sub);
   req.usuario = usuario;
+  filtrarCostos(req, res);
   next();
 });
 
