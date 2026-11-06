@@ -143,7 +143,7 @@ function FormProducto({ producto, onClose, onCambios }) {
       onCambios(); onClose();
     } catch (e) {
       if (e.codigo === 'SKU_DUPLICADO') setErr({ sku: 'El SKU ya existe en el catálogo' });
-      else setAlerta(mensajeError(e));
+      else { setAlerta(mensajeError(e)); document.querySelector('.modal-cuerpo')?.scrollTo(0, 0); }
       if (hecho) onCambios();
     } finally { setEnviando(false); }
   }

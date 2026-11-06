@@ -82,11 +82,11 @@ select.entrada { appearance: none; background: var(--surface) url("data:image/sv
 /* Tabla */
 .tabla-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
-th { text-align: left; padding: 14px 16px; font-size: 11px; line-height: 14px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); background: var(--bg); white-space: nowrap; }
-td { padding: 12px 16px; border-top: 1px solid var(--line); vertical-align: middle; }
+th { text-align: left; padding: 14px 12px; font-size: 11px; line-height: 14px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); background: var(--bg); white-space: nowrap; }
+td { padding: 12px; border-top: 1px solid var(--line); vertical-align: middle; }
 th.derecha, td.derecha { text-align: right; }
 .celda-sec { color: var(--ink-3); }
-td.dato, td.sku, .tabla-wrap td:nth-child(4) { white-space: nowrap; }
+td.dato { white-space: nowrap; }
 .vacio { padding: 40px 16px; text-align: center; color: var(--ink-3); }
 .paginacion { display: flex; align-items: center; justify-content: space-between; margin-top: 20px; color: var(--ink-3); gap: 12px; flex-wrap: wrap; }
 .paginacion .pags { display: flex; gap: 6px; }
