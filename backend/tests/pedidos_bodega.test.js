@@ -130,7 +130,7 @@ test('T50: asignación inválida no cambia nada (pedido sin cargar, usuario que 
   assert.equal((await query(`SELECT count(*)::int n FROM despacho WHERE id_orden = $1`, [listo])).rows[0].n, 0);
 });
 
-test('T50: chofer inexistente responde 422', async () => {
+test('T50: chofer inexistente responde 409 (lo rechaza el trigger)', async () => {
   const id = await nuevo({ estado: 'EN_CAMION' });
-  assert.equal((await t.http('POST', `/api/pedidos/${id}/asignar-chofer`, t.admin, { id_chofer: 999999 })).status, 422);
+  assert.equal((await t.http('POST', `/api/pedidos/${id}/asignar-chofer`, t.admin, { id_chofer: 999999 })).status, 409);
 });

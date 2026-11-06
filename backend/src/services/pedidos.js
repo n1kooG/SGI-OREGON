@@ -13,7 +13,6 @@ const ESTADOS = [...BODEGA, 'EN_RUTA', 'ENTREGADO', 'RECHAZADO'];
 // Los errores de los triggers del esquema (transición no permitida, chofer inválido) son 409; la regla vive en la BD, no se repite aquí.
 const dePg = (e) => {
   if (e.code === '23514') throw bad(e.message, 409, 'TRANSICION_INVALIDA');
-  if (e.code === '23503') throw bad('El chofer indicado no existe', 422, 'CHOFER_INEXISTENTE');
   if (e.code === '23505') throw bad('El pedido ya tiene un despacho asignado', 409, 'YA_ASIGNADO');
   throw e;
 };
