@@ -8,6 +8,7 @@ import inventarioRouter from './routes/inventario.js';
 import dashboardRouter from './routes/dashboard.js';
 import comprasRouter from './routes/compras.js';
 import pedidosRouter from './routes/pedidos.js';
+import despachosRouter from './routes/despachos.js';
 import auditoriaRouter from './routes/auditoria.js';
 import usuariosRouter from './routes/usuarios.js';
 import healthRouter from './routes/health.js';
@@ -27,6 +28,7 @@ export function crearApp() {
   app.use('/api/dashboard', dashboardRouter);
   app.use('/api/compras', comprasRouter);
   app.use('/api/pedidos', pedidosRouter);
+  app.use('/api/despachos', despachosRouter);
   app.use('/api/auditoria', auditoriaRouter);
   app.use('/api/usuarios', usuariosRouter);
 
