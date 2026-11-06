@@ -12,7 +12,7 @@ export async function iniciarCache() {
     await client.connect();
   } catch {
     client = null;
-    console.warn('[cache] Redis no disponible: el dashboard funcionará sin caché');
+    console.warn('[cache] Redis no disponible: el sistema funcionará sin caché');
   }
 }
 
@@ -21,16 +21,26 @@ export async function cerrarCache() {
   client = null;
 }
 
+// 'ok' | 'caido' | 'desactivado'
+export async function estadoCache() {
+  if (!client) return config.redisUrl ? 'caido' : 'desactivado';
+  try { await client.ping(); return 'ok'; } catch { return 'caido'; }
+}
+
+// Lectura/escritura cruda; devuelven undefined/false si Redis no responde para que el llamador use su respaldo.
+export async function redisGet(clave) {
+  if (!client) return undefined;
+  try { return await client.get(clave); } catch { return undefined; }
+}
+export async function redisSet(clave, valor, ttlSegundos) {
+  if (!client) return false;
+  try { await client.set(clave, valor, { EX: ttlSegundos }); return true; } catch { return false; }
+}
+
 export async function conCache(clave, ttlSegundos, calcular) {
-  if (client) {
-    try {
-      const hit = await client.get(clave);
-      if (hit) return { data: JSON.parse(hit), cache: 'HIT' };
-    } catch { /* se ignora: se calcula directo */ }
-  }
+  const hit = await redisGet(clave);
+  if (hit) return { data: JSON.parse(hit), cache: 'HIT' };
   const data = await calcular();
-  if (client) {
-    try { await client.set(clave, JSON.stringify(data), { EX: ttlSegundos }); } catch { /* idem */ }
-  }
-  return { data, cache: client ? 'MISS' : 'OFF' };
+  const ok = await redisSet(clave, JSON.stringify(data), ttlSegundos);
+  return { data, cache: ok ? 'MISS' : 'OFF' };
 }

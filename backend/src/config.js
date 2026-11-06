@@ -8,6 +8,11 @@ export const config = {
   maxIntentos: Number(process.env.MAX_INTENTOS ?? 5),
   bloqueoMinutos: Number(process.env.BLOQUEO_MINUTOS ?? 15),
   kpiTtl: Number(process.env.KPI_TTL_SEGUNDOS ?? 30),
+  dbSsl: process.env.DB_SSL === 'true',
+  sessionIdleMinutes: Number(process.env.SESSION_IDLE_MINUTES ?? 15),
+  storageEnabled: process.env.STORAGE_ENABLED === 'true',
+  s3Bucket: process.env.S3_BUCKET ?? '',
+  s3Region: process.env.S3_REGION ?? 'sa-east-1',
 };
 
 if (!config.jwtSecret || config.jwtSecret.length < 16) {

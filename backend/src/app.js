@@ -8,6 +8,8 @@ import inventarioRouter from './routes/inventario.js';
 import dashboardRouter from './routes/dashboard.js';
 import pedidosRouter from './routes/pedidos.js';
 import auditoriaRouter from './routes/auditoria.js';
+import healthRouter from './routes/health.js';
+import { manejadorErrores, noEncontrado } from './middleware/errores.js';
 
 export function crearApp() {
   const app = express();
@@ -16,7 +18,7 @@ export function crearApp() {
   app.use(cors({ origin: config.corsOrigin }));
   app.use(express.json({ limit: '100kb' }));
 
-  app.get('/api/health', (_req, res) => res.json({ ok: true }));
+  app.use('/api/health', healthRouter);
   app.use('/api/auth', authRouter);
   app.use('/api/productos', productosRouter);
   app.use('/api/inventario', inventarioRouter);
@@ -24,12 +26,7 @@ export function crearApp() {
   app.use('/api/pedidos', pedidosRouter);
   app.use('/api/auditoria', auditoriaRouter);
 
-  app.use('/api', (_req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
-  // Errores: respuesta genérica, sin detalles internos (OWASP A02/A10).
-  // eslint-disable-next-line no-unused-vars
-  app.use((err, _req, res, _next) => {
-    console.error(err);
-    res.status(err.status ?? 500).json({ error: 'Error interno del servidor' });
-  });
+  app.use('/api', noEncontrado);
+  app.use(manejadorErrores);
   return app;
 }
