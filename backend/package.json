@@ -1,0 +1,21 @@
+{
+  "name": "sgi-oregon-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "API REST del SGI Tienda Oregón (Node.js + PostgreSQL + Redis)",
+  "scripts": {
+    "dev": "node --watch --env-file=.env src/server.js",
+    "start": "node --env-file=.env src/server.js",
+    "test": "node --env-file=.env --test tests/*.test.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.1",
+    "redis": "^4.7.0"
+  }
+}
