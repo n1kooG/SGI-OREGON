@@ -21,7 +21,7 @@ psql sgi_oregon -f db/02_datos_ejemplo.sql
 
 # 3) Backend  → http://localhost:3000
 cd backend
-cp .env.example .env        # edita JWT_SECRET y DATABASE_URL
+cp .env.example .env        # edita JWT_SECRET y DATABASE_URL (con brew, el usuario de la BD es el de tu Mac, sin clave)
 npm install
 npm run dev
 npm test                    # necesita la BD arriba
