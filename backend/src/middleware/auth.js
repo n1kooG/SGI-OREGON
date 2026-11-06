@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
 import { query } from '../db.js';
 import { auditar } from '../audit.js';
+import { ah } from '../errors.js';
 
 // 1) Valida firma y vencimiento del JWT en CADA petición.
 // 2) El rol y los permisos se leen de la base de datos (no del token): si el Administrador cambia
@@ -27,7 +28,7 @@ export async function autenticar(req, res, next) {
 }
 
 // Denegación por defecto (M3): basta con tener AL MENOS uno de los permisos indicados.
-export const requierePermiso = (...permisos) => async (req, res, next) => {
+export const requierePermiso = (...permisos) => ah(async (req, res, next) => {
   if (permisos.some((p) => req.usuario.permisos.includes(p))) return next();
   await auditar(req, {
     idUsuario: req.usuario.id_usuario,
@@ -35,7 +36,7 @@ export const requierePermiso = (...permisos) => async (req, res, next) => {
     accion: 'ACCESO_DENEGADO',
     despues: { ruta: req.originalUrl, metodo: req.method, requiere: permisos },
   });
-  res.status(403).json({ error: 'No tienes permiso para esta operación' });
-};
+  res.status(403).json({ error: 'No tienes permiso para esta operación', codigo: 'ACCESO_DENEGADO' });
+});
 
 export const tiene = (req, permiso) => req.usuario.permisos.includes(permiso);
