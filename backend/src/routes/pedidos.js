@@ -10,7 +10,7 @@ const router = Router();
 
 // GET /api/pedidos?estado=PENDIENTE_PREPARACION  (CU-06 supervisión / HU05 lista de picking)
 router.get('/', autenticar, requierePermiso('pedidos:leer', 'pedidos:preparar'), ah(async (req, res) => {
-  res.json(await svc.listar(req.query.estado ? String(req.query.estado) : null));
+  res.json(await svc.listar(req, { estado: req.query.estado && String(req.query.estado), canal: req.query.canal }));
 }));
 
 // HU04 / CU-05: importación masiva de ventas desde .xlsx (permiso pedidos:importar). Campos multipart: `archivo` (.xlsx) y `canal`.
@@ -35,7 +35,18 @@ router.post('/importaciones/simular', autenticar, importar, conArchivo, ah(async
 router.post('/importaciones', autenticar, importar, conArchivo, ah(async (req, res) => {
   res.status(201).json(await imp.importar(req, req.file.buffer, req.file.originalname, req.body?.canal));
 }));
-// TODO(HU05): PATCH /api/pedidos/:id/estado  (pedidos:preparar; el trigger valida el flujo de estados)
-// TODO(HU07): GET /api/despachos/mi-ruta y PATCH /api/despachos/:id (ruta:leer, entregas:registrar)
+
+// HU05 / CU-10 (Bodega) y CU-06 (Administrador). `:id` numérico para no chocar con /importaciones/*.
+const id = (req) => Number(req.params.id);
+const ver = requierePermiso('pedidos:leer', 'pedidos:preparar');
+const preparar = requierePermiso('pedidos:preparar');
+router.get('/:id(\\d+)', autenticar, ver, ah(async (req, res) => res.json(await svc.detalle(req, id(req)))));
+router.patch('/:id(\\d+)/estado', autenticar, preparar, ah(async (req, res) => res.json(await svc.cambiarEstado(req, id(req), req.body?.estado))));
+router.post('/:id(\\d+)/comentarios', autenticar, preparar, ah(async (req, res) => res.status(201).json(await svc.comentar(req, id(req), req.body ?? {}))));
+router.get('/:id(\\d+)/etiqueta', autenticar, preparar, ah(async (req, res) => {
+  const { pdf, nombre } = await svc.etiqueta(req, id(req));
+  res.set('Content-Disposition', `attachment; filename="${nombre.replace(/[^\w.-]/g, '_')}"`).type('application/pdf').send(pdf);
+}));
+router.post('/:id(\\d+)/asignar-chofer', autenticar, requierePermiso('pedidos:asignar_chofer'), ah(async (req, res) => res.json(await svc.asignarChofer(req, id(req), req.body?.id_chofer))));
 
 export default router;
