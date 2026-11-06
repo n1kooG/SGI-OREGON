@@ -3,6 +3,7 @@ import { config } from '../config.js';
 import { AppError } from '../errors.js';
 import * as repo from '../repositories/usuarios.js';
 import { auditar } from '../audit.js';
+import { registrarActividad } from '../session.js';
 import { conTransaccion } from '../db.js';
 
 const MSG_GENERICO = 'Usuario o contraseña incorrectos'; // anti-enumeración (PU-08)
@@ -36,5 +37,6 @@ export async function login(req, email, password) {
   if (r.fallo) throw credencialesInvalidas();
   const { u } = r;
   const token = jwt.sign({ sub: u.id_usuario }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
+  await registrarActividad(u.id_usuario);
   return { token, usuario: { id: u.id_usuario, nombre: u.nombre_completo, email: u.email, rol: u.rol, permisos: u.permisos } };
 }
