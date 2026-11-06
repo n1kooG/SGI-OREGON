@@ -10,7 +10,4 @@ router.get('/buscar', autenticar, requierePermiso('inventario:consultar', 'inven
   res.json(await svc.buscar(String(req.query.q ?? '').trim()));
 }));
 
-// TODO(HU03/CU-04): POST /api/compras/recepciones (factura + detalle, una transacción; compras:recepcionar)
-// TODO(HU03): POST /api/compras/recepciones/:id/confirmar-descarga (compras:confirmar_descarga)
-
 export default router;
