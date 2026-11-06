@@ -8,6 +8,7 @@ import inventarioRouter from './routes/inventario.js';
 import dashboardRouter from './routes/dashboard.js';
 import pedidosRouter from './routes/pedidos.js';
 import auditoriaRouter from './routes/auditoria.js';
+import usuariosRouter from './routes/usuarios.js';
 import healthRouter from './routes/health.js';
 import { manejadorErrores, noEncontrado } from './middleware/errores.js';
 
@@ -25,6 +26,7 @@ export function crearApp() {
   app.use('/api/dashboard', dashboardRouter);
   app.use('/api/pedidos', pedidosRouter);
   app.use('/api/auditoria', auditoriaRouter);
+  app.use('/api/usuarios', usuariosRouter);
 
   app.use('/api', noEncontrado);
   app.use(manejadorErrores);
