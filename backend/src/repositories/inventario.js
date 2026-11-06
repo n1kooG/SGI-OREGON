@@ -9,7 +9,7 @@ export async function buscar(q) {
        FROM producto p JOIN inventario i ON i.sku = p.sku
       WHERE p.estado = 'ACTIVO'
         AND (p.sku ILIKE $1 || '%' OR p.modelo ILIKE '%' || $1 || '%' OR p.nombre ILIKE '%' || $1 || '%')
-      ORDER BY p.sku
+      ORDER BY (p.sku = upper($1)) DESC, (p.sku ILIKE $1 || '%') DESC, p.sku
       LIMIT 20`,
     [q],
   );
