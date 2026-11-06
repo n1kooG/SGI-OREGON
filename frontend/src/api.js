@@ -1,5 +1,4 @@
-// Cliente HTTP mínimo. TODO(seguridad): el token vive en sessionStorage (se borra al cerrar la pestaña);
-// evaluar cookie httpOnly + CSRF antes de producción.
+// Cliente HTTP mínimo. El token vive en sessionStorage (se borra al cerrar la pestaña).
 const KEY = 'sgi_token';
 export const token = {
   get: () => { try { return sessionStorage.getItem(KEY); } catch { return null; } },
@@ -8,17 +7,32 @@ export const token = {
 };
 
 export class ApiError extends Error {
-  constructor(status, message) { super(message); this.status = status; }
+  constructor(status, message, codigo) { super(message); this.status = status; this.codigo = codigo; }
 }
 
-export async function api(ruta, { metodo = 'GET', cuerpo } = {}) {
+// Cualquier 401 fuera del login avisa a la sesión para que cierre y redirija.
+let alNoAutorizado = () => {};
+export const alPerderSesion = (fn) => { alNoAutorizado = fn; };
+
+export async function api(ruta, { metodo = 'GET', cuerpo, publica = false } = {}) {
   const t = token.get();
-  const res = await fetch(`/api${ruta}`, {
-    method: metodo,
-    headers: { 'Content-Type': 'application/json', ...(t && { Authorization: `Bearer ${t}` }) },
-    body: cuerpo ? JSON.stringify(cuerpo) : undefined,
-  });
+  let res;
+  try {
+    res = await fetch(`/api${ruta}`, {
+      method: metodo,
+      headers: { 'Content-Type': 'application/json', ...(t && { Authorization: `Bearer ${t}` }) },
+      body: cuerpo ? JSON.stringify(cuerpo) : undefined,
+    });
+  } catch {
+    throw new ApiError(0, 'No hay conexión con el servidor. Revisa tu red e inténtalo de nuevo.', 'SIN_RED');
+  }
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw new ApiError(res.status, data?.error ?? 'Error de comunicación con el servidor');
-  return { data, cache: res.headers.get('X-Cache') };
+  if (!res.ok) {
+    if (res.status === 401 && !publica) alNoAutorizado(data?.codigo);
+    const msg = data?.error ?? (res.status === 403 ? 'No tienes permiso para esta operación' : 'Error de comunicación con el servidor');
+    throw new ApiError(res.status, msg, data?.codigo);
+  }
+  return { data, total: Number(res.headers.get('X-Total-Count') ?? 0) };
 }
+
+export const mensajeError = (e) => (e instanceof ApiError ? e.message : 'Ocurrió un error inesperado');
