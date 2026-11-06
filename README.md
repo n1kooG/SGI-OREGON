@@ -4,32 +4,40 @@ Avance del Proyecto Integrado (INACAP). Stack del informe: React (PWA) + Node.js
 
 ## Requisitos (Mac)
 - Node 20 o superior (`node -v`)
-- Docker Desktop (para PostgreSQL y Redis). Sin Docker: `brew install postgresql@16 redis` y ver "Sin Docker".
+- PostgreSQL 16 y Redis locales: `brew install postgresql@16 redis`
+- Sin Docker. En producción: Amazon RDS (PostgreSQL) + EC2 + S3.
 
-## Puesta en marcha (3 terminales)
+## Puesta en marcha
 
 ```bash
-# 1) Base de datos + Redis (la primera vez carga db/01 y db/02 solo)
-docker compose up -d
+# 1) Servicios locales
+brew services start postgresql@16
+brew services start redis
 
-# 2) Backend  → http://localhost:3000
+# 2) Base de datos (la primera vez; db/02 es solo para desarrollo)
+createdb sgi_oregon
+psql sgi_oregon -f db/01_modelo_datos.sql
+psql sgi_oregon -f db/02_datos_ejemplo.sql
+
+# 3) Backend  → http://localhost:3000
 cd backend
-cp .env.example .env        # edita JWT_SECRET
+cp .env.example .env        # edita JWT_SECRET y DATABASE_URL
 npm install
 npm run dev
-npm test                    # pruebas de seguridad (necesita la BD arriba)
+npm test                    # necesita la BD arriba
 
-# 3) Frontend → http://localhost:5173
+# 4) Frontend → http://localhost:5173
 cd frontend
 npm install
 npm run dev
 ```
 
 Usuarios de ejemplo (clave `Demo-Oregon-2026`): `admin@tiendaoregon.cl`, `bodega@tiendaoregon.cl`, `chofer@tiendaoregon.cl`.
-En el login hay que elegir el rol que corresponde al usuario; si no coincide, se rechaza y queda en auditoría.
+El login pide solo correo y contraseña: el rol sale de la base de datos y define la pantalla de destino.
 
-**Reiniciar la BD desde cero:** `docker compose down -v && docker compose up -d`.
-**Sin Docker:** crea la BD `sgi_oregon`, ejecuta `db/01_modelo_datos.sql` y luego `db/02_datos_ejemplo.sql` con `psql`, y ajusta `DATABASE_URL`. Redis es opcional: sin él, el dashboard funciona sin caché (cabecera `X-Cache: OFF`).
+**Reiniciar la BD desde cero:** `dropdb sgi_oregon && createdb sgi_oregon` y repetir el paso 2.
+Redis es opcional: sin él, el dashboard funciona sin caché (cabecera `X-Cache: OFF`).
+Pruebas de integridad de la BD: `psql sgi_oregon -f db/03_pruebas_integridad.sql` (deben aprobar las 39).
 
 ## Estructura
 ```

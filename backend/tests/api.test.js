@@ -16,7 +16,7 @@ const api = async (ruta, { metodo = 'GET', token, cuerpo } = {}) => {
   });
   return { status: r.status, body: await r.json().catch(() => null), headers: r.headers };
 };
-const login = async (email, rol) => (await api('/api/auth/login', { metodo: 'POST', cuerpo: { email, password: PASS, rol } })).body?.token;
+const login = async (email) => (await api('/api/auth/login', { metodo: 'POST', cuerpo: { email, password: PASS } })).body?.token;
 
 before(async () => {
   await iniciarCache();
@@ -32,7 +32,7 @@ after(async () => {
 });
 
 test('login correcto devuelve token y rol real', async () => {
-  const r = await api('/api/auth/login', { metodo: 'POST', cuerpo: { email: 'admin@tiendaoregon.cl', password: PASS, rol: 'ADMINISTRADOR' } });
+  const r = await api('/api/auth/login', { metodo: 'POST', cuerpo: { email: 'admin@tiendaoregon.cl', password: PASS } });
   assert.equal(r.status, 200);
   assert.equal(r.body.usuario.rol, 'ADMINISTRADOR');
   assert.ok(r.body.token);
@@ -46,9 +46,10 @@ test('usuario inexistente y clave errónea devuelven el mismo mensaje (anti-enum
   assert.equal(a.body.error, b.body.error);
 });
 
-test('rol elegido distinto al real → 403', async () => {
+test('rol enviado por el cliente se ignora: el rol sale de la BD', async () => {
   const r = await api('/api/auth/login', { metodo: 'POST', cuerpo: { email: 'bodega@tiendaoregon.cl', password: PASS, rol: 'ADMINISTRADOR' } });
-  assert.equal(r.status, 403);
+  assert.equal(r.status, 200);
+  assert.equal(r.body.usuario.rol, 'BODEGA');
 });
 
 test('sin token → 401', async () => {
@@ -56,7 +57,7 @@ test('sin token → 401', async () => {
 });
 
 test('Bodega no ve costos ni precios; solo inventario sin costos', async () => {
-  const token = await login('bodega@tiendaoregon.cl', 'BODEGA');
+  const token = await login('bodega@tiendaoregon.cl');
   assert.equal((await api('/api/productos', { token })).status, 403); // sin catalogo:leer
   const r = await api('/api/inventario/buscar?q=TH', { token });
   assert.equal(r.status, 200);
@@ -66,14 +67,14 @@ test('Bodega no ve costos ni precios; solo inventario sin costos', async () => {
 });
 
 test('Chofer: default deny en dashboard, auditoría e inventario', async () => {
-  const token = await login('chofer@tiendaoregon.cl', 'CHOFER');
+  const token = await login('chofer@tiendaoregon.cl');
   for (const ruta of ['/api/dashboard/kpis', '/api/auditoria', '/api/inventario/buscar?q=TH', '/api/productos']) {
     assert.equal((await api(ruta, { token })).status, 403, ruta);
   }
 });
 
 test('Administrador ve costos, KPIs y auditoría; el acceso denegado queda auditado', async () => {
-  const admin = await login('admin@tiendaoregon.cl', 'ADMINISTRADOR');
+  const admin = await login('admin@tiendaoregon.cl');
   const prods = await api('/api/productos', { token: admin });
   assert.equal(prods.status, 200);
   assert.ok('costo_adquisicion_neto' in prods.body[0]);
@@ -81,7 +82,7 @@ test('Administrador ve costos, KPIs y auditoría; el acceso denegado queda audit
   assert.equal(kpi.status, 200);
   assert.ok(kpi.body.valorizacion_inventario > 0);
 
-  const chofer = await login('chofer@tiendaoregon.cl', 'CHOFER');
+  const chofer = await login('chofer@tiendaoregon.cl');
   await api('/api/auditoria', { token: chofer });
   const log = await api('/api/auditoria?limite=10', { token: admin });
   assert.ok(log.body.some((l) => l.accion === 'ACCESO_DENEGADO' && l.rol === 'CHOFER'));

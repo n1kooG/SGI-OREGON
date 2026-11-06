@@ -8,11 +8,11 @@ import { autenticar } from '../middleware/auth.js';
 const router = Router();
 const MSG_GENERICO = 'Usuario o contraseña incorrectos'; // anti-enumeración (PU-08)
 
-// POST /api/auth/login  { email, password, rol }
+// POST /api/auth/login  { email, password }
 // Políticas: bcrypt vía pgcrypto (PU-06/07), mensaje único (PU-08), bloqueo tras N intentos (M11),
-// rol elegido en pantalla solo se compara con el rol real de la BD (CU-01, PI-07).
+// el rol sale siempre de la BD; cualquier rol enviado por el cliente se ignora (CU-01, PI-07).
 router.post('/login', async (req, res) => {
-  const { email, password, rol } = req.body ?? {};
+  const { email, password } = req.body ?? {};
   if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
     return res.status(400).json({ error: 'Debes ingresar usuario y contraseña' });
   }
@@ -59,12 +59,6 @@ router.post('/login', async (req, res) => {
       despues: { intentos: f.intentos_fallidos, bloqueado_hasta: f.bloqueado_hasta },
     });
     return res.status(401).json({ error: MSG_GENERICO });
-  }
-
-  // El rol seleccionado en la pantalla solo decide a qué interfaz se redirige.
-  if (rol && rol !== u.rol) {
-    await auditar(req, { idUsuario: u.id_usuario, tabla: 'usuario', accion: 'ACCESO_DENEGADO', despues: { rol_elegido: rol, rol_real: u.rol } });
-    return res.status(403).json({ error: 'El rol seleccionado no corresponde a tu cuenta' });
   }
 
   await query(

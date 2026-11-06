@@ -16,8 +16,8 @@ export function AuthProvider({ children }) {
     api('/auth/me').then(({ data }) => setUsuario(data)).catch(() => token.clear()).finally(() => setCargando(false));
   }, []);
 
-  const login = useCallback(async (email, password, rol) => {
-    const { data } = await api('/auth/login', { metodo: 'POST', cuerpo: { email, password, rol } });
+  const login = useCallback(async (email, password) => {
+    const { data } = await api('/auth/login', { metodo: 'POST', cuerpo: { email, password } });
     token.set(data.token);
     setUsuario(data.usuario);
     return data.usuario;
