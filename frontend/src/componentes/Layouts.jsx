@@ -6,7 +6,7 @@ import { Boton, Icono, Logo } from './ui.jsx';
 export const ROL = { ADMINISTRADOR: 'Administrador', BODEGA: 'Bodega', CHOFER: 'Chofer' };
 
 // Panel de oficina: módulos de los Sprints 1 y 2.
-const ITEMS = [['/catalogo', 'Catálogo Maestro', 'caja'], ['/compras', 'Recepción de Compras', 'factura'], ['/importacion', 'Carga de Pedidos', 'subir'], ['/usuarios', 'Usuarios y Roles', 'usuarios']];
+const ITEMS = [['/catalogo', 'Catálogo Maestro', 'caja'], ['/compras', 'Recepción de Compras', 'factura'], ['/importacion', 'Carga de Pedidos', 'subir'], ['/pedidos', 'Pedidos y Despachos', 'camion'], ['/usuarios', 'Usuarios y Roles', 'usuarios']];
 
 export function Oficina() {
   const { usuario, logout } = useSesion();
@@ -60,12 +60,12 @@ function CabMovil({ panel }) {
   );
 }
 
-// Chofer: móvil, solo bienvenida por ahora.
-export function Movil({ panel, texto }) {
-  return <div className="movil"><CabMovil panel={panel} /><main><Bienvenida texto={texto} /></main></div>;
+// Chofer: móvil, sin navegación inferior (una sola pantalla).
+export function Movil({ panel, children }) {
+  return <div className="movil"><CabMovil panel={panel} /><main>{children}</main></div>;
 }
 
-// Bodega: cabecera + contenido + navegación inferior (solo lo habilitado en el Sprint 2).
+// Bodega: cabecera + contenido + navegación inferior (Inicio, Buscador, Pedidos y Descarga).
 export function MovilBodega() {
   return (
     <div className="movil con-nav">
@@ -73,6 +73,8 @@ export function MovilBodega() {
       <main><Outlet /></main>
       <nav className="nav-inferior" aria-label="Navegación de bodega">
         <NavLink to="/bodega" end><Icono n="casa" />Inicio</NavLink>
+        <NavLink to="/bodega/buscador"><Icono n="search" />Buscador</NavLink>
+        <NavLink to="/bodega/pedidos"><Icono n="lista" />Pedidos</NavLink>
         <NavLink to="/bodega/descarga"><Icono n="camion" />Descarga</NavLink>
       </nav>
     </div>
