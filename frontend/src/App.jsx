@@ -2,7 +2,8 @@ import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { useSesion, HOME } from './sesion.jsx';
 import { Bienvenida, Movil, MovilBodega, Oficina } from './componentes/Layouts.jsx';
 import Login from './paginas/Login.jsx';
-import Inicio from './paginas/Inicio.jsx';
+import Dashboard from './paginas/Dashboard.jsx';
+import Auditoria from './paginas/Auditoria.jsx';
 import Catalogo from './paginas/Catalogo.jsx';
 import Usuarios from './paginas/Usuarios.jsx';
 import Recepcion from './paginas/Recepcion.jsx';
@@ -30,11 +31,12 @@ export default function App() {
       <Route path="/login" element={usuario ? <Navigate to={HOME[usuario.rol] ?? '/login'} replace /> : <Login />} />
       <Route element={<Protegida rol="ADMINISTRADOR" />}>
         <Route element={<Oficina />}>
-          <Route path="/dashboard" element={<Inicio />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/catalogo" element={<Catalogo />} />
           <Route path="/compras" element={<Recepcion />} />
           <Route path="/importacion" element={<Importacion />} />
           <Route path="/pedidos" element={<Pedidos />} />
+          <Route path="/auditoria" element={<Auditoria />} />
           <Route path="/usuarios" element={<Usuarios />} />
         </Route>
       </Route>
