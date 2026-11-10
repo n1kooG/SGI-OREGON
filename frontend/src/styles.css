@@ -148,12 +148,6 @@ td.dato { white-space: nowrap; }
 .topbar-movil { display: none; }
 .velo-nav { display: none; }
 
-/* Inicio */
-.accesos { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; max-width: 760px; }
-.acceso { display: flex; gap: 14px; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; text-decoration: none; color: var(--ink); }
-.acceso:hover { border-color: var(--ink); }
-.acceso strong { display: block; font-weight: 600; font-size: 15px; }
-.acceso span { color: var(--ink-3); }
 
 /* Login */
 .login { min-height: 100%; display: flex; flex-direction: column; }
@@ -272,3 +266,21 @@ td.dato { white-space: nowrap; }
 .zona-carga.compacta { flex-direction: row; text-align: left; gap: 14px; padding: 14px 16px; margin-bottom: 0; flex-wrap: wrap; }
 .zona-carga.compacta .zona-texto { display: flex; flex-direction: column; flex: 1; min-width: 160px; overflow-wrap: anywhere; }
 .zona-carga.compacta .btn { margin-top: 0; }
+
+/* Dashboard y auditoría (Sprint 4) */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+.kpi-et { font-size: 11px; line-height: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.kpi-valor { font-size: 28px; line-height: 36px; font-weight: 500; color: var(--ink); }
+.kpi-num { font-size: 30px; line-height: 36px; font-weight: 500; color: var(--ink); }
+.kpi-num small { font-size: 16px; font-weight: 400; color: var(--ink-3); margin-left: 6px; }
+.kpi-num.mal { color: var(--danger); }
+.kpi-pie { color: var(--ink-3); }
+.kpi-pie.ok { color: var(--ok); }
+.kpi-pie.mal { color: var(--danger); }
+.subtitulo { font-family: var(--f-ui); font-size: 15px; line-height: 20px; font-weight: 600; margin-bottom: 20px; }
+.texto-mal { color: var(--danger); }
+.aviso-quiebres { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border: 1px solid var(--danger); border-radius: var(--radio); background: var(--danger-bg); color: var(--danger); font-weight: 500; }
+.acciones-cab { display: flex; gap: 10px; flex-wrap: wrap; }
+.filtros-aud { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0 16px; margin-bottom: 8px; }
+.nota-aud { color: var(--ink-3); font-size: 13px; margin-top: 20px; }
