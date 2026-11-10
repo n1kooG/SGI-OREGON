@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { api, mensajeError } from '../api.js';
 import { Alerta, Boton, Campo, clp, useAviso } from '../componentes/ui.jsx';
 
@@ -18,6 +18,8 @@ export default function Recepcion() {
   const avisar = useAviso();
   const [f, setF] = useState(vacio);
   const [pdf, setPdf] = useState(null);
+  const entrada = useRef(null);
+  const [arrastrando, setArrastrando] = useState(false);
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [ok, setOk] = useState(null);
@@ -60,7 +62,19 @@ export default function Recepcion() {
           <Campo etiqueta="N° de factura" value={f.numero} onChange={set('numero')} maxLength={20} required />
           <Campo etiqueta="Fecha de emisión" type="date" max={hoy()} value={f.fecha} onChange={set('fecha')} required />
           <Campo etiqueta="Forma de pago" como="select" value={f.pago} onChange={set('pago')}>{PAGOS.map((p) => <option key={p}>{p}</option>)}</Campo>
-          <Campo etiqueta="Factura en PDF (opcional, máx. 5 MB)" type="file" accept="application/pdf" onChange={(e) => setPdf(e.target.files[0] ?? null)} />
+        </div>
+
+        <div className="seccion etiqueta">Factura en PDF (opcional)</div>
+        <div
+          className={`zona-carga ${arrastrando ? 'activa' : ''}`}
+          onDragOver={(e) => { e.preventDefault(); setArrastrando(true); }}
+          onDragLeave={() => setArrastrando(false)}
+          onDrop={(e) => { e.preventDefault(); setArrastrando(false); setPdf(e.dataTransfer.files[0] ?? null); }}
+        >
+          <p><strong>{pdf ? pdf.name : 'Arrastra aquí la factura en PDF'}</strong></p>
+          <p className="tenue">{pdf ? `${(pdf.size / 1024).toFixed(0)} KB` : 'o selecciónala desde tu equipo (máx. 5 MB)'}</p>
+          <Boton onClick={() => entrada.current.click()}>Seleccionar archivo</Boton>
+          <input ref={entrada} type="file" accept="application/pdf" hidden aria-label="Factura en PDF" onChange={(e) => { setPdf(e.target.files[0] ?? null); e.target.value = ''; }} />
         </div>
 
         <div className="seccion etiqueta">Detalle</div>
