@@ -1,4 +1,5 @@
-import { query } from '../db.js';
+import { query, trasCommit } from '../db.js';
+import { sujetoInventario } from '../observers/index.js';
 
 // Sin costos ni márgenes: sirve a Bodega. Usa los índices GIN/trigramas del modelo.
 export async function buscar(q) {
@@ -19,6 +20,7 @@ export async function buscar(q) {
 // Suma al stock físico (recepción de compra). Siempre dentro de la transacción del llamador.
 export async function incrementarFisico(sku, cantidad, client) {
   const { rowCount } = await client.query(`UPDATE inventario SET stock_fisico = stock_fisico + $2 WHERE sku = $1`, [sku, cantidad]);
+  if (rowCount === 1) trasCommit(client, () => sujetoInventario.notificar({ tipo: 'INGRESO', sku, cantidad }));
   return rowCount === 1;
 }
 
@@ -28,6 +30,7 @@ export async function rebajarFisico(sku, cantidad, client) {
   try {
     const { rowCount } = await client.query(
       `UPDATE inventario SET stock_fisico = stock_fisico - $2 WHERE sku = $1 AND stock_fisico - $2 >= stock_reservado`, [sku, cantidad]);
+    if (rowCount === 1) trasCommit(client, () => sujetoInventario.notificar({ tipo: 'REBAJA', sku, cantidad }));
     return rowCount === 1;
   } catch (e) {
     if (e.code === '23514') return false;
