@@ -8,6 +8,10 @@ import Usuarios from './paginas/Usuarios.jsx';
 import Recepcion from './paginas/Recepcion.jsx';
 import Importacion from './paginas/Importacion.jsx';
 import Descarga from './paginas/Descarga.jsx';
+import Pedidos from './paginas/Pedidos.jsx';
+import BodegaBuscador from './paginas/BodegaBuscador.jsx';
+import BodegaPedidos from './paginas/BodegaPedidos.jsx';
+import ChoferRuta from './paginas/ChoferRuta.jsx';
 
 // Ruta protegida por rol: es solo UX; el backend aplica el control real (denegación por defecto).
 function Protegida({ rol }) {
@@ -30,17 +34,20 @@ export default function App() {
           <Route path="/catalogo" element={<Catalogo />} />
           <Route path="/compras" element={<Recepcion />} />
           <Route path="/importacion" element={<Importacion />} />
+          <Route path="/pedidos" element={<Pedidos />} />
           <Route path="/usuarios" element={<Usuarios />} />
         </Route>
       </Route>
       <Route element={<Protegida rol="BODEGA" />}>
         <Route element={<MovilBodega />}>
-          <Route path="/bodega" element={<Bienvenida texto="Desde Descarga confirmas el camión contra la factura. El buscador de stock y los pedidos aparecerán cuando estén habilitados." />} />
+          <Route path="/bodega" element={<Bienvenida texto="Desde Descarga confirmas el camión contra la factura. Con el buscador consultas stock y ubicación, y en Pedidos preparas lo que sale a reparto." />} />
           <Route path="/bodega/descarga" element={<Descarga />} />
+          <Route path="/bodega/buscador" element={<BodegaBuscador />} />
+          <Route path="/bodega/pedidos" element={<BodegaPedidos />} />
         </Route>
       </Route>
       <Route element={<Protegida rol="CHOFER" />}>
-        <Route path="/ruta" element={<Movil panel="Panel chofer" texto="Aquí aparecerá tu hoja de ruta cuando esté habilitada." />} />
+        <Route path="/ruta" element={<Movil panel="Chofer: distribución terreno"><ChoferRuta /></Movil>} />
       </Route>
       <Route path="*" element={cargando ? null : <Navigate to={usuario ? HOME[usuario.rol] ?? '/login' : '/login'} replace />} />
     </Routes>
