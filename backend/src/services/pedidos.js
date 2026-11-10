@@ -80,7 +80,22 @@ export async function etiqueta(req, id) {
   return { pdf: await fin, nombre: `etiqueta_${o.codigo_externo}.pdf` };
 }
 
-function dibujarEtiqueta(doc, o, rut) {
+// Mayor tamaño (de `max` a `min`) con que el texto cabe en `ancho`; null si ni al mínimo cabe.
+function ajustar(doc, t, fuente, max, min, ancho) {
+  for (let f = max; f >= min; f -= 0.5) if (doc.font(fuente).fontSize(f).widthOfString(t) <= ancho) return f;
+  return null;
+}
+// Recorta con «…» para que el texto (a ese tamaño) quepa en `ancho`.
+function recortar(doc, t, fuente, tam, ancho, espaciado = 0) {
+  doc.font(fuente).fontSize(tam);
+  const cabe = (x) => doc.widthOfString(x, { characterSpacing: espaciado }) <= ancho;
+  if (cabe(t)) return t;
+  let r = t;
+  while (r.length > 1 && !cabe(r + '…')) r = r.slice(0, -1);
+  return r.trimEnd() + '…';
+}
+
+export function dibujarEtiqueta(doc, o, rut) {
   const M = 14, W = 283 - 2 * M, cl = (d) => new Date(d).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' });
   const caja = (y, h) => doc.lineWidth(1).roundedRect(M, y, W, h, 3).strokeColor(C.tinta).stroke();
   doc.rect(0, 0, 283, 425).fill(C.blanco); // fondo blanco explícito
@@ -88,26 +103,30 @@ function dibujarEtiqueta(doc, o, rut) {
   doc.rect(0, 0, 283, 40).fill(C.tinta);
   marca(doc, M, 12, 14);
   doc.font('Helvetica-Bold').fontSize(7).fillColor(C.blanco).text('ETIQUETA DE DESPACHO', M, 16, { width: W, align: 'right', characterSpacing: 0.8, lineBreak: false });
-  // Código de orden + canal
+  // Código de orden + canal: el código se reduce hasta caber en una línea; la píldora se mide por su texto
+  // y, si el código no cabe a ≥ 20 pt a su lado, baja a la fila del rótulo «Orden».
+  const canal = recortar(doc, String(o.canal_origen).toUpperCase(), 'Helvetica-Bold', 8, 150, 0.6), cw = doc.font('Helvetica-Bold').fontSize(8).widthOfString(canal, { characterSpacing: 0.6 }) + 16;
+  const codigo = String(o.codigo_externo), junto = ajustar(doc, codigo, 'Helvetica-Bold', 27, 20, W - cw - 10);
+  const pillY = junto ? 62 : 46, tam = junto ?? ajustar(doc, codigo, 'Helvetica-Bold', 27, 12, W) ?? 12;
   rotulo(doc, 'Orden', M, 50);
-  doc.font('Helvetica-Bold').fontSize(27).fillColor(C.tinta).text(o.codigo_externo, M, 59, { lineBreak: false });
-  const canal = String(o.canal_origen).toUpperCase(), cw = doc.font('Helvetica-Bold').fontSize(8).widthOfString(canal, { characterSpacing: 0.6 }) + 16;
-  doc.lineWidth(1.2).roundedRect(M + W - cw, 62, cw, 18, 9).strokeColor(C.tinta).stroke();
-  doc.fillColor(C.tinta).text(canal, M + W - cw, 67.5, { width: cw, align: 'center', characterSpacing: 0.6, lineBreak: false });
+  doc.font('Helvetica-Bold').fontSize(tam).fillColor(C.tinta).text(recortar(doc, codigo, 'Helvetica-Bold', tam, junto ? W - cw - 10 : W), M, junto ? 59 : 67 + (27 - tam) / 2, { lineBreak: false });
+  doc.lineWidth(1.2).roundedRect(M + W - cw, pillY, cw, 18, 9).strokeColor(C.tinta).stroke();
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(C.tinta).text(canal, M + W - cw, pillY + 5.5, { width: cw, align: 'center', characterSpacing: 0.6, lineBreak: false });
   // Código de barras
   const mod = Math.min(2.2, W / (11 * (o.codigo_externo.length + 2) + 13));
   const ancho = dibujarCode128(doc, o.codigo_externo, M, 98, 34, mod);
-  doc.font('Courier').fontSize(8).fillColor(C.tinta).text(o.codigo_externo, M, 136, { width: ancho, align: 'center', characterSpacing: 2, lineBreak: false });
+  doc.font('Courier').fontSize(8).fillColor(C.tinta).text(recortar(doc, codigo, 'Courier', 8, W, 1), M, 136, { width: Math.max(ancho, 1), align: 'center', characterSpacing: 1, lineBreak: false });
   // Destinatario
   caja(154, 100);
   doc.rect(M, 154, 3, 100).fill(C.tinta);
   rotulo(doc, 'Destinatario', M + 12, 161);
-  doc.font('Helvetica-Bold').fontSize(13).fillColor(C.tinta).text(o.nombre_cliente, M + 12, 173, { width: W - 22, height: 16, ellipsis: true });
+  const tn = ajustar(doc, o.nombre_cliente, 'Helvetica-Bold', 13, 10, W - 22) ?? 10;
+  doc.font('Helvetica-Bold').fontSize(tn).fillColor(C.tinta).text(recortar(doc, o.nombre_cliente, 'Helvetica-Bold', tn, W - 22), M + 12, 173 + (13 - tn) / 2, { lineBreak: false });
   let y = 191;
   if (rut) { doc.font('Courier').fontSize(8.5).fillColor(C.tinta3).text(`RUT ${formatearRut(rut) ?? rut}`, M + 12, y, { lineBreak: false }); y += 13; }
-  doc.font('Helvetica').fontSize(9.5).fillColor(C.tinta).text(o.direccion_despacho ?? 'Sin dirección registrada', M + 12, y, { width: W - 22, height: 24, ellipsis: true });
-  doc.font('Helvetica-Bold').fontSize(11).text((o.comuna ?? '').toUpperCase(), M + 12, 226, { width: W - 22, lineBreak: false });
-  if (o.telefono_contacto) doc.font('Courier').fontSize(8.5).fillColor(C.tinta3).text(`Tel. ${o.telefono_contacto}`, M + 12, 240, { lineBreak: false });
+  doc.font('Helvetica').fontSize(9).fillColor(C.tinta).text(o.direccion_despacho ?? 'Sin dirección registrada', M + 12, y, { width: W - 22, height: 22, ellipsis: true });
+  doc.font('Helvetica-Bold').fontSize(11).text(recortar(doc, (o.comuna ?? '').toUpperCase(), 'Helvetica-Bold', 11, W - 22), M + 12, rut ? 230 : 226, { lineBreak: false });
+  if (o.telefono_contacto) doc.font('Courier').fontSize(8.5).fillColor(C.tinta3).text(`Tel. ${o.telefono_contacto}`, M + 12, rut ? 242 : 240, { lineBreak: false });
   // Contenido
   rotulo(doc, 'Contenido', M, 263);
   const unidades = o.items.reduce((a, i) => a + i.cantidad, 0);
