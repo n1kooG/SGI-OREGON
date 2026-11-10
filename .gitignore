@@ -3,7 +3,6 @@ dist/
 .env
 *.log
 .DS_Store
-.claude/
 .env.local
 
 # Documentación privada del equipo (no se publica)
