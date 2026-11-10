@@ -4,11 +4,25 @@ export async function kpis() {
   const [{ rows: [k] }, { rows: criticos }] = await Promise.all([
     query(`SELECT COALESCE(SUM(i.stock_fisico * p.costo_adquisicion_neto), 0)::float AS valorizacion_inventario,
                   (SELECT COUNT(*) FROM orden_venta WHERE estado_orden IN ('PENDIENTE_PREPARACION','ARMADO','ETIQUETADO'))::int AS ordenes_pendientes,
-                  (SELECT ROUND(AVG(margen_porcentual), 1)::float FROM lista_precio) AS margen_promedio
+                  (SELECT ROUND(AVG(margen_porcentual), 1)::float FROM lista_precio) AS margen_promedio,
+                  COUNT(*)::int AS skus_activos,
+                  (SELECT COUNT(*) FROM orden_venta WHERE fecha_orden >= CURRENT_DATE)::int AS ventas_dia
              FROM inventario i JOIN producto p ON p.sku = i.sku WHERE p.estado = 'ACTIVO'`),
     query(`SELECT sku, nombre, marca, stock_fisico, stock_minimo, ubicacion_bodega FROM v_stock_critico ORDER BY sku`),
   ]);
   return { ...k, stock_critico: criticos.length, quiebres: criticos.length, productos_criticos: criticos };
+}
+
+// Tabla «Productos más vendidos y estado de reposición»: unidades vendidas en el mes en curso (sin órdenes rechazadas), máx. 10.
+export async function topProductos() {
+  const { rows } = await query(
+    `SELECT p.sku, p.nombre AS producto, p.marca, SUM(d.cantidad_vendida)::int AS ventas_mes, i.stock_fisico AS stock_actual,
+            CASE WHEN v.sku IS NULL THEN 'ABASTECIDO' ELSE 'QUIEBRE_INMINENTE' END AS estado
+       FROM detalle_venta d JOIN orden_venta o ON o.id_orden = d.id_orden
+       JOIN producto p ON p.sku = d.sku JOIN inventario i ON i.sku = p.sku LEFT JOIN v_stock_critico v ON v.sku = p.sku
+      WHERE o.estado_orden <> 'RECHAZADO' AND o.fecha_orden >= date_trunc('month', now())
+      GROUP BY p.sku, p.nombre, p.marca, i.stock_fisico, v.sku ORDER BY ventas_mes DESC, p.sku LIMIT 10`);
+  return rows;
 }
 
 // HU09: SKU en quiebre con reorden sugerido = reponer hasta el doble del mínimo (al menos 1 unidad).

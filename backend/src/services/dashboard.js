@@ -7,6 +7,8 @@ export async function kpis() {
   return conCache('kpis:dashboard', config.kpiTtl, async () => ({ ...(await repo.kpis()), generado: new Date().toISOString() }));
 }
 
+export const topProductos = () => conCache('top:dashboard', config.kpiTtl, () => repo.topProductos());
+
 export async function alertas() {
   return conCache('alertas:dashboard', config.kpiTtl, async () => {
     const items = await repo.alertas();

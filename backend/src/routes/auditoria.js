@@ -13,6 +13,9 @@ router.get('/', autenticar, requierePermiso('auditoria:leer'), ah(async (req, re
   res.set('X-Total-Count', String(total)).json(items);
 }));
 
+// GET /api/auditoria/filtros: listas para los selectores de Usuario y Acción.
+router.get('/filtros', autenticar, requierePermiso('auditoria:leer'), ah(async (_req, res) => res.json(await svc.opcionesFiltros())));
+
 // GET /api/auditoria/exportar?formato=xlsx|pdf + los mismos filtros (T42). La exportación queda auditada.
 router.get('/exportar', autenticar, requierePermiso('auditoria:leer'), ah(async (req, res) => {
   const { buffer, tipo, nombre, filas } = await svc.exportar(req.query);

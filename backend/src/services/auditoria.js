@@ -32,6 +32,8 @@ export async function listar(q = {}) {
   return { items, total };
 }
 
+export const opcionesFiltros = () => repo.opcionesFiltros();
+
 const COLS = [['Fecha', 'fecha', 20], ['Usuario', 'usuario', 26], ['Rol', 'rol', 15], ['Acción', 'accion', 22], ['Módulo', 'modulo', 20], ['IP de origen', 'ip', 16]];
 const hora = (d) => new Date(d).toLocaleString('es-CL', { timeZone: 'America/Santiago' });
 const fila = (r) => ({ fecha: hora(r.fecha_hora), usuario: r.usuario ?? '—', rol: r.rol ?? '—', accion: r.accion, modulo: r.modulo, ip: r.ip_origen });

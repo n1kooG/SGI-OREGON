@@ -182,6 +182,28 @@ test('T51: filtros de bitácora por usuario, acción, fecha y paginación; fecha
   assert.equal((await ctx.http('GET', '/api/auditoria?desde=2026-02-01&hasta=2026-01-01', ctx.admin)).status, 400);
 });
 
+test('Figma: kpis con skus_activos y ventas_dia, /top-productos y /auditoria/filtros', async () => {
+  await redisDel('kpis:dashboard', 'top:dashboard');
+  const k = await ctx.http('GET', '/api/dashboard/kpis', ctx.admin);
+  const activos = (await query(`SELECT count(*)::int n FROM producto WHERE estado = 'ACTIVO'`)).rows[0].n;
+  assert.equal(k.body.skus_activos, activos);
+  assert.equal(typeof k.body.ventas_dia, 'number');
+  assert.equal(k.body.quiebres, k.body.stock_critico);
+  await crearPedido(MARCA, { canal: `Top ${MARCA}`, lineas: [['UT-FORNO', 2]] });
+  await fijar('UT-FORNO', 3);
+  await redisDel('top:dashboard');
+  const t = await ctx.http('GET', '/api/dashboard/top-productos', ctx.admin);
+  assert.ok(t.body.length <= 10);
+  assert.deepEqual(Object.keys(t.body[0]).sort(), ['estado', 'marca', 'producto', 'sku', 'stock_actual', 'ventas_mes']);
+  assert.equal(t.body.find((x) => x.sku === 'UT-FORNO').estado, 'QUIEBRE_INMINENTE');
+  assert.ok(t.body.every((x, i) => i === 0 || t.body[i - 1].ventas_mes >= x.ventas_mes));
+  const f = await ctx.http('GET', '/api/auditoria/filtros', ctx.admin);
+  assert.ok(f.body.usuarios.some((u) => u.id_usuario === ctx.idAdmin && u.nombre) && f.body.acciones.includes('ACCESO_DENEGADO'));
+  const porId = await ctx.http('GET', `/api/auditoria?usuario=${ctx.idChofer}&accion=ACCESO_DENEGADO`, ctx.admin);
+  assert.ok(porId.body.length > 0 && porId.body.every((l) => l.rol === 'CHOFER'));
+  for (const ruta of ['/api/dashboard/top-productos', '/api/auditoria/filtros']) assert.equal((await ctx.http('GET', ruta, ctx.bodega)).status, 403);
+});
+
 test('T42: exporta la bitácora a xlsx y pdf como descarga, con filtros, solo Administrador, y queda auditado', async () => {
   const antes = async () => (await query(`SELECT count(*)::int n FROM audit_log WHERE accion = 'EXPORTACIÓN'`)).rows[0].n;
   const n0 = await antes();

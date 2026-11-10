@@ -11,6 +11,12 @@ router.get('/kpis', autenticar, requierePermiso('inventario:leer'), ah(async (_r
   res.set('X-Cache', cache).json(data);
 }));
 
+// GET /api/dashboard/top-productos
+router.get('/top-productos', autenticar, requierePermiso('inventario:leer'), ah(async (_req, res) => {
+  const { data, cache } = await svc.topProductos();
+  res.set('X-Cache', cache).json(data);
+}));
+
 // GET /api/dashboard/alertas  (HU09)
 router.get('/alertas', autenticar, requierePermiso('alertas:leer'), ah(async (_req, res) => {
   const { data, cache } = await svc.alertas();
