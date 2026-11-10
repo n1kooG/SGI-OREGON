@@ -217,9 +217,14 @@ test('T42: exporta la bitácora a xlsx y pdf como descarga, con filtros, solo Ad
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load(Buffer.from(await x.arrayBuffer()));
   const hoja = wb.worksheets[0];
-  assert.deepEqual(hoja.getRow(1).values.slice(1), ['Fecha', 'Usuario', 'Rol', 'Acción', 'Módulo', 'IP de origen']);
-  assert.ok(hoja.rowCount > 1);
-  hoja.eachRow((r, i) => { if (i > 1) assert.equal(r.getCell(4).value, 'ACCESO_DENEGADO'); });
+  // Filas 1–4: marca, título, filtros y generación; la tabla parte en la 5 con panel fijo, autofiltro y fechas reales.
+  assert.deepEqual(hoja.getRow(5).values.slice(1), ['Fecha y hora', 'Usuario', 'Rol', 'Acción', 'Módulo', 'IP de origen']);
+  assert.match(hoja.getCell('A3').value, /Acción: ACCESO_DENEGADO/);
+  assert.equal(hoja.views[0].ySplit, 5);
+  assert.equal(hoja.autoFilter, 'A5:F5');
+  assert.ok(hoja.rowCount > 5);
+  assert.ok(hoja.getCell('A6').value instanceof Date);
+  hoja.eachRow((r, i) => { if (i > 5) assert.equal(r.getCell(4).value, 'ACCESO_DENEGADO'); });
 
   const p = await fetch(`${base}?formato=pdf`, { headers: h });
   assert.equal(p.status, 200);
