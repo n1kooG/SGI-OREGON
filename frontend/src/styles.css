@@ -266,3 +266,9 @@ td.dato { white-space: nowrap; }
 .cierre > p:first-of-type { margin-bottom: 18px; }
 .cierre-pie { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 16px; }
 .cierre-pie .btn.bloque { width: 100%; }
+
+/* Selector de PDF de la recepción: misma zona punteada de Carga Masiva, en una fila */
+.zona-pdf { grid-column: 1 / -1; }
+.zona-carga.compacta { flex-direction: row; text-align: left; gap: 14px; padding: 14px 16px; margin-bottom: 0; flex-wrap: wrap; }
+.zona-carga.compacta .zona-texto { display: flex; flex-direction: column; flex: 1; min-width: 160px; overflow-wrap: anywhere; }
+.zona-carga.compacta .btn { margin-top: 0; }
