@@ -37,6 +37,11 @@ export async function redisSet(clave, valor, ttlSegundos) {
   try { await client.set(clave, valor, { EX: ttlSegundos }); return true; } catch { return false; }
 }
 
+export async function redisDel(...claves) {
+  if (!client) return false;
+  try { await client.del(claves); return true; } catch { return false; }
+}
+
 export async function conCache(clave, ttlSegundos, calcular) {
   const hit = await redisGet(clave);
   if (hit) return { data: JSON.parse(hit), cache: 'HIT' };

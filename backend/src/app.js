@@ -18,7 +18,7 @@ export function crearApp() {
   const app = express();
   app.disable('x-powered-by');
   app.use(helmet());
-  app.use(cors({ origin: config.corsOrigin }));
+  app.use(cors({ origin: config.corsOrigin, exposedHeaders: ['X-Total-Count', 'Content-Disposition', 'X-Cache'] }));
   app.use(express.json({ limit: '100kb' }));
 
   app.use('/api/health', healthRouter);
