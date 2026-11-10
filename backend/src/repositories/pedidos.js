@@ -67,3 +67,9 @@ export const insertarDetalles = (c, lineas) => c.query(
   `INSERT INTO detalle_venta (id_orden, sku, cantidad_vendida, precio_unitario)
    SELECT * FROM unnest($1::int[], $2::text[], $3::int[], $4::numeric[])`,
   [lineas.map((l) => l.idOrden), lineas.map((l) => l.sku), lineas.map((l) => l.cantidad), lineas.map((l) => l.precio)]);
+
+// RUT del cliente solo para la etiqueta; no forma parte del detalle que reciben todos los roles.
+export async function rutCliente(id) {
+  const { rows } = await query(`SELECT rut_cliente FROM orden_venta WHERE id_orden = $1`, [id]);
+  return rows[0]?.rut_cliente ?? null;
+}
