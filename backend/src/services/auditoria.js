@@ -123,6 +123,9 @@ async function pdf(rows, resumen) {
     COLS.forEach(([t], i) => doc.font('Helvetica-Bold').fontSize(7.5).fillColor(C.blanco).text(t.toUpperCase(), x[i] + 8, y + 6.5, { width: ancho[i] - 12, characterSpacing: 0.6, lineBreak: false }));
     return y + 20;
   };
+  const fondo = () => doc.rect(0, 0, doc.page.width, doc.page.height).fill(C.blanco);
+  doc.on('pageAdded', fondo);
+  fondo();
   // Encabezado de marca
   marca(doc, M, M - 4, 13, C.tinta);
   rotulo(doc, 'Documento de control interno', M, M, { width: W, align: 'right' });
@@ -134,7 +137,7 @@ async function pdf(rows, resumen) {
   if (!rows.length) doc.font('Helvetica-Oblique').fontSize(9).fillColor(C.tinta3).text('No hay registros para los filtros indicados.', M + 8, y + 8, { lineBreak: false });
   rows.forEach((r, n) => {
     if (y + RH > tope) { doc.addPage(); y = cabecera(M); }
-    if (n % 2) doc.rect(M, y, W, RH).fill(C.fondo);
+    doc.rect(M, y, W, RH).fill(n % 2 ? C.fondo : C.blanco); // relleno explícito: no depende de la transparencia del visor
     COLS.forEach(([, k], i) => {
       const mono = k === 'ip', v = k === 'fecha' ? hora(r.fecha) : r[k];
       doc.font(mono ? 'Courier' : k === 'accion' ? 'Helvetica-Bold' : 'Helvetica').fontSize(mono ? 8 : 8.5).fillColor(C.tinta)

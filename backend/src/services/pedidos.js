@@ -83,6 +83,7 @@ export async function etiqueta(req, id) {
 function dibujarEtiqueta(doc, o, rut) {
   const M = 14, W = 283 - 2 * M, cl = (d) => new Date(d).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' });
   const caja = (y, h) => doc.lineWidth(1).roundedRect(M, y, W, h, 3).strokeColor(C.tinta).stroke();
+  doc.rect(0, 0, 283, 425).fill(C.blanco); // fondo blanco explícito
   // Encabezado de marca
   doc.rect(0, 0, 283, 40).fill(C.tinta);
   marca(doc, M, 12, 14);
