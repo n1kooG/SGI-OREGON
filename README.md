@@ -1,74 +1,88 @@
-# SGI Tienda Oregón — base de la aplicación
+# SGI Tienda Oregón
 
-Avance del Proyecto Integrado (INACAP). Stack del informe: React (PWA) + Node.js/Express + PostgreSQL + Redis.
+**Sistema de Gestión de Inventario** para una comercializadora que vende por varios canales. Controla existencias, compras a proveedores, pedidos multicanal, la preparación en bodega y el reparto en terreno, dejando registro de cada acción.
 
-## Requisitos (Mac)
-- Node 20 o superior (`node -v`)
-- PostgreSQL 16 y Redis locales: `brew install postgresql@16 redis`
-- Sin Docker. En producción: Amazon RDS (PostgreSQL) + EC2 + S3.
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-PWA-646CFF?logo=vite&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-relacional-4169E1?logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-caché-DC382D?logo=redis&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS-S3%20%C2%B7%20RDS%20%C2%B7%20EC2-232F3E?logo=amazonaws&logoColor=white)
 
-## Puesta en marcha
+Proyecto Integrado de INACAP.
 
-```bash
-# 1) Servicios locales
-brew services start postgresql@16
-brew services start redis
+## Qué problema resuelve
 
-# 2) Base de datos (la primera vez; db/02 es solo para desarrollo)
-createdb sgi_oregon
-psql sgi_oregon -f db/01_modelo_datos.sql
-psql sgi_oregon -f db/02_datos_ejemplo.sql
+Una tienda que vende por sitio web, marketplaces y mayoristas necesita saber en todo momento cuánto stock tiene, dónde está en bodega, cuánto cuesta y deja cada producto, y qué pedidos ya salieron a reparto. SGI reúne esa información en un solo sistema, con control de acceso por rol y bitácora de auditoría.
 
-# 3) Backend  → http://localhost:3000
-cd backend
-cp .env.example .env        # edita JWT_SECRET y DATABASE_URL (con brew, el usuario de la BD es el de tu Mac, sin clave)
-npm install
-npm run dev
-npm test                    # necesita la BD arriba
+## A quién sirve
 
-# 4) Frontend → http://localhost:5173
-cd frontend
-npm install
-npm run dev
-```
+| Rol | Qué hace en el sistema |
+|---|---|
+| **Administrador** | Mantiene el catálogo y los precios, registra compras, carga pedidos, asigna choferes, supervisa indicadores y administra usuarios y la bitácora. |
+| **Bodega** | Consulta stock y ubicaciones, prepara pedidos, descarga camiones contra la factura y genera etiquetas de despacho. |
+| **Chofer** | Revisa su ruta del día y registra cada entrega o rechazo, con foto y ubicación. |
 
-Usuarios de ejemplo (clave `Demo-Oregon-2026`): `admin@tiendaoregon.cl`, `bodega@tiendaoregon.cl`, `chofer@tiendaoregon.cl`.
-El login pide solo correo y contraseña: el rol sale de la base de datos y define la pantalla de destino.
+## Módulos y funcionalidades
 
-**Reiniciar la BD desde cero:** `dropdb sgi_oregon && createdb sgi_oregon` y repetir el paso 2.
-Redis es opcional: sin él, el dashboard funciona sin caché (cabecera `X-Cache: OFF`).
-Pruebas de integridad de la BD: `psql sgi_oregon -f db/03_pruebas_integridad.sql` (deben aprobar las 39).
+- **Catálogo maestro:** productos con SKU inmutable, costo de adquisición y precios de venta por canal (Web, Marketplace y Mayorista), con margen calculado automáticamente.
+- **Compras y facturas:** recepción de la factura del proveedor con neto, IVA (19 %) y total, y PDF de respaldo opcional. Cada recepción suma el stock en la misma operación.
+- **Descarga de camión:** conteo de bultos por SKU contra el número de factura, con detalle de las diferencias encontradas.
+- **Carga masiva de pedidos:** importación desde Excel por canal de venta. La planilla se simula antes de escribir; si tiene errores, no se guarda nada.
+- **Picking y etiquetas:** lista de recolección por pedido, avance de estados (sin recolectar, armado, etiquetado, en camión) y etiqueta de despacho con código de barras Code 128.
+- **Búsqueda de stock:** consulta rápida por SKU, modelo o nombre, con stock disponible y ubicación en bodega.
+- **Asignación y reparto:** el administrador asigna un chofer a cada pedido en camión. El chofer confirma la entrega con foto y geolocalización, o la rechaza con una causal obligatoria.
+- **Dashboard y alertas:** valorización del inventario, stock crítico, ventas del día y margen promedio, con aviso de quiebres inminentes.
+- **Bitácora de auditoría:** registro inmutable de las acciones del sistema, con filtros y exportación a Excel y PDF.
 
-## Estructura
-```
-db/        modelo relacional y datos de ejemplo (los del informe)
-backend/   API REST (Express, ESM)
-  src/middleware/auth.js   JWT + permisos leídos desde la BD en cada request + default deny (403) + auditoría
-  src/routes/              auth, productos, inventario, dashboard, pedidos, auditoria
-  src/cache.js             caché Redis con degradación si no hay Redis
-  tests/api.test.js        políticas de seguridad del informe
-frontend/  React + Vite, PWA (manifest + service worker que no cachea /api)
-```
+## Seguridad
 
-## Qué ya está
-- Login con bcrypt (pgcrypto), mensaje único de error, bloqueo 15 min tras 5 intentos, rol validado contra la BD.
-- RBAC por permisos "módulo:acción"; cada acceso denegado se registra en `audit_log`.
-- Costos y márgenes solo para quien tiene `costos:leer` (Bodega/Chofer nunca los reciben).
-- Dashboard (KPIs + stock crítico, caché 30 s), catálogo (solo lectura), auditoría, búsqueda de Bodega (HU06).
+- **Acceso por rol:** cada función exige un permiso. Lo que no está permitido se deniega por defecto y el intento queda registrado.
+- **Roles leídos desde la base de datos:** el rol y los permisos se consultan en cada solicitud, no se confían al token, así que un cambio de rol surte efecto de inmediato.
+- **Costos y márgenes protegidos:** solo el Administrador los recibe; la API no los entrega a Bodega ni a Chofer.
+- **Autenticación robusta:** contraseñas cifradas con bcrypt, mensaje de error único al ingresar y bloqueo temporal tras varios intentos fallidos.
+- **Sesión por inactividad:** la sesión expira tras un período sin actividad.
+- **Bitácora inmutable:** inicios de sesión, cambios de estado, operaciones de inventario, precios y usuarios quedan registrados.
 
-## Qué falta (los `TODO(...)` en el código indican dónde)
-| Pendiente | HU / CU | Dónde |
+## Stack tecnológico
+
+| Capa | Tecnología | Uso |
 |---|---|---|
-| Alta y edición de productos, listas de precio | HU01, HU02 | `routes/productos.js` |
-| Recepción de compras y confirmación de descarga | HU03, CU-04 | `routes/inventario.js` |
-| Importación de pedidos desde Excel (una transacción) | HU04, CU-05 | `routes/pedidos.js` |
-| Picking y cambio de estado de pedidos (Bodega) | HU05 | `routes/pedidos.js`, `pages/Bodega.jsx` |
-| Ruta y entregas del chofer con geolocalización | HU07 | nuevo `routes/despachos.js`, `pages/Ruta.jsx` |
-| Alertas de reposición y reportes | HU09 | `routes/dashboard.js` |
-| Almacenamiento de archivos (S3) | — | pendiente |
+| Frontend | React + Vite (PWA) | Panel de oficina y vistas móviles para bodega y chofer |
+| Backend | Node.js + Express | API REST, autenticación con JWT, validaciones y permisos |
+| Base de datos | PostgreSQL | Modelo relacional con restricciones, disparadores y transacciones |
+| Caché | Redis | Caché de indicadores del dashboard y control de inactividad (opcional) |
+| Documentos | ExcelJS, PDFKit | Importación y exportación de planillas, bitácora, etiquetas |
+| Producción | AWS (S3, RDS, EC2) | Archivos de respaldo, base de datos administrada y servidor de aplicación |
 
-## Riesgos conocidos (antes de producción)
-- El token JWT está en `sessionStorage`; se debe evaluar cookie httpOnly + CSRF.
-- No hay límite de peticiones por IP en el login (solo el bloqueo por cuenta, que además permite bloquear a un usuario a propósito).
-- `helmet` está con valores por defecto; falta ajustar CSP cuando el front se sirva desde otro origen.
-- El `.env` de ejemplo usa claves de desarrollo. No reutilizar.
+## Arquitectura
+
+```
+Solicitud HTTP → Rutas (entrada y permisos) → Servicios (reglas de negocio) → Repositorios (SQL parametrizado)
+```
+
+- **Capa transversal:** middleware de autenticación, permisos, filtro de costos y auditoría.
+- **Observer para alertas de stock:** cuando cambia el inventario, un sujeto notifica a sus observadores. Uno evalúa el stock crítico y genera la alerta; otro actualiza las métricas del dashboard.
+- **Transacciones con auditoría:** las operaciones que mueven stock, precios o estados se confirman junto con su registro en la bitácora. Si una parte falla, no queda nada a medias.
+
+## Estructura del repositorio
+
+```
+backend/
+  src/routes/        endpoints por módulo
+  src/services/      reglas de negocio
+  src/repositories/  acceso a datos (SQL)
+  src/middleware/    autenticación, permisos y control de costos
+  src/observers/     alertas de stock y métricas del dashboard
+  src/pdf/           etiquetas de despacho y reportes en PDF
+  tests/             pruebas automatizadas de la API
+db/                  modelo de datos, datos de ejemplo, pruebas de integridad, concurrencia y rendimiento
+frontend/
+  src/paginas/       pantallas por módulo
+  src/componentes/   diseño, navegación y componentes compartidos
+```
+
+## Estado del proyecto
+
+- **Sprints 1 a 4:** completados.
+- **Contexto:** Proyecto Integrado de INACAP, desarrollado como sistema de gestión para una comercializadora.
