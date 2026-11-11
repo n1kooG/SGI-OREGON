@@ -12,6 +12,8 @@ export const config = {
   sessionIdleMinutes: Number(process.env.SESSION_IDLE_MINUTES ?? 15),
   storageEnabled: process.env.STORAGE_ENABLED === 'true',
   s3Bucket: process.env.S3_BUCKET ?? '',
+  // Con true, cerrar una entrega como ENTREGADO exige la firma o el nombre del receptor; por defecto son opcionales.
+  exigirReceptorEntrega: process.env.EXIGIR_RECEPTOR_ENTREGA === 'true',
   // Remitente de la etiqueta de despacho: solo se imprime lo que esté definido (no hay dirección de bodega ni RUT en la base).
   remitente: { nombre: process.env.REMITENTE_NOMBRE ?? 'Comercial Oregon SpA', rut: process.env.REMITENTE_RUT ?? '', direccion: process.env.BODEGA_DIRECCION ?? '', comuna: process.env.BODEGA_COMUNA ?? '' },
   s3Region: process.env.S3_REGION ?? 'sa-east-1',

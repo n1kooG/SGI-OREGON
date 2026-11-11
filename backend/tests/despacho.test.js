@@ -1,9 +1,11 @@
 // HU07 / T30–T34: hoja de ruta del chofer, cierre Entregado/Rechazado, evidencia, geolocalización y flujo completo.
-import { test, before, after } from 'node:test';
+import { test, before, after, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { iniciar, crearPedido, limpiar } from './_aux.js';
 import { pool, query } from '../src/db.js';
 import { cerrarCache } from '../src/cache.js';
+import { config } from '../src/config.js';
+import { S3Client } from '@aws-sdk/client-s3';
 
 const M = `s3d${Date.now().toString(36)}`;
 const JPG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46]);
@@ -136,4 +138,89 @@ test('T34: flujo completo — importado/pendiente -> Bodega prepara -> Admin asi
   for (const [tok, ruta2] of [[t.bodega, `/api/pedidos/${id}`], [t.chofer, '/api/despachos/mi-ruta']]) {
     assert.doesNotMatch(JSON.stringify((await t.http('GET', ruta2, tok)).body), /costo|margen|valorizacion/i);
   }
+});
+
+// ---- T32 / PI-04: firma del receptor ----
+const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+const conFirma = (campos, buf = PNG, tipo = 'image/png') => {
+  const f = new FormData();
+  for (const [k, v] of Object.entries(campos)) f.set(k, String(v));
+  f.set('firma', new Blob([buf], { type: tipo }), 'firma.png');
+  return f;
+};
+
+test('T32: con S3 desactivado la firma se descarta sin error y el nombre del receptor sí queda guardado', async () => {
+  const { id, idDespacho } = await enRuta();
+  const r = await t.http('PATCH', `/api/despachos/${idDespacho}`, t.chofer, conFirma({ estado: 'ENTREGADO', nombre_receptor: '  María Soto  ' }));
+  assert.equal(r.status, 200);
+  assert.equal(r.body.firma, false);
+  assert.equal(r.body.nombre_receptor, 'María Soto');
+  const d = await despacho(idDespacho);
+  assert.equal(d.url_firma_s3, null);
+  assert.equal(d.nombre_receptor, 'María Soto');
+  assert.equal(await estado(id), 'ENTREGADO');
+});
+
+test('T32: la firma y el receptor son opcionales al entregar (el cierre sin ellos sigue siendo 200)', async () => {
+  const { idDespacho } = await enRuta();
+  assert.equal((await t.http('PATCH', `/api/despachos/${idDespacho}`, t.chofer, { estado: 'ENTREGADO' })).status, 200);
+  const d = await despacho(idDespacho);
+  assert.equal(d.nombre_receptor, null);
+  assert.equal(d.url_firma_s3, null);
+});
+
+test('T32: la firma se valida (solo PNG por tipo y firma de archivo, máx. 1 MB), el receptor máx. 120 y no aplican al rechazo', async () => {
+  const { id, idDespacho } = await enRuta();
+  const url = `/api/despachos/${idDespacho}`;
+  assert.equal((await t.http('PATCH', url, t.chofer, conFirma({ estado: 'ENTREGADO' }, JPG, 'image/jpeg'))).status, 400);
+  assert.equal((await t.http('PATCH', url, t.chofer, conFirma({ estado: 'ENTREGADO' }, Buffer.from('no soy png'), 'image/png'))).status, 400);
+  assert.equal((await t.http('PATCH', url, t.chofer, conFirma({ estado: 'ENTREGADO' }, Buffer.concat([PNG, Buffer.alloc(1024 * 1024)])))).status, 413);
+  assert.equal((await t.http('PATCH', url, t.chofer, { estado: 'ENTREGADO', nombre_receptor: 'x'.repeat(121) })).status, 400);
+  assert.equal((await t.http('PATCH', url, t.chofer, { estado: 'RECHAZADO', motivo: 'Ausente', nombre_receptor: 'Alguien' })).status, 400);
+  assert.equal((await t.http('PATCH', url, t.chofer, conFirma({ estado: 'RECHAZADO', motivo: 'Ausente' }))).status, 400);
+  assert.equal((await despacho(idDespacho)).estado_entrega, 'PENDIENTE');
+  assert.equal(await estado(id), 'EN_RUTA');
+});
+
+test('T32: EXIGIR_RECEPTOR_ENTREGA=true exige firma o nombre para ENTREGADO (400 RECEPTOR_OBLIGATORIO)', async () => {
+  const { idDespacho } = await enRuta();
+  config.exigirReceptorEntrega = true;
+  try {
+    const mal = await t.http('PATCH', `/api/despachos/${idDespacho}`, t.chofer, { estado: 'ENTREGADO' });
+    assert.equal(mal.status, 400);
+    assert.equal(mal.body.codigo, 'RECEPTOR_OBLIGATORIO');
+    assert.equal((await t.http('PATCH', `/api/despachos/${idDespacho}`, t.chofer, { estado: 'ENTREGADO', nombre_receptor: 'Pedro' })).status, 200);
+  } finally { config.exigirReceptorEntrega = false; }
+});
+
+test('T32: con S3 activo la firma se sube a firmas/<id>.png, queda la clave, se audita sin la imagen y mi-ruta solo indica si hay firma y el receptor', async () => {
+  const { id, idDespacho } = await enRuta();
+  const envios = [];
+  const espia = mock.method(S3Client.prototype, 'send', async (cmd) => { envios.push(cmd.input); return {}; });
+  Object.assign(config, { storageEnabled: true, s3Bucket: 'bucket-de-prueba' });
+  try {
+    const r = await t.http('PATCH', `/api/despachos/${idDespacho}`, t.chofer, conFirma({ estado: 'ENTREGADO', nombre_receptor: 'Ana Rojas' }));
+    assert.equal(r.status, 200);
+    assert.equal(r.body.firma, true);
+  } finally { Object.assign(config, { storageEnabled: false, s3Bucket: '' }); espia.mock.restore(); }
+  assert.equal(envios.length, 1);
+  assert.equal(envios[0].Key, `firmas/${idDespacho}.png`);
+  assert.equal(envios[0].ContentType, 'image/png');
+  assert.equal((await despacho(idDespacho)).url_firma_s3, `firmas/${idDespacho}.png`);
+  const [log] = await logs(idDespacho);
+  assert.equal(log.valores_nuevos.firma, `firmas/${idDespacho}.png`);
+  assert.equal(log.valores_nuevos.nombre_receptor, 'Ana Rojas');
+  assert.doesNotMatch(JSON.stringify(log.valores_nuevos), /PNG|buffer/);
+  const p = (await t.http('GET', '/api/despachos/mi-ruta', t.chofer)).body.find((x) => x.id_orden === id);
+  assert.equal(p.tiene_firma, true);
+  assert.equal(p.nombre_receptor, 'Ana Rojas');
+  assert.equal('url_firma_s3' in p, false);
+});
+
+test('T32: una entrega ya cerrada responde 409 y no se sobrescribe el receptor', async () => {
+  const { idDespacho } = await enRuta();
+  await t.http('PATCH', `/api/despachos/${idDespacho}`, t.chofer, { estado: 'ENTREGADO' });
+  const r = await t.http('PATCH', `/api/despachos/${idDespacho}`, t.chofer, conFirma({ estado: 'ENTREGADO', nombre_receptor: 'Otro' }));
+  assert.equal(r.status, 409);
+  assert.equal((await despacho(idDespacho)).nombre_receptor, null);
 });

@@ -4,11 +4,14 @@ import { conTransaccion } from '../db.js';
 import { auditar } from '../audit.js';
 import { AppError } from '../errors.js';
 import { almacenamientoActivo, subir } from '../storage.js';
+import { config } from '../config.js';
 
 const bad = (msg, status = 400, codigo = 'VALIDACION') => new AppError(status, msg, codigo);
 const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png' };
 const JPG = [0xff, 0xd8, 0xff];
 const PNG = [0x89, 0x50, 0x4e, 0x47];
+const PNG_FIRMA = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const FIRMA_MAX = 1024 * 1024; // un trazo en un canvas pesa pocos KB
 
 export const miRuta = (req) => repo.miRuta(req.usuario.id_usuario);
 
@@ -20,9 +23,9 @@ function geo(lat, lon) {
   return `${la.toFixed(6)},${lo.toFixed(6)}`;
 }
 
-// `foto` = { buffer, mimetype } opcional. Como en compras, S3 y la BD no comparten transacción: la foto se sube antes de abrirla
+// `foto` y `firma` = { buffer, mimetype } opcionales (la firma solo aplica a ENTREGADO). Como en compras, S3 y la BD no comparten transacción: la foto se sube antes de abrirla
 // (clave determinista, se sobrescribe al reintentar); si la transacción falla a lo sumo queda un objeto huérfano.
-export async function cerrar(req, id, body = {}, foto = null) {
+export async function cerrar(req, id, body = {}, foto = null, firma = null) {
   const estado = body.estado;
   if (!['ENTREGADO', 'RECHAZADO'].includes(estado)) throw bad('estado debe ser ENTREGADO o RECHAZADO');
   const motivo = typeof body.motivo === 'string' ? body.motivo.trim() : '';
@@ -32,6 +35,14 @@ export async function cerrar(req, id, body = {}, foto = null) {
   if (foto) {
     const ok = foto.buffer.length > 4 && (foto.mimetype === 'image/jpeg' ? JPG : foto.mimetype === 'image/png' ? PNG : null)?.every((b, i) => foto.buffer[i] === b);
     if (!ok) throw bad('La evidencia debe ser una imagen JPG o PNG');
+  }
+  const receptor = typeof body.nombre_receptor === 'string' ? body.nombre_receptor.trim() : '';
+  if (receptor.length > 120) throw bad('El nombre del receptor admite máximo 120 caracteres');
+  if (estado === 'RECHAZADO' && (firma || receptor)) throw bad('La firma y el receptor solo aplican a las entregas');
+  if (estado === 'ENTREGADO' && config.exigirReceptorEntrega && !firma && !receptor) throw bad('La entrega exige la firma o el nombre del receptor', 400, 'RECEPTOR_OBLIGATORIO');
+  if (firma) {
+    if (firma.mimetype !== 'image/png' || !PNG_FIRMA.every((b, i) => firma.buffer[i] === b)) throw bad('La firma debe ser una imagen PNG');
+    if (firma.buffer.length > FIRMA_MAX) throw bad('La firma supera 1 MB', 413, 'ARCHIVO_INVALIDO');
   }
 
   const d = await conTransaccion((c) => repo.bloquear(c, id));
@@ -43,11 +54,13 @@ export async function cerrar(req, id, body = {}, foto = null) {
     clave = `evidencias/${id}.${EXT[foto.mimetype]}`;
     await subir(clave, foto.buffer, foto.mimetype);
   } // shortcut: con almacenamiento desactivado la foto se descarta sin error y url_evidencia_s3 queda NULL.
+  let claveFirma = null;
+  if (firma && almacenamientoActivo()) claveFirma = await subir(`firmas/${id}.png`, firma.buffer, 'image/png'); // igual: sin S3 url_firma_s3 queda NULL; el nombre sí se guarda
 
   return conTransaccion(async (c) => {
     const actual = await repo.bloquear(c, id);
     if (actual.estado_entrega !== 'PENDIENTE') throw bad('La entrega ya fue cerrada', 409, 'YA_CERRADO');
-    await repo.cerrar(c, id, estado, motivo || null, clave);
+    await repo.cerrar(c, id, estado, motivo || null, clave, claveFirma, receptor || null);
     try {
       await pedidos.fijarEstado(c, actual.id_orden, estado); // trg_orden_transicion: solo desde EN_RUTA
     } catch (e) {
@@ -57,8 +70,8 @@ export async function cerrar(req, id, body = {}, foto = null) {
     await auditar(req, {
       idUsuario: req.usuario.id_usuario, tabla: 'despacho', accion: 'ENTREGA', geo: coords,
       antes: { id_despacho: id, estado_entrega: 'PENDIENTE' },
-      despues: { id_despacho: id, id_orden: actual.id_orden, estado_entrega: estado, motivo_rechazo: motivo || null, evidencia: clave },
+      despues: { id_despacho: id, id_orden: actual.id_orden, estado_entrega: estado, motivo_rechazo: motivo || null, evidencia: clave, firma: claveFirma, nombre_receptor: receptor || null }, // la imagen nunca va a la bitácora: solo su clave
     }, c);
-    return { id_despacho: id, id_orden: actual.id_orden, estado_entrega: estado, evidencia: !!clave };
+    return { id_despacho: id, id_orden: actual.id_orden, estado_entrega: estado, evidencia: !!clave, firma: !!claveFirma, nombre_receptor: receptor || null };
   });
 }
