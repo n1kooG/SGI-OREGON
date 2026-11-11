@@ -46,7 +46,7 @@
 .tabla-pedidos .badge { white-space: nowrap; }
 .enlace-orden { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }
 .enlace-orden:hover { text-decoration: underline; }
-.tabla-pedidos table { min-width: 960px; }
+.tabla-pedidos table { min-width: 1100px; }
 
 /* Compras y Facturas: pestañas e historial */
 .pestanas { display: flex; gap: 8px; border-bottom: 1px solid var(--line); margin-top: -8px; }
@@ -74,3 +74,47 @@
 .historial-compras .tabla-mini td { height: auto; }
 .tabla-mini tr.discrepancia td { background: var(--warn-bg); }
 @media (max-width: 899px) { .filtros-hist .campo, .filtros-hist .campo:nth-child(2), .filtros-hist .campo:nth-child(3) { width: 100%; } }
+
+/* Mi cuenta */
+.abrir-cuenta { background: none; border: 0; padding: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; border-radius: 8px; }
+.pie-usuario .abrir-cuenta { display: block; width: 100%; padding: 8px 10px; margin: 0 -10px 8px; }
+.pie-usuario .abrir-cuenta:hover { background: var(--nav-2); }
+.pie-usuario .abrir-cuenta .rol { margin-bottom: 0; }
+.movil-cab .abrir-cuenta { flex: 1; }
+.modal.mi-cuenta { max-width: 480px; }
+.mi-cuenta .modal-cab { padding: 24px 24px 8px; }
+.mi-cuenta .modal-cuerpo { padding: 12px 24px 24px; }
+.ficha-cuenta { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin: 0 0 20px; display: flex; flex-direction: column; gap: 8px; }
+.ficha-cuenta > div { display: grid; grid-template-columns: 72px 1fr; align-items: center; gap: 12px; }
+.ficha-cuenta dt { color: var(--ink-3); }
+.ficha-cuenta dd { margin: 0; color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
+.ficha-cuenta p { margin: 4px 0 0; font-size: 12px; line-height: 16px; color: var(--ink-3); }
+.mi-cuenta form { display: flex; flex-direction: column; gap: 14px; }
+.mi-cuenta form h3 { font: 600 15px/20px var(--f-ui); color: var(--ink); }
+.mi-cuenta .campo > label { font-size: 12px; }
+.exito-clave { display: flex; gap: 12px; align-items: center; background: var(--ok-bg); color: var(--ok); border-radius: 12px; padding: 12px 14px; }
+.exito-clave strong { display: block; color: var(--ok); }
+.exito-clave span:not(.marca-req) { color: var(--ink-2); font-size: 13px; }
+.exito-clave .marca-req { background: var(--ok); border-color: var(--ok); color: #fff; width: 24px; height: 24px; }
+.requisitos > span { font-size: 12px; color: var(--ink-2); }
+.requisitos ul { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.requisitos li { display: flex; align-items: center; gap: 10px; color: var(--ink-3); }
+.requisitos li.cumple { color: var(--ink); font-weight: 500; }
+.marca-req { width: 20px; height: 20px; flex: none; border-radius: 50%; border: 1.5px solid var(--line-strong); display: grid; place-items: center; }
+.requisitos li.cumple .marca-req { background: var(--ok); border-color: var(--ok); color: #fff; }
+.marca-req .icono { width: 12px; height: 12px; stroke-width: 3; }
+.estado-req { font-size: 12px; font-weight: 400; }
+.requisitos li.cumple .estado-req { color: var(--ok); }
+.mi-cuenta .ayuda { align-items: flex-start; font-size: 12px; line-height: 16px; margin: 0; }
+.mi-cuenta .ayuda .icono { width: 14px; height: 14px; flex: none; margin-top: 1px; }
+.pie-cuenta { display: flex; justify-content: flex-end; gap: 12px; }
+.mi-cuenta .alerta { margin: 0; }
+@media (max-width: 640px) {
+  .velo-modal:has(.modal.mi-cuenta) { align-items: flex-end; padding: 0; }
+  .modal.mi-cuenta { max-width: none; max-height: 92vh; border-radius: 20px 20px 0 0; }
+  .modal.mi-cuenta::before { content: ''; align-self: center; width: 40px; height: 4px; border-radius: 2px; background: var(--line-strong); margin-top: 10px; }
+  .mi-cuenta .modal-cab, .mi-cuenta .modal-cuerpo { padding-left: 20px; padding-right: 20px; }
+  .pie-cuenta { flex-direction: column-reverse; }
+  .pie-cuenta .btn { width: 100%; height: 48px; }
+}
+.mi-cuenta .campo { margin: 0; }

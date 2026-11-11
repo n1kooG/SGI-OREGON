@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useSesion } from '../sesion.jsx';
 import { Boton, Icono, Logo } from './ui.jsx';
+import MiCuenta from './MiCuenta.jsx';
 
 export const ROL = { ADMINISTRADOR: 'Administrador', BODEGA: 'Bodega', CHOFER: 'Chofer' };
 
@@ -11,6 +12,7 @@ const ITEMS = [['/dashboard', 'Dashboard General', 'panel'], ['/catalogo', 'Cat�
 export function Oficina() {
   const { usuario, logout } = useSesion();
   const [abierto, setAbierto] = useState(false);
+  const [cuenta, setCuenta] = useState(false);
   const { pathname } = useLocation();
   useEffect(() => setAbierto(false), [pathname]);
   return (
@@ -25,13 +27,16 @@ export function Oficina() {
           {ITEMS.map(([to, txt, ic]) => <NavLink key={to} to={to}><Icono n={ic} />{txt}</NavLink>)}
         </nav>
         <div className="pie-usuario">
-          <strong>{usuario.nombre}</strong>
-          <span className="rol">{ROL[usuario.rol] ?? usuario.rol}</span>
+          <button type="button" className="abrir-cuenta" aria-label="Mi cuenta" onClick={() => setCuenta(true)}>
+            <strong>{usuario.nombre}</strong>
+            <span className="rol">{ROL[usuario.rol] ?? usuario.rol}</span>
+          </button>
           <button type="button" onClick={logout}><Icono n="salir" />Salir del sistema</button>
         </div>
       </aside>
       <div className="velo-nav" onClick={() => setAbierto(false)} />
       <main className="contenido"><Outlet /></main>
+      {cuenta && <MiCuenta onClose={() => setCuenta(false)} />}
     </div>
   );
 }
@@ -51,11 +56,13 @@ export function Bienvenida({ texto }) {
 
 function CabMovil({ panel }) {
   const { logout } = useSesion();
+  const [cuenta, setCuenta] = useState(false);
   return (
     <header className="movil-cab">
       <Logo />
-      <div className="quien"><strong>Tienda Oregón</strong><small>{panel}</small></div>
+      <button type="button" className="quien abrir-cuenta" aria-label="Mi cuenta" onClick={() => setCuenta(true)}><strong>Tienda Oregón</strong><small>{panel}</small></button>
       <Boton icono="salir" onClick={logout}>Salir</Boton>
+      {cuenta && <MiCuenta onClose={() => setCuenta(false)} />}
     </header>
   );
 }
