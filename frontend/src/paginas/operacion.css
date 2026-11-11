@@ -125,3 +125,31 @@
 .verificacion .bulto-fila { gap: 0 10px; }
 .verificacion .bulto-fila .btn { margin-bottom: 0; }
 .descarga .btn.primario.bloque { font-weight: 500; }
+
+/* ---------- Chofer: ruta de reparto y registro de entrega ---------- */
+.ruta-chofer { gap: 14px; }
+.ruta-chofer .tarjeta-pedido { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 16px; border-radius: 16px; }
+.ruta-chofer .fila-sb { flex-wrap: nowrap; }
+.ruta-chofer .chip-sku { padding: 3px 8px; }
+.ruta-chofer .tarjeta-pedido > strong { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; }
+.ruta-chofer .dato-fila { margin: 0; font-size: 13px; line-height: 18px; color: var(--ink-2); }
+.ruta-chofer .dato-fila .icono { width: 15px; height: 15px; margin-top: 1.5px; color: var(--ink-3); }
+.ruta-chofer .dato-fila { white-space: pre-wrap; }
+.ruta-chofer .dato-fila a { text-decoration: none; }
+.ruta-chofer .parada .btn.bloque-sm { height: 48px; margin: 0; }
+.ruta-chofer .botones-cierre { gap: 10px; }
+.ruta-chofer .botones-cierre .btn { font-weight: 500; }
+.cierre { gap: 16px; min-height: calc(100vh - 64px); }
+.cierre > h1 { margin: 0; }
+.cierre > p:first-of-type { margin: -12px 0 0; font-size: 13px; line-height: 18px; }
+.cierre .campo { margin: 0; gap: 6px; }
+.cierre .campo > label, .cierre .campo > .rotulo { font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.cierre .foto-cierre { gap: 8px; }
+.cierre textarea.entrada { height: 112px; padding: 14px; resize: none; }
+.cierre .btn.bloque-sm { height: 48px; }
+.cierre > p.tenue:not(:first-of-type) { font-size: 13px; line-height: 18px; }
+.cierre .alerta { margin: 0; }
+.cierre-pie { gap: 16px; padding-top: 0; }
+.cierre-pie .btn.bloque { font-weight: 500; }
+.cierre-pie .btn.enlace { width: 100%; height: 48px; padding: 0 24px; border-radius: 10px; color: var(--ink-2); }
+.cierre-pie .btn.enlace:hover { text-decoration: none; background: var(--bg); }
