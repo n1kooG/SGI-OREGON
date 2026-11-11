@@ -151,3 +151,15 @@ test('BODEGA y CHOFER: 403 en escritura y jamás ven costo ni margen', async () 
   }
   assert.equal((await query(`SELECT 1 FROM producto WHERE sku = 'ZZ-T12B'`)).rowCount, 0);
 });
+
+test('GET /productos?activo=1 excluye los productos inactivos y respeta la búsqueda y el total', async () => {
+  await limpiar(); // las pruebas anteriores dejan sus SKU de prueba creados
+  await api('/api/productos', { metodo: 'POST', token: admin, cuerpo: nuevo({ sku: 'zz-t08', modelo: 'ZZ-ACTIVO' }) });
+  await api('/api/productos', { metodo: 'POST', token: admin, cuerpo: nuevo({ sku: 'zz-t12', modelo: 'ZZ-ACTIVO' }) });
+  assert.equal((await api('/api/productos/ZZ-T12', { metodo: 'PUT', token: admin, cuerpo: { estado: 'INACTIVO' } })).status, 200);
+  const todos = await api('/api/productos?q=ZZ-ACTIVO', { token: admin });
+  assert.deepEqual(todos.json.map((p) => p.sku), ['ZZ-T08', 'ZZ-T12']);
+  const activos = await api('/api/productos?q=ZZ-ACTIVO&activo=1', { token: admin });
+  assert.deepEqual(activos.json.map((p) => p.sku), ['ZZ-T08']);
+  assert.equal(activos.headers.get('x-total-count'), '1');
+});
