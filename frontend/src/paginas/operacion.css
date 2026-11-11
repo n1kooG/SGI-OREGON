@@ -1,0 +1,44 @@
+/* Pantallas operativas (Pedidos, Bodega y Chofer) según el mockup Oregón de Figma.
+   Se importa después de styles.css desde main.jsx; solo agrega o ajusta estilos de estas pantallas. */
+:root {
+  /* Valores de Figma que no existían como token */
+  --sombra-modal: 0 24px 56px rgba(11, 23, 42, .25);
+  --halo-foco: rgba(255, 68, 0, .22);
+}
+
+/* Insignia informativa (cian) con su punto, igual que ok/mal/aviso */
+.badge.info { background: var(--info-bg); color: var(--info); }
+.badge.info::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.tabla-pedidos .badge, .movil .badge { padding: 3px 8px; line-height: 16px; }
+
+/* ---------- Pedidos y Despachos (oficina) ---------- */
+.cabecera.pedidos-cab { margin-bottom: 28px; }
+.pedidos-cab h1 { letter-spacing: -.3px; }
+.pedidos-cab p { margin-top: 6px; }
+.tabla-pedidos table { table-layout: fixed; }
+.tabla-pedidos th { padding: 12px 12px 12px 0; }
+.tabla-pedidos td { padding: 0 12px 0 0; height: 72px; }
+.tabla-pedidos th:first-child, .tabla-pedidos td:first-child { padding-left: 20px; width: 172px; }
+.tabla-pedidos th:last-child, .tabla-pedidos td:last-child { padding-right: 20px; width: 160px; }
+.tabla-pedidos th:nth-child(3), .tabla-pedidos td:nth-child(3) { width: 152px; }
+.tabla-pedidos th:nth-child(4), .tabla-pedidos td:nth-child(4) { width: 192px; }
+.tabla-pedidos th:nth-child(5), .tabla-pedidos td:nth-child(5) { width: 212px; }
+.tabla-pedidos tbody tr:first-child td { border-top: 0; }
+.tabla-pedidos td.dato { font-weight: 500; }
+.tabla-pedidos .celda-sec { font-size: 13px; line-height: 18px; margin-top: 2px; }
+
+/* Modal «Asignar chofer»: 480 px, relleno 32, separación 24 y alineado arriba como en el mockup */
+.velo-modal:has(.asignar-chofer) { align-items: flex-start; padding-top: 160px; }
+.modal:has(.asignar-chofer) { padding: 32px; gap: 24px; border-radius: 18px; box-shadow: var(--sombra-modal); }
+.modal:has(.asignar-chofer) .modal-cab, .modal:has(.asignar-chofer) .modal-cuerpo, .modal:has(.asignar-chofer) .modal-pie { padding: 0; }
+.modal:has(.asignar-chofer) .modal-cab h2 { letter-spacing: -.12px; }
+.modal:has(.asignar-chofer) .modal-cab p { font-size: 13px; line-height: 18px; margin-top: 6px; }
+.modal:has(.asignar-chofer) .modal-cab .icono-solo { width: 36px; height: 36px; border-radius: 8px; }
+.modal:has(.asignar-chofer) .modal-cab .icono { width: 17px; height: 17px; }
+.modal:has(.asignar-chofer) .modal-cuerpo { display: flex; flex-direction: column; gap: 24px; overflow: visible; flex: none; }
+.asignar-chofer { display: contents; }
+.modal:has(.asignar-chofer) .campo { margin: 0; gap: 6px; }
+.modal:has(.asignar-chofer) .campo > label { font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.modal:has(.asignar-chofer) .modal-cuerpo p.tenue { font-size: 13px; line-height: 18px; }
+.modal:has(.asignar-chofer) .alerta { margin: 0; }
+.modal:has(.asignar-chofer) .modal-pie { gap: 12px; }
