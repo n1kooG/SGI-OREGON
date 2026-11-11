@@ -101,7 +101,7 @@ function FormProducto({ producto, onClose, onCambios }) {
     sku: producto?.sku ?? '', modelo: producto?.modelo ?? '', marca: producto?.marca ?? '', nombre: producto?.nombre ?? '',
     categoria: producto?.categoria ?? '', descripcion: producto?.descripcion ?? '',
     costo: producto?.costo_adquisicion_neto ? String(Number(producto.costo_adquisicion_neto)) : '', stock_minimo: String(producto?.stock_minimo ?? 0),
-    activo: (producto?.estado ?? 'ACTIVO') === 'ACTIVO',
+    ubicacion: producto?.ubicacion_bodega ?? '', activo: (producto?.estado ?? 'ACTIVO') === 'ACTIVO',
     ...Object.fromEntries(CANALES.map(([c]) => [`p_${c}`, precioDe(producto ?? {}, c) ? String(Number(precioDe(producto, c))) : ''])),
   }));
   const [err, setErr] = useState({});
@@ -136,12 +136,14 @@ function FormProducto({ producto, onClose, onCambios }) {
     const pasoPrecios = async () => { for (const [c] of cambios) await api(`/productos/${sku}/precios/${c}`, { metodo: 'PUT', cuerpo: { precio: num(f[`p_${c}`]) } }); };
     const pasoProducto = () => editar
       ? api(`/productos/${sku}`, { metodo: 'PUT', cuerpo: { ...datos, estado: f.activo ? 'ACTIVO' : 'INACTIVO', ...(verCostos && { costo_adquisicion_neto: num(f.costo) }) } })
-      : api('/productos', { metodo: 'POST', cuerpo: { sku, ...datos, costo_adquisicion_neto: num(f.costo) } });
+      : api('/productos', { metodo: 'POST', cuerpo: { sku, ...datos, costo_adquisicion_neto: num(f.costo), ubicacion_bodega: f.ubicacion } });
+    const cambiaUbicacion = editar && f.ubicacion.trim() !== (producto.ubicacion_bodega ?? '');
+    const pasoUbicacion = async () => { if (cambiaUbicacion) await api(`/inventario/${sku}/ubicacion`, { metodo: 'PUT', cuerpo: { ubicacion_bodega: f.ubicacion } }); };
     // Un costo mayor exige fijar primero los precios; en los demás casos el producto va primero.
     const costoSube = editar && verCostos && num(f.costo) > Number(producto.costo_adquisicion_neto);
     let hecho = false;
     try {
-      for (const paso of costoSube ? [pasoPrecios, pasoProducto] : [pasoProducto, pasoPrecios]) { await paso(); hecho = true; }
+      for (const paso of costoSube ? [pasoPrecios, pasoProducto, pasoUbicacion] : [pasoProducto, pasoPrecios, pasoUbicacion]) { await paso(); hecho = true; }
       avisar(editar ? 'Cambios guardados' : 'Producto creado');
       onCambios(); onClose();
     } catch (e) {
@@ -173,7 +175,7 @@ function FormProducto({ producto, onClose, onCambios }) {
         <div className="grid2">
           {verCostos && <Campo etiqueta="Costo de adquisición neto ($)" type="number" min="0" inputMode="decimal" value={f.costo} onChange={set('costo')} error={err.costo} placeholder="0" />}
           <Campo etiqueta="Stock mínimo (un.)" type="number" min="0" value={f.stock_minimo} onChange={set('stock_minimo')} error={err.stock_minimo} />
-          <Campo etiqueta="Ubicación en bodega" value={producto?.ubicacion_bodega ?? ''} readOnly placeholder={editar ? 'Sin ubicación' : 'Ej. Pasillo A - Estante 2'} />
+          <Campo etiqueta="Ubicación en bodega" value={f.ubicacion} onChange={set('ubicacion')} maxLength={40} placeholder="Ej. Pasillo A - Estante 2" />
           <Campo etiqueta="Stock físico (un.)" value={producto?.stock_fisico ?? 0} readOnly />
         </div>
         {/* Un producto nuevo siempre nace activo: el interruptor solo se opera al editar. */}
