@@ -3,7 +3,7 @@ import { config } from '../config.js';
 import { AppError } from '../errors.js';
 import * as repo from '../repositories/usuarios.js';
 import { auditar } from '../audit.js';
-import { registrarActividad } from '../session.js';
+import { registrarActividad, cerrarSesiones } from '../session.js';
 import { conTransaccion } from '../db.js';
 import { errorPoliticaClave } from '../politicaClave.js';
 
@@ -61,6 +61,7 @@ export async function cambiarClave(req, actual, nueva) {
     await auditar(req, { idUsuario: id, tabla: 'usuario', accion: 'CLAVE_CAMBIADA', despues: { id_usuario: id } }, c);
     return {};
   });
+  if (!r.fallo) await cerrarSesiones(id); // tras cambiar la clave, los tokens emitidos con la anterior dejan de servir
   if (r.fallo === 'CUENTA_BLOQUEADA') throw new AppError(423, 'Cuenta bloqueada temporalmente', 'CUENTA_BLOQUEADA');
   if (r.fallo) throw new AppError(403, 'La contraseña actual es incorrecta', 'CLAVE_ACTUAL_INCORRECTA');
 }

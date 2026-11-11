@@ -63,6 +63,7 @@ test('éxito: login con la nueva, falla con la vieja, reinicia intentos, audita 
   const r = await cambiar(token, { actual: PASS, nueva: NUEVA });
   assert.equal(r.status, 200);
   assert.deepEqual(Object.keys(r.body), ['mensaje']);
+  assert.equal((await http('GET', '/api/auth/me', token)).status, 401); // el token anterior queda revocado
   assert.equal((await login(PASS)).status, 401);
   assert.equal((await login(NUEVA)).status, 200);
 
