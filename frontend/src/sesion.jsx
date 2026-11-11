@@ -5,7 +5,7 @@ const Ctx = createContext(null);
 export const useSesion = () => useContext(Ctx);
 
 // Pantalla inicial por rol (la autorización real siempre se valida en el backend).
-export const HOME = { ADMINISTRADOR: '/dashboard', BODEGA: '/bodega', CHOFER: '/ruta' };
+export const HOME = { ADMINISTRADOR: '/dashboard', BODEGA: '/bodega', CHOFER: '/chofer' };
 
 export function SesionProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
