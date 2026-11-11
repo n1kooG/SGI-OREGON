@@ -47,3 +47,30 @@
 .enlace-orden { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }
 .enlace-orden:hover { text-decoration: underline; }
 .tabla-pedidos table { min-width: 960px; }
+
+/* Compras y Facturas: pestañas e historial */
+.pestanas { display: flex; gap: 8px; border-bottom: 1px solid var(--line); margin-top: -8px; }
+.pestanas button { background: none; border: 0; padding: 10px 6px; margin: 0 6px -1px 0; font: 500 14px/20px var(--f-ui); color: var(--ink-3); cursor: pointer; border-bottom: 2px solid transparent; }
+.pestanas button:hover { color: var(--ink); }
+.pestanas button.activa { color: var(--ink); border-bottom-color: var(--accent); }
+.vista-registrar { display: flex; flex-direction: column; gap: 28px; }
+.vista-registrar[hidden] { display: none; }
+.historial-compras { display: flex; flex-direction: column; gap: 20px; }
+.filtros-hist { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.filtros-hist .campo { width: 220px; }
+.filtros-hist .campo:nth-child(2), .filtros-hist .campo:nth-child(3) { width: 150px; }
+.filtros-hist .buscador-fact { flex: 1; min-width: 220px; }
+.filtros-hist .entrada { height: 44px; }
+.con-icono { position: relative; }
+.con-icono .icono { position: absolute; left: 14px; top: 13px; color: var(--ink-3); }
+.con-icono .entrada { padding-left: 42px; }
+.historial-compras td { height: 56px; }
+.historial-compras .expandir { border: 0; background: none; }
+.historial-compras .total-col { font-weight: 600; }
+.historial-compras tr.abierta td { border-bottom: 0; }
+.historial-compras tr.fila-detalle td { height: auto; padding: 4px 20px 20px; background: var(--surface); }
+.detalle-compra-cab { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; margin: 8px 0 10px; font-size: 13px; }
+.detalle-compra-cab .aviso-disc { color: var(--warn); font-weight: 500; }
+.historial-compras .tabla-mini td { height: auto; }
+.tabla-mini tr.discrepancia td { background: var(--warn-bg); }
+@media (max-width: 899px) { .filtros-hist .campo, .filtros-hist .campo:nth-child(2), .filtros-hist .campo:nth-child(3) { width: 100%; } }
