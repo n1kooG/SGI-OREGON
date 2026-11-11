@@ -41,3 +41,11 @@ test('partirCodigo: usa 1 línea si cabe, divide y recorta con «…» si es muy
   assert.equal(largo.lineas.length, 3);
   assert.ok(largo.lineas.at(-1).endsWith('…') && largo.tam >= 7);
 });
+
+test('crearPdf: el texto monoespaciado con «::» (IPv6) no rompe y los metadatos son propios', async () => {
+  const doc = crearPdf('Prueba');
+  assert.doesNotThrow(() => doc.font('Mono').fontSize(8).text('::1', 10, 10));
+  assert.equal(doc.info.Producer, 'Tienda Oregón');
+  assert.equal(doc.info.Creator, 'Tienda Oregón');
+  doc.end();
+});
