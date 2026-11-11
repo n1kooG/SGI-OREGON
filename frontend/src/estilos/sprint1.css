@@ -80,7 +80,6 @@
 .s1 .modal-cab .btn.icono-solo .icono { width: 16px; height: 16px; }
 .s1 .modal-cuerpo { padding: 28px 32px; }
 .s1 .modal.lado .modal-pie { padding: 20px 32px; }
-.s1 .modal.chico .modal-cab { padding: 28px 32px 0; }
 .s1 .modal-cuerpo form { display: flex; flex-direction: column; gap: 16px; }
 .s1 .modal-cuerpo form .campo, .s1 .modal-cuerpo form .alerta { margin: 0; }
 .s1 .modal-cuerpo form .grid2 { gap: 16px; }
@@ -99,3 +98,15 @@
 .interruptor button:disabled { cursor: default; }
 .s1 .msg-error { font-size: 13px; line-height: 18px; }
 .s1 .campo.error .entrada { box-shadow: none; }
+
+/* Modales centrados (Crear usuario, Dar de baja, Cambiar rol): anclados a 120 px del borde superior */
+.s1 .velo-modal:not(.lado) { align-items: flex-start; padding-top: 120px; }
+.s1 .modal:not(.lado) { border-radius: 20px; max-height: calc(100vh - 136px); }
+.s1 .modal:not(.lado) .modal-cab { align-items: flex-start; padding: 32px 32px 0; }
+.s1 .modal:not(.lado) .modal-cuerpo { padding: 24px 32px 0; }
+.s1 .modal:not(.lado) .modal-cuerpo form .campo { margin-bottom: 18px; }
+.s1 .modal:not(.lado) .modal-cuerpo form { display: block; }
+.s1 .modal:not(.lado) .modal-cab p { margin-top: 6px; }
+.s1 .modal:not(.lado) .modal-pie { padding: 6px 32px 34px; }
+.s1 .modal.chico .modal-cuerpo { color: var(--ink-2); }
+.s1 .modal.chico .modal-pie { padding-top: 24px; padding-bottom: 34px; }
