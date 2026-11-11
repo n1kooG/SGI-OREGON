@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, mensajeError } from '../api.js';
 import { Alerta, Badge, Boton, Campo, Modal, Tabla, useAviso } from '../componentes/ui.jsx';
 import { ROL } from '../componentes/Layouts.jsx';
+import '../estilos/sprint1.css';
 import { useSesion } from '../sesion.jsx';
 
 const ROLES = Object.entries(ROL);
@@ -23,7 +24,7 @@ export default function Usuarios() {
   const hecho = (texto) => { avisar(texto); cargar(); cerrar(); };
 
   return (
-    <>
+    <div className="s1 usuarios">
       <div className="cabecera">
         <div>
           <h1>Administración de Usuarios y Roles</h1>
@@ -40,21 +41,21 @@ export default function Usuarios() {
             <td><Badge tono={u.rol === 'ADMINISTRADOR' ? 'ink' : ''}>{ROL[u.rol] ?? u.rol}</Badge></td>
             <td><Badge tono={u.acceso_costos ? 'ok' : 'mal'}>{u.acceso_costos ? 'Permitido (total)' : 'Bloqueado / oculto'}</Badge></td>
             <td><Badge tono={u.activo ? 'ok' : 'mal'}>{u.activo ? 'Activo' : 'Baja'}</Badge></td>
-            <td>
-              <Boton variante="enlace" onClick={() => setDlg({ tipo: 'rol', u })}>Cambiar rol</Boton>{' '}
+            <td><div className="acciones-fila">
+              <Boton variante="enlace" onClick={() => setDlg({ tipo: 'rol', u })}>Cambiar rol</Boton>
               {u.id_usuario === yo.id ? <span className="tenue">Cuenta propia</span>
                 : u.activo ? <Boton variante="enlace" onClick={() => setDlg({ tipo: 'baja', u })}>Dar de baja</Boton>
                 : <Boton variante="enlace" onClick={() => setDlg({ tipo: 'reactivar', u })}>Reactivar</Boton>}
-            </td>
+            </div></td>
           </tr>
         ))}
       </Tabla>
-      <p className="tenue" style={{ marginTop: 20 }}>La baja impide el ingreso de la cuenta sin borrar su historial. No se puede dar de baja a la propia cuenta ni al último administrador.</p>
+      <p className="tenue nota-tabla">La baja impide el ingreso de la cuenta sin borrar su historial. No se puede dar de baja a la propia cuenta ni al último administrador.</p>
 
       {dlg?.tipo === 'crear' && <Crear onClose={cerrar} onHecho={() => hecho('Usuario creado')} />}
       {dlg?.tipo === 'rol' && <CambiarRol u={dlg.u} onClose={cerrar} onHecho={() => hecho('Rol actualizado')} />}
       {(dlg?.tipo === 'baja' || dlg?.tipo === 'reactivar') && <Estado tipo={dlg.tipo} u={dlg.u} onClose={cerrar} onHecho={() => hecho(dlg.tipo === 'baja' ? 'Usuario dado de baja' : 'Usuario reactivado')} />}
-    </>
+    </div>
   );
 }
 

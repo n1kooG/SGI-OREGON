@@ -48,6 +48,27 @@
 .catalogo tr > :nth-child(8) { width: 104px; }
 .catalogo tr > :nth-child(9) { width: 82px; }
 
+/* Usuarios: tabla de columnas fijas */
+.usuarios table { table-layout: fixed; }
+.usuarios th { padding: 12px 6px; white-space: normal; vertical-align: middle; }
+.usuarios td { padding: 0 6px; height: 68px; border-top: 0; border-bottom: 1px solid var(--line); }
+.usuarios tr > :first-child { padding-left: 20px; }
+.usuarios tr > :last-child { padding-right: 20px; }
+.usuarios tbody tr:last-child td { border-bottom: 0; }
+.usuarios tr > :nth-child(2) { width: 222px; }
+.usuarios td:nth-child(2) { font-size: 13px; line-height: 18px; color: var(--ink-2); }
+.usuarios tr > :nth-child(3) { width: 132px; }
+.usuarios tr > :nth-child(4) { width: 192px; }
+.usuarios tr > :nth-child(5) { width: 102px; }
+.usuarios tr > :nth-child(6) { width: 236px; }
+.usuarios th { color: var(--ink-3); }
+.usuarios .dato.celda-sec { margin-top: 2px; }
+.acciones-fila { display: flex; align-items: center; gap: 8px; }
+.usuarios .btn.enlace { height: 40px; padding: 0 16px; border-radius: var(--radio); color: var(--ink-2); }
+.usuarios .btn.enlace:hover { text-decoration: none; background: var(--bg); }
+.usuarios .acciones-fila .tenue { font-size: 13px; line-height: 18px; }
+.nota-tabla { margin-top: 28px; font-size: 13px; line-height: 18px; }
+
 /* Panel lateral y modales (Catálogo y Usuarios) */
 .s1 .campo > label, .s1 .campo > .rotulo { font-size: 12px; line-height: 16px; color: var(--ink-2); }
 .s1 .ayuda { font-size: 13px; line-height: 18px; }
