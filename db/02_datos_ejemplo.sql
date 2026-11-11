@@ -4,16 +4,8 @@
 --            carga de lote de ventas (PI-02), asignación a chofer (PI-03).
 -- =====================================================================
 
--- Roles y permisos (JSONB). Formato "modulo:accion", igual que validarToken(jwt, "pedidos:importar")
-INSERT INTO rol (nombre_rol, descripcion, permisos) VALUES
- ('ADMINISTRADOR', 'Jefatura Administrativa y Comercial: acceso total, incluye costos y márgenes',
-  '["catalogo:leer","catalogo:escribir","costos:leer","precios:leer","precios:escribir",
-    "compras:recepcionar","pedidos:importar","pedidos:leer","pedidos:asignar_chofer",
-    "inventario:leer","alertas:leer","reportes:leer","auditoria:leer","usuarios:administrar"]'),
- ('BODEGA', 'Operario de bodega: consulta de stock, preparación de pedidos y descarga de camión; sin costos ni márgenes',
-  '["inventario:consultar","pedidos:preparar","compras:confirmar_descarga"]'),
- ('CHOFER', 'Chofer de reparto: hoja de ruta y cierre de entregas; sin costos ni márgenes',
-  '["ruta:leer","entregas:registrar"]');
+-- Roles y permisos: fuente única compartida con el arranque de producción
+\ir roles_permisos.sql
 
 -- Usuarios (clave de demostración con bcrypt cost 12; nunca se almacena en texto plano)
 INSERT INTO usuario (rut, nombre_completo, email, password_hash, id_rol) VALUES

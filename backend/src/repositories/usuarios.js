@@ -20,14 +20,18 @@ export async function simularHash(password) {
   await query(`SELECT crypt($1, gen_salt('bf', 12))`, [password]); // iguala tiempos de respuesta
 }
 
+// Si el bloqueo anterior ya venció, la cuenta parte de cero: un fallo cada 15 min no la mantiene bloqueada para siempre.
 export async function registrarFallo(idUsuario, maxIntentos, bloqueoMinutos, db = { query }) {
   const { rows: [f] } = await db.query(
-    `UPDATE usuario
-        SET intentos_fallidos = intentos_fallidos + 1,
-            bloqueado_hasta = CASE WHEN intentos_fallidos + 1 >= $2
-                                   THEN now() + make_interval(mins => $3) ELSE bloqueado_hasta END
-      WHERE id_usuario = $1
-      RETURNING intentos_fallidos, bloqueado_hasta`,
+    `UPDATE usuario u
+        SET intentos_fallidos = n.intentos,
+            bloqueado_hasta = CASE WHEN n.intentos >= $2 THEN now() + make_interval(mins => $3)
+                                   WHEN u.bloqueado_hasta <= now() THEN NULL ELSE u.bloqueado_hasta END
+       FROM (SELECT id_usuario,
+                    CASE WHEN bloqueado_hasta IS NOT NULL AND bloqueado_hasta <= now() THEN 1 ELSE intentos_fallidos + 1 END AS intentos
+               FROM usuario WHERE id_usuario = $1) n
+      WHERE u.id_usuario = n.id_usuario
+      RETURNING u.intentos_fallidos, u.bloqueado_hasta`,
     [idUsuario, maxIntentos, bloqueoMinutos],
   );
   return f;
@@ -37,6 +41,24 @@ export const registrarAcceso = (idUsuario, db = { query }) =>
   db.query(
     `UPDATE usuario SET intentos_fallidos = 0, bloqueado_hasta = NULL, ultimo_acceso = now() WHERE id_usuario = $1`,
     [idUsuario],
+  );
+
+// Cambio de clave: verifica la clave actual con la fila bloqueada (FOR UPDATE), igual que el login.
+export async function estadoClave(id, password, db) {
+  const { rows } = await db.query(
+    `SELECT (password_hash = crypt($2, password_hash)) AS clave_ok,
+            (bloqueado_hasta IS NOT NULL AND bloqueado_hasta > now()) AS bloqueada
+       FROM usuario WHERE id_usuario = $1 FOR UPDATE`,
+    [id, password],
+  );
+  return rows[0];
+}
+
+// Nueva clave con bcrypt de costo 12 (igual que el alta); reinicia los intentos fallidos y el bloqueo.
+export const actualizarClave = (id, password, db) =>
+  db.query(
+    `UPDATE usuario SET password_hash = crypt($2, gen_salt('bf', 12)), intentos_fallidos = 0, bloqueado_hasta = NULL WHERE id_usuario = $1`,
+    [id, password],
   );
 
 // El rol y los permisos se leen de la BD en cada petición (M10).

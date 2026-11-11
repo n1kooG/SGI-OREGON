@@ -14,6 +14,13 @@ router.post('/login', ah(async (req, res) => {
   res.json(await svc.login(req, email.trim(), password));
 }));
 
+// PUT /api/auth/clave  { actual, nueva }  (el usuario autenticado cambia la suya)
+router.put('/clave', autenticar, ah(async (req, res) => {
+  const { actual, nueva } = req.body ?? {};
+  await svc.cambiarClave(req, actual, nueva);
+  res.json({ mensaje: 'Contraseña actualizada' });
+}));
+
 router.get('/me', autenticar, (req, res) => {
   const { id_usuario, nombre_completo, email, rol, permisos } = req.usuario;
   res.json({ id: id_usuario, nombre: nombre_completo, email, rol, permisos });

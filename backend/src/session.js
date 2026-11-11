@@ -2,7 +2,7 @@
 // si Redis no responde. Sin registro de actividad = sesión expirada (falla cerrado, p. ej. tras reiniciar el servidor sin Redis).
 // shortcut: el mapa en memoria es por proceso y no se purga (una entrada por usuario); con varias instancias sin Redis cada una ve lo suyo.
 import { config } from './config.js';
-import { redisGet, redisSet } from './cache.js';
+import { redisGet, redisSet, redisDel } from './cache.js';
 
 const memoria = new Map();
 const clave = (id) => `sesion:${id}`;
@@ -10,6 +10,12 @@ const clave = (id) => `sesion:${id}`;
 export async function registrarActividad(idUsuario, ts = Date.now()) {
   memoria.set(idUsuario, ts);
   await redisSet(clave(idUsuario), String(ts), config.sessionIdleMinutes * 60);
+}
+
+// Revoca las sesiones activas del usuario (sin registro de actividad = expirada): todo token vigente debe volver a iniciar sesión.
+export async function cerrarSesiones(idUsuario) {
+  memoria.delete(idUsuario);
+  await redisDel(clave(idUsuario));
 }
 
 export async function ultimaActividad(idUsuario) {
