@@ -173,15 +173,14 @@ function FormProducto({ producto, onClose, onCambios }) {
         <div className="grid2">
           {verCostos && <Campo etiqueta="Costo de adquisición neto ($)" type="number" min="0" inputMode="decimal" value={f.costo} onChange={set('costo')} error={err.costo} placeholder="0" />}
           <Campo etiqueta="Stock mínimo (un.)" type="number" min="0" value={f.stock_minimo} onChange={set('stock_minimo')} error={err.stock_minimo} />
-          {editar && <Campo etiqueta="Ubicación en bodega" value={producto.ubicacion_bodega ?? ''} readOnly placeholder="Sin ubicación" />}
-          {editar && <Campo etiqueta="Stock físico (un.)" value={producto.stock_fisico ?? 0} readOnly />}
+          <Campo etiqueta="Ubicación en bodega" value={producto?.ubicacion_bodega ?? ''} readOnly placeholder={editar ? 'Sin ubicación' : 'Ej. Pasillo A - Estante 2'} />
+          <Campo etiqueta="Stock físico (un.)" value={producto?.stock_fisico ?? 0} readOnly />
         </div>
-        {editar && (
-          <div className="interruptor">
-            <button type="button" role="switch" aria-checked={f.activo} aria-label="Producto activo" onClick={() => setF({ ...f, activo: !f.activo })} />
-            <span>Producto activo</span><span className="tenue">Inactivar no borra el historial.</span>
-          </div>
-        )}
+        {/* Un producto nuevo siempre nace activo: el interruptor solo se opera al editar. */}
+        <div className="interruptor">
+          <button type="button" role="switch" aria-checked={f.activo} aria-label="Producto activo" disabled={!editar} onClick={() => setF({ ...f, activo: !f.activo })} />
+          <span>Producto activo</span><span className="tenue">Inactivar no borra el historial.</span>
+        </div>
 
         <div className="seccion etiqueta">Precios por canal</div>
         {CANALES.map(([c, nombre]) => {

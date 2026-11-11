@@ -75,3 +75,6 @@
 .s1 .precio-fila .etiqueta { text-transform: none; letter-spacing: 0; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--ink-2); }
 .s1 .precio-fila .margen { padding: 0; height: 44px; display: flex; align-items: center; font-weight: 500; }
 .s1 .modal-cuerpo p.tenue { line-height: 18px; }
+.interruptor button:disabled { cursor: default; }
+.s1 .msg-error { font-size: 13px; line-height: 18px; }
+.s1 .campo.error .entrada { box-shadow: none; }
