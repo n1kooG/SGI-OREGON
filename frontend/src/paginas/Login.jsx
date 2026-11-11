@@ -13,9 +13,9 @@ const Fondo = () => (
   <svg aria-hidden="true" preserveAspectRatio="xMidYMid slice">
     <defs>
       <pattern id="est" width="360" height="250" patternUnits="userSpaceOnUse">
-        <path d="M0 246h360" stroke="#162540" strokeWidth="6" /><path d="M120 0v246M240 0v246" stroke="#162540" strokeWidth="2" />
-        <rect x="40" y="100" width="110" height="140" rx="4" fill="none" stroke="#1b2d4d" strokeWidth="2" />
-        <rect x="190" y="70" width="130" height="170" rx="4" fill="none" stroke="#1b2d4d" strokeWidth="2" />
+        <path d="M0 246h360" stroke="#17524e" strokeWidth="6" /><path d="M120 0v246M240 0v246" stroke="#17524e" strokeWidth="2" />
+        <rect x="40" y="100" width="110" height="140" rx="4" fill="none" stroke="#1d5f5a" strokeWidth="2" />
+        <rect x="190" y="70" width="130" height="170" rx="4" fill="none" stroke="#1d5f5a" strokeWidth="2" />
       </pattern>
     </defs>
     <rect width="100%" height="100%" fill="url(#est)" />
