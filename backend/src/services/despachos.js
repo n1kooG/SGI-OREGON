@@ -15,6 +15,22 @@ const PNG_FIRMA = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const FIRMA_MAX = 1024 * 1024; // un trazo en un canvas pesa pocos KB
 
 export const miRuta = (req) => repo.miRuta(req.usuario.id_usuario);
+export const resumenJornada = (req) => repo.resumenJornada(req.usuario.id_usuario);
+
+export async function historial(req, { pagina, limite } = {}) {
+  const p = pagina === undefined ? 1 : Number(pagina);
+  const l = limite === undefined ? 20 : Number(limite);
+  if (!Number.isInteger(p) || p < 1) throw bad('pagina debe ser un entero ≥ 1');
+  if (!Number.isInteger(l) || l < 1 || l > 100) throw bad('limite debe ser un entero entre 1 y 100');
+  const filas = await repo.historial(req.usuario.id_usuario, l, (p - 1) * l);
+  return { total: filas[0]?.total ?? 0, pagina: p, limite: l, items: filas.map(({ total, ...f }) => f) };
+}
+
+export async function detalle(req, id) {
+  const d = await repo.detalle(req.usuario.id_usuario, id);
+  if (!d) throw new AppError(404, 'Despacho no encontrado', 'NO_ENCONTRADO'); // no se revela el de otro chofer
+  return d;
+}
 
 // Coordenadas opcionales (PI-04): ambas o ninguna; se guardan como «lat,lon» con 6 decimales, formato que exige el CHECK de audit_log.
 function geo(lat, lon) {

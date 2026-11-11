@@ -14,6 +14,9 @@ const conArchivos = (req, res, next) => subida.fields([{ name: 'foto', maxCount:
 });
 
 router.get('/mi-ruta', autenticar, requierePermiso('ruta:leer'), ah(async (req, res) => res.json(await svc.miRuta(req))));
+router.get('/mi-ruta/resumen', autenticar, requierePermiso('ruta:leer'), ah(async (req, res) => res.json(await svc.resumenJornada(req))));
+router.get('/historial', autenticar, requierePermiso('ruta:leer'), ah(async (req, res) => res.json(await svc.historial(req, req.query))));
+router.get('/:id(\\d+)', autenticar, requierePermiso('ruta:leer'), ah(async (req, res) => res.json(await svc.detalle(req, Number(req.params.id)))));
 router.patch('/:id(\\d+)', autenticar, requierePermiso('entregas:registrar'), conArchivos, ah(async (req, res) => {
   res.json(await svc.cerrar(req, Number(req.params.id), req.body ?? {}, req.files?.foto?.[0] ?? null, req.files?.firma?.[0] ?? null));
 }));
