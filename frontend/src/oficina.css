@@ -45,8 +45,17 @@
 .vista .panel .seccion { margin: 0; display: block; font: 600 15px/20px var(--f-ui); letter-spacing: 0; text-transform: none; color: var(--ink); }
 .vista .panel .seccion::after { content: none; }
 .vista .grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px 16px; }
-.vista .linea-fila { grid-template-columns: 2fr 120px 200px auto; gap: 16px; }
-.vista .linea-fila .btn { margin-bottom: 0; }
+.vista .captura { display: grid; grid-template-columns: 2fr 120px 200px auto; gap: 16px; align-items: end; }
+.vista .captura > .btn { height: 44px; padding: 0 24px; }
+.vista .selector-producto { position: relative; }
+.vista .selector-lista { position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; right: 0; margin: 0; padding: 6px; list-style: none; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: 0 8px 24px rgba(16, 32, 31, .12); max-height: 320px; overflow-y: auto; }
+.vista .selector-lista li { display: grid; grid-template-columns: 150px 1fr auto; gap: 12px; align-items: center; padding: 8px 10px; border-radius: 8px; font-size: 14px; line-height: 20px; cursor: pointer; }
+.vista .selector-lista li.activa, .vista .selector-lista li:hover { background: var(--bg); }
+.vista .selector-lista li.sin-resultados { display: block; color: var(--ink-3); cursor: default; }
+.vista .selector-lista .tenue { font-size: 12px; }
+.vista .sku { font-weight: 500; color: var(--ink); }
+.vista .acciones-fila { display: flex; gap: 6px; }
+.vista .panel .tabla-wrap { border-radius: 14px; }
 .vista .zona-pdf { gap: 10px; }
 .vista .zona-carga.compacta { border: 0; padding: 0; gap: 14px; background: none; }
 .vista .zona-carga.compacta > .icono { display: none; }
@@ -96,6 +105,8 @@
 @media (max-width: 899px) {
   .vista .cabecera { flex-wrap: wrap; }
   .vista .grid5 { grid-template-columns: 1fr 1fr; }
+  .vista .captura { grid-template-columns: 1fr 1fr; }
+  .vista .captura > :first-child { grid-column: 1 / -1; }
   .vista .filtros-aud { grid-template-columns: 1fr 1fr; }
   .vista.dashboard table, .vista.auditoria table { table-layout: auto; }
   .vista.dashboard th, .vista.auditoria th { width: auto !important; }
