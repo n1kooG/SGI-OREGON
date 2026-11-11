@@ -1,6 +1,6 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { useSesion, HOME } from './sesion.jsx';
-import { Bienvenida, Movil, MovilBodega, Oficina } from './componentes/Layouts.jsx';
+import { Bienvenida, MovilBodega, Oficina } from './componentes/Layouts.jsx';
 import Login from './paginas/Login.jsx';
 import Dashboard from './paginas/Dashboard.jsx';
 import Auditoria from './paginas/Auditoria.jsx';
@@ -12,7 +12,13 @@ import Descarga from './paginas/Descarga.jsx';
 import Pedidos from './paginas/Pedidos.jsx';
 import BodegaBuscador from './paginas/BodegaBuscador.jsx';
 import BodegaPedidos from './paginas/BodegaPedidos.jsx';
-import ChoferRuta from './paginas/ChoferRuta.jsx';
+import { ConNav, SinNav } from './paginas/chofer/comunes.jsx';
+import ChoferInicio from './paginas/chofer/Inicio.jsx';
+import ChoferRuta from './paginas/chofer/Ruta.jsx';
+import ChoferDetalle from './paginas/chofer/Detalle.jsx';
+import ChoferEntrega from './paginas/chofer/Entrega.jsx';
+import ChoferRechazo from './paginas/chofer/Rechazo.jsx';
+import ChoferHistorial from './paginas/chofer/Historial.jsx';
 
 // Ruta protegida por rol: es solo UX; el backend aplica el control real (denegación por defecto).
 function Protegida({ rol }) {
@@ -49,7 +55,17 @@ export default function App() {
         </Route>
       </Route>
       <Route element={<Protegida rol="CHOFER" />}>
-        <Route path="/ruta" element={<Movil panel="Chofer: distribución terreno"><ChoferRuta /></Movil>} />
+        <Route element={<ConNav />}>
+          <Route path="/chofer" element={<ChoferInicio />} />
+          <Route path="/chofer/ruta" element={<ChoferRuta />} />
+          <Route path="/chofer/historial" element={<ChoferHistorial />} />
+        </Route>
+        <Route element={<SinNav />}>
+          <Route path="/chofer/ruta/:id" element={<ChoferDetalle />} />
+          <Route path="/chofer/ruta/:id/entrega" element={<ChoferEntrega />} />
+          <Route path="/chofer/ruta/:id/rechazo" element={<ChoferRechazo />} />
+        </Route>
+        <Route path="/ruta" element={<Navigate to="/chofer/ruta" replace />} />
       </Route>
       <Route path="*" element={cargando ? null : <Navigate to={usuario ? HOME[usuario.rol] ?? '/login' : '/login'} replace />} />
     </Routes>
