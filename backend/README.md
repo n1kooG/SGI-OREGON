@@ -44,3 +44,46 @@ son `db/07_pruebas_rol.sql` y `tests/rol_aplicacion.test.js`.
 Las claves de los roles viajan en un `ALTER ROLE ... PASSWORD`: el script desactiva `log_statement` en su sesión si
 corre como superusuario. Si no (p. ej. RDS), pasa en `SGI_APP_PASSWORD`/`SGI_OWNER_PASSWORD` el verificador SCRAM ya
 calculado (`SCRAM-SHA-256$4096:...`; PostgreSQL lo acepta tal cual) para que la clave en claro no llegue al servidor.
+
+## Cambio de contraseña (API, sin pantalla)
+
+`PUT /api/auth/clave` con `Authorization: Bearer <token>` y cuerpo `{ "actual": "...", "nueva": "..." }`.
+
+- Política de la nueva clave: mínimo 12 caracteres, máximo 72 bytes (límite de bcrypt), distinta de la actual y
+  distinta de la clave de ejemplo (`src/politicaClave.js`). Rechazo: `400` con código `CLAVE_NO_VALIDA`.
+- Clave actual incorrecta: `403` `CLAVE_ACTUAL_INCORRECTA`; cuenta como intento fallido (bloqueo tras `MAX_INTENTOS`).
+  Con la cuenta bloqueada: `423`.
+- Éxito: `200 { "mensaje": "Contraseña actualizada" }`. Hash bcrypt costo 12, intentos y bloqueo en cero, evento
+  `CLAVE_CAMBIADA` en la bitácora (sin claves) y revocación de las sesiones activas del usuario: debe iniciar sesión
+  de nuevo con la clave nueva.
+
+## Scripts de administración
+
+Se ejecutan en el servidor, con `node --env-file=.env`. Usan `DATABASE_URL_MIGRACION` (rol propietario) y, si falta,
+`DATABASE_URL`. La clave **nunca** va como argumento: por stdin o variable de entorno.
+
+```bash
+# Primer arranque de producción (sin datos de ejemplo): roles + primer administrador. Se niega si ya hay uno.
+ADMIN_EMAIL=jefatura@tienda.cl ADMIN_RUT=12.345.678-5 ADMIN_NOMBRE='Jefatura' \
+  node --env-file=.env scripts/arranque-produccion.mjs < clave.txt      # clave en la primera línea; o ADMIN_CLAVE
+# Restablecer la clave de un usuario (reinicia el bloqueo y deja CLAVE_RESTABLECIDA en la bitácora)
+node --env-file=.env scripts/clave-usuario.mjs correo@tienda.cl < clave.txt   # o CLAVE_NUEVA
+```
+
+Orden de un despliegue nuevo: `db/01_modelo_datos.sql` → `db/07_rol_aplicacion.sql` → `scripts/arranque-produccion.mjs`
+(`db/02_datos_ejemplo.sql` es solo desarrollo y trae la clave de ejemplo pública). El administrador inicial no tiene
+marca de «cambio obligatorio» (no existe esa columna): debe rotar su clave tras el primer ingreso con
+`PUT /api/auth/clave` o con `clave-usuario.mjs`. Los permisos de los roles viven en `db/roles_permisos.sql`
+(fuente única del seed y del arranque).
+
+## Producción
+
+Con `NODE_ENV=production` la API no arranca si `JWT_SECRET` tiene menos de 32 caracteres o es el valor de ejemplo.
+Genera uno con `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
+
+## Hallazgos de la auditoría pendientes
+
+No se abordaron en este trabajo: límite de memoria al leer `.xlsx` (bomba de descompresión), paginación del listado de
+pedidos, stock y salida de una entrega rechazada, reasignación de despachos al dar de baja a un chofer, límite de
+peticiones en el login, revocación individual de tokens (`jti`/logout; el cambio de clave revoca las sesiones por
+usuario) y los hallazgos Bajo/Informativos restantes.
