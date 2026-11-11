@@ -20,6 +20,15 @@ router.post('/recepciones', requierePermiso('compras:recepcionar'), conPdf, ah(a
   res.status(201).json(await svc.registrar(req, cuerpo(req), req.file ?? null));
 }));
 
+// Historial: lista paginada (cuerpo = arreglo; total en X-Total-Count), detalle de ítems y PDF de la factura.
+router.get('/recepciones', requierePermiso('compras:recepcionar'), ah(async (req, res) => {
+  const { items, total } = await svc.listarRecepciones(req.query);
+  res.set('X-Total-Count', String(total)).json(items);
+}));
+router.get('/recepciones/proveedores', requierePermiso('compras:recepcionar'), ah(async (_req, res) => res.json(await svc.proveedores())));
+router.get('/recepciones/:id(\\d+)', requierePermiso('compras:recepcionar'), ah(async (req, res) => res.json(await svc.detalleRecepcion(Number(req.params.id)))));
+router.get('/recepciones/:id(\\d+)/pdf', requierePermiso('compras:recepcionar'), ah(async (req, res) => res.json(await svc.urlPdf(Number(req.params.id)))));
+
 // T49 / CU-11: BODEGA confirma la descarga del camión (respuesta sin precios).
 router.post('/descargas', requierePermiso('compras:confirmar_descarga'), ah(async (req, res) => {
   res.json(await svc.confirmarDescarga(req, req.body ?? {}));

@@ -31,3 +31,8 @@ test('entregado: el detalle expone chofer, fechas y la geolocalización registra
   assert.equal(body.tiene_evidencia, false);
   assert.match(body.rut_cliente ?? 'sin-rut', /./);
 });
+
+test('Bodega ve el detalle sin RUT, chofer ni geolocalización', async () => {
+  const { body } = await t.http('GET', `/api/pedidos/${id}`, t.bodega);
+  for (const k of ['rut_cliente', 'geolocalizacion', 'nombre_chofer', 'fecha_cierre']) assert.equal(k in body, false, k);
+});
