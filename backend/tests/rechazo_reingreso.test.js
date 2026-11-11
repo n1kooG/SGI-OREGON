@@ -134,3 +134,16 @@ test('PI-05: atomicidad — si la transición del pedido falla se revierte la de
   assert.equal((await despachos(id))[0].reingresado_en, null);
   assert.equal((await query(`SELECT 1 FROM audit_log WHERE accion = 'REINGRESO' AND (valores_nuevos->>'id_despacho')::int = $1`, [d.id_despacho])).rowCount, 0);
 });
+
+test('PI-05: Bodega no puede sacar un RECHAZADO de ese estado sin reingresar (409, el stock no se devuelve)', async () => {
+  const { id, idDespacho } = await rechazado();
+  const antes = await stock('TH-4500');
+  const r = await t.http('PATCH', `/api/pedidos/${id}/estado`, t.bodega, { estado: 'EN_CAMION' });
+  assert.equal(r.status, 409);
+  assert.equal(await estado(id), 'RECHAZADO');
+  assert.equal(await stock('TH-4500'), antes);
+  // asignar chofer tampoco sirve antes del reingreso, y el reingreso sí lo habilita
+  assert.equal((await t.http('POST', `/api/despachos/${idDespacho}/reingresar`, t.bodega)).status, 200);
+  sumados = { 'TH-4500': sumados['TH-4500'] + 2, 'UT-FORNO': sumados['UT-FORNO'] + 1 };
+  assert.equal(await estado(id), 'EN_CAMION');
+});

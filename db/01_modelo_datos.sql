@@ -225,7 +225,10 @@ BEGIN
   IF (OLD.estado_orden = ANY (bodega) AND NEW.estado_orden = ANY (bodega))
      OR (OLD.estado_orden = 'EN_CAMION' AND NEW.estado_orden = 'EN_RUTA')
      OR (OLD.estado_orden = 'EN_RUTA'   AND NEW.estado_orden IN ('ENTREGADO', 'RECHAZADO'))
-     OR (OLD.estado_orden = 'RECHAZADO' AND NEW.estado_orden = 'EN_CAMION') THEN      -- reprogramación tras el reingreso
+     OR (OLD.estado_orden = 'RECHAZADO' AND NEW.estado_orden = 'EN_CAMION'              -- reprogramación: solo tras el reingreso físico
+         AND EXISTS (SELECT 1 FROM despacho d
+                      WHERE d.id_despacho = (SELECT max(id_despacho) FROM despacho WHERE id_orden = OLD.id_orden)
+                        AND d.estado_entrega = 'RECHAZADO' AND d.reingresado_en IS NOT NULL)) THEN
     RETURN NEW;
   END IF;
   RAISE EXCEPTION 'Transición de estado no permitida: % -> %', OLD.estado_orden, NEW.estado_orden
