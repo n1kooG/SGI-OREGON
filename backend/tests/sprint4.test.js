@@ -114,7 +114,7 @@ test('HU09: kpis suma `quiebres` y /alertas lista los SKU críticos con reorden 
   assert.equal(k.body.quiebres, a.body.quiebres);
   assert.equal(a.body.quiebres, a.body.items.length);
   const horno = a.body.items.find((i) => i.sku === 'UT-FORNO');
-  assert.deepEqual(Object.keys(horno).sort(), ['modelo', 'sku', 'stock_fisico', 'stock_minimo', 'sugerido_reorden']);
+  assert.deepEqual(Object.keys(horno).sort(), ['modelo', 'nivel', 'producto', 'sku', 'stock_fisico', 'stock_minimo', 'sugerido_reorden']);
   assert.equal(horno.sugerido_reorden, 7); // 2 × 5 − 3
 });
 
@@ -135,14 +135,14 @@ test('T39–T41: /graficos entrega ventas, márgenes, rotación e inmovilizado c
   await redisDel('graficos:dashboard');
   const g = await ctx.http('GET', '/api/dashboard/graficos', ctx.admin);
   assert.equal(g.status, 200);
-  assert.deepEqual(Object.keys(g.body).sort(), ['inmovilizado', 'margenes', 'rotacion', 'ventas_por_canal']);
+  assert.deepEqual(Object.keys(g.body).sort(), ['canales', 'desde', 'etiqueta', 'hasta', 'inmovilizado', 'inmovilizado_resumen', 'margenes', 'periodo', 'rotacion', 'serie', 'totales', 'umbral_rotacion', 'ventas_por_canal']);
   const v = g.body.ventas_por_canal.find((x) => x.canal === `Canal ${MARCA}`);
   assert.equal(v.total, 10000);
   const costo = Number((await query(`SELECT costo_adquisicion_neto c FROM producto WHERE sku = 'TH-4500'`)).rows[0].c);
   const m = g.body.margenes.find((x) => x.canal === `Canal ${MARCA}`);
   assert.equal(m.margen_promedio, Math.round(1000 * (10000 - 2 * costo) / 10000) / 10);
   assert.ok(g.body.rotacion.some((x) => x.sku === 'TH-4500' && x.rotacion > 0));
-  for (const i of g.body.inmovilizado) assert.deepEqual(Object.keys(i).sort(), ['dias_sin_movimiento', 'modelo', 'sku', 'stock_fisico', 'valor']);
+  for (const i of g.body.inmovilizado) assert.deepEqual(Object.keys(i).sort(), ['dias_sin_movimiento', 'modelo', 'producto', 'sku', 'stock_fisico', 'valor']);
 });
 
 test('T39/T40: stock sin ventas ni ingresos en 60 días aparece como inmovilizado (con días y valor); lo que rota no', async () => {
@@ -190,11 +190,11 @@ test('Figma: kpis con skus_activos y ventas_dia, /top-productos y /auditoria/fil
   assert.equal(typeof k.body.ventas_dia, 'number');
   assert.equal(k.body.quiebres, k.body.stock_critico);
   await crearPedido(MARCA, { canal: `Top ${MARCA}`, lineas: [['UT-FORNO', 2]] });
-  await fijar('UT-FORNO', 3);
+  await fijar('UT-FORNO', 2); // 2 ≤ la mitad del mínimo (5): quiebre inminente
   await redisDel('top:dashboard');
   const t = await ctx.http('GET', '/api/dashboard/top-productos', ctx.admin);
   assert.ok(t.body.length <= 10);
-  assert.deepEqual(Object.keys(t.body[0]).sort(), ['estado', 'marca', 'producto', 'sku', 'stock_actual', 'ventas_mes']);
+  assert.deepEqual(Object.keys(t.body[0]).sort(), ['estado', 'marca', 'producto', 'sku', 'stock_actual', 'stock_minimo', 'ventas_mes']);
   assert.equal(t.body.find((x) => x.sku === 'UT-FORNO').estado, 'QUIEBRE_INMINENTE');
   assert.ok(t.body.every((x, i) => i === 0 || t.body[i - 1].ventas_mes >= x.ventas_mes));
   const f = await ctx.http('GET', '/api/auditoria/filtros', ctx.admin);
