@@ -141,3 +141,43 @@ export async function confirmarDescarga(req, body = {}) {
     return { id_recepcion: rec.id_recepcion, numero_factura: numero, estado_documento: estado, discrepancias };
   });
 }
+
+// Historial de recepciones (solo ADMINISTRADOR: lleva montos). Estado de descarga: PENDIENTE | CONFORME | CON_DISCREPANCIA.
+const esFecha = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().slice(0, 10) === s;
+
+export async function listarRecepciones(q = {}) {
+  const f = {};
+  for (const k of ['proveedor', 'q']) {
+    const v = typeof q[k] === 'string' ? q[k].trim() : '';
+    if (v) f[k] = v.slice(0, 120);
+  }
+  for (const k of ['desde', 'hasta']) {
+    if (!q[k]) continue;
+    if (typeof q[k] !== 'string' || !esFecha(q[k])) throw bad(`${k} debe tener formato AAAA-MM-DD`);
+    f[k] = q[k];
+  }
+  if (f.desde && f.hasta && f.desde > f.hasta) throw bad('desde no puede ser posterior a hasta');
+  const limite = Math.max(1, Math.min(Math.trunc(Number(q.limite)) || 20, 100));
+  const pagina = Math.max(1, Math.trunc(Number(q.pagina)) || 1);
+  const [items, total] = await Promise.all([repo.listarRecepciones(f, limite, (pagina - 1) * limite), repo.contarRecepciones(f)]);
+  return { items, total };
+}
+
+export const proveedores = () => repo.proveedores();
+
+export async function detalleRecepcion(id) {
+  const r = await repo.recepcion(id);
+  if (!r) throw bad('Recepción no encontrada', 404, 'NO_ENCONTRADO');
+  const { url_pdf_factura, bultos, ...resto } = r;
+  // «Recibida» solo existe si Bodega confirmó la descarga; un SKU sin bultos contados cuenta 0 (igual que al detectar la discrepancia).
+  return { ...resto, items: r.items.map((i) => ({ ...i, recibida: bultos ? Number(bultos[i.sku] ?? 0) : null })) };
+}
+
+// URL firmada de corta duración al PDF de la factura. Sin almacenamiento activo o sin archivo adjunto responde 404 con el motivo.
+export async function urlPdf(id) {
+  const r = await repo.recepcion(id);
+  if (!r) throw bad('Recepción no encontrada', 404, 'NO_ENCONTRADO');
+  if (!almacenamientoActivo()) throw bad('El almacenamiento de archivos está desactivado: no hay PDF disponible', 404, 'SIN_PDF');
+  if (!r.url_pdf_factura) throw bad('La factura no tiene PDF adjunto', 404, 'SIN_PDF');
+  return { url: await urlFirmada(r.url_pdf_factura, 120), expira_en: 120 };
+}

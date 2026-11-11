@@ -30,8 +30,10 @@ export function SesionProvider({ children }) {
     return data.usuario;
   }, []);
 
+  // Cierra la sesión local mostrando un aviso en el login (p. ej. tras cambiar la clave, que revoca las sesiones).
+  const expirar = useCallback((texto) => { token.clear(); setAviso(texto); setUsuario(null); }, []);
   const logout = useCallback(() => { token.clear(); setAviso(''); setUsuario(null); }, []);
   const puede = useCallback((permiso) => !!usuario?.permisos?.includes(permiso), [usuario]);
 
-  return <Ctx.Provider value={{ usuario, cargando, aviso, login, logout, puede }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ usuario, cargando, aviso, login, logout, expirar, puede }}>{children}</Ctx.Provider>;
 }

@@ -40,7 +40,8 @@ export async function detalle(req, id) {
   const o = await existente(id);
   const items = await repo.items(id);
   // El precio de venta es del Administrador (precios:leer); Bodega solo recibe lo que necesita para recolectar.
-  return { ...o, items: tiene(req, 'precios:leer') ? items : items.map(({ precio_unitario, subtotal, ...resto }) => resto) };
+  const base = tiene(req, 'pedidos:leer') ? o : (({ rut_cliente, geolocalizacion, nombre_chofer, fecha_cierre, ...resto }) => resto)(o); // RUT, chofer y ubicación del cierre: solo administración
+  return { ...base, items: tiene(req, 'precios:leer') ? items : items.map(({ precio_unitario, subtotal, ...resto }) => resto) };
 }
 
 export async function cambiarEstado(req, id, estado) {

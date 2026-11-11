@@ -1,6 +1,8 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { api, mensajeError } from '../api.js';
 import '../oficina.css';
+import './admin.css';
+import HistorialCompras from './HistorialCompras.jsx';
 import { Alerta, Boton, Campo, Icono, Tabla, clp, useAviso } from '../componentes/ui.jsx';
 
 const PAGOS = ['Contado', 'Transferencia', 'Crédito 30 días', 'Crédito 60 días'];
@@ -84,6 +86,7 @@ export default function Recepcion() {
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [ok, setOk] = useState(null);
+  const [pestana, setPestana] = useState('registrar');
   const m = useMemo(() => montos(f.lineas), [f.lineas]);
   const unidades = f.lineas.reduce((s, l) => s + l.cantidad, 0);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
@@ -129,9 +132,16 @@ export default function Recepcion() {
   return (
     <div className="vista compras">
       <div className="cabecera">
-        <div><h1>Módulo de Compras y Recepción</h1><p>Ingreso formal de mercadería contra factura electrónica SII, desglose multiproducto y archivo digital en PDF.</p></div>
+        <div><h1>Módulo de Compras y Recepción</h1><p>Ingreso formal de mercadería contra factura electrónica SII y consulta del historial de recepciones.</p></div>
         {f.numero.trim() && <span className="badge ink">Factura electrónica SII N° {f.numero.trim()}</span>}
       </div>
+      <div className="pestanas" role="tablist" aria-label="Compras y Facturas">
+        {[['registrar', 'Registrar recepción'], ['historial', 'Historial']].map(([k, t]) => (
+          <button key={k} type="button" role="tab" id={`tab-${k}`} aria-selected={pestana === k} aria-controls={`panel-${k}`} className={pestana === k ? 'activa' : ''} onClick={() => setPestana(k)}>{t}</button>
+        ))}
+      </div>
+      {pestana === 'historial' && <div role="tabpanel" id="panel-historial" aria-labelledby="tab-historial"><HistorialCompras /></div>}
+      <div hidden={pestana !== 'registrar'} role="tabpanel" id="panel-registrar" aria-labelledby="tab-registrar" className="vista-registrar">
       {ok && (
         <div className="alerta info" role="status">
           Factura {ok.numero_factura} registrada: {ok.unidades} unidades · neto {clp(ok.monto_neto)} · IVA {clp(ok.monto_iva)} · total <strong>{clp(ok.monto_total)}</strong>.
@@ -206,6 +216,7 @@ export default function Recepcion() {
         </div>
        </div>
       </form>
+      </div>
     </div>
   );
 }

@@ -23,11 +23,14 @@ export async function listar(estados, canal, porReingresar = false) {
 export async function obtener(id, c = { query }) {
   const { rows } = await c.query(
     `SELECT o.id_orden, o.codigo_externo, o.canal_origen, o.fecha_orden, o.nombre_cliente, o.direccion_despacho, o.comuna,
-            o.telefono_contacto, o.estado_orden, o.numero_documento_sii,
-            ds.id_despacho, ds.id_usuario_chofer, ds.estado_entrega,
+            o.telefono_contacto, o.estado_orden, o.numero_documento_sii, o.rut_cliente,
+            ds.id_despacho, ds.id_usuario_chofer, ch.nombre_completo AS nombre_chofer, ds.fecha_asignacion, ds.fecha_cierre,
+            (ds.url_evidencia_s3 IS NOT NULL) AS tiene_evidencia, ds.estado_entrega,
+            (SELECT a.geolocalizacion FROM audit_log a WHERE a.tabla_afectada = 'despacho' AND a.accion = 'ENTREGA'
+                AND (a.valores_nuevos->>'id_despacho')::int = ds.id_despacho ORDER BY a.id_log DESC LIMIT 1) AS geolocalizacion,
             ds.motivo_rechazo, ds.nombre_receptor, (ds.url_firma_s3 IS NOT NULL) AS tiene_firma,
             ds.reingresado_en, (ds.reingresado_en IS NOT NULL) AS reingresado
-       FROM orden_venta o ${ULTIMO_DESPACHO} WHERE o.id_orden = $1`, [id]);
+       FROM orden_venta o ${ULTIMO_DESPACHO} LEFT JOIN usuario ch ON ch.id_usuario = ds.id_usuario_chofer WHERE o.id_orden = $1`, [id]);
   return rows[0] ?? null;
 }
 

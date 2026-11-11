@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, mensajeError } from '../api.js';
 import { Alerta, Badge, Boton, Campo, Modal, Tabla, useAviso } from '../componentes/ui.jsx';
+import PedidoDetalle from './PedidoDetalle.jsx';
+import './admin.css';
 
 export const ESTADOS = {
   PENDIENTE_PREPARACION: ['Sin recolectar', 'aviso'], ARMADO: ['Armado', 'info'], ETIQUETADO: ['Etiquetado', 'info'], EN_CAMION: ['En camión', 'info'],
   EN_RUTA: ['En ruta (chofer)', 'aviso'], ENTREGADO: ['Entregado', 'ok'], RECHAZADO: ['Rechazado', 'mal'],
 };
 export const EstadoBadge = ({ e }) => <Badge tono={ESTADOS[e]?.[1]}>{ESTADOS[e]?.[0] ?? e}</Badge>;
+// La causal es texto libre del chofer: en la tabla va resumida (primera frase, tope de 28 caracteres).
+const causalResumida = (m = '') => { const t = m.split(/[.:;\n]/)[0].trim(); return t.length > 28 ? `${t.slice(0, 27)}…` : t; };
 export const fechaCorta = (f) => new Date(f).toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' }).replaceAll('-', '/');
 
 function AsignarChofer({ pedido, onClose, onHecho }) {
@@ -54,6 +58,7 @@ export default function Pedidos() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [asignando, setAsignando] = useState(null);
+  const [detalle, setDetalle] = useState(null); // { id, ruta }
   const canales = useRef(new Set()); // el canal es texto libre: se arma la lista con los vistos
 
   const cargar = useCallback(async () => {
@@ -67,6 +72,15 @@ export default function Pedidos() {
   }, [canal, estado]);
   useEffect(() => { cargar(); }, [cargar]);
   const cerrar = useCallback(() => setAsignando(null), []);
+  const cerrarDetalle = useCallback(() => setDetalle(null), []);
+  // Un rechazo reingresado vuelve a EN_CAMION: «Reprogramar» reutiliza el modal de asignación.
+  const accion = (p) => {
+    if (p.estado_orden === 'EN_CAMION') return <Boton variante={p.reingresado ? 'primario' : ''} onClick={() => setAsignando(p)}>{p.reingresado ? 'Reprogramar' : 'Asignar chofer'}</Boton>;
+    if (p.estado_orden === 'EN_RUTA') return <Boton className="enlace" onClick={() => setDetalle({ id: p.id_orden, ruta: true })}>Ver ruta</Boton>;
+    if (p.estado_orden === 'ENTREGADO') return <Boton className="enlace" onClick={() => setDetalle({ id: p.id_orden })}>Ver detalle</Boton>;
+    if (p.estado_orden === 'RECHAZADO') return <span className="celda-sec">Esperando reingreso en bodega</span>;
+    return <Boton className="enlace" onClick={() => setDetalle({ id: p.id_orden })}>Ver detalle</Boton>;
+  };
 
   return (
     <>
@@ -93,15 +107,16 @@ export default function Pedidos() {
       >
         {filas.map((p) => (
           <tr key={p.id_orden}>
-            <td className="dato">#{p.codigo_externo}</td>
+            <td className="dato"><button type="button" className="enlace-orden" aria-label={`Ver detalle del pedido ${p.codigo_externo}`} onClick={() => setDetalle({ id: p.id_orden })}>#{p.codigo_externo}</button></td>
             <td>{p.nombre_cliente}<div className="celda-sec">{p.comuna ?? 'Sin comuna'}</div></td>
             <td style={{ whiteSpace: 'nowrap' }}>{p.canal_origen}</td>
             <td>{p.unidades} un.</td>
-            <td><EstadoBadge e={p.estado_orden} />{p.nombre_chofer && <div className="celda-sec">{p.nombre_chofer}</div>}</td>
-            <td className="derecha">{p.estado_orden === 'EN_CAMION' ? <Boton onClick={() => setAsignando(p)}>Asignar chofer</Boton> : <span className="celda-sec">—</span>}</td>
+            <td>{p.estado_entrega === 'RECHAZADO' ? <Badge tono="mal">Rechazado{p.motivo_rechazo && ` · ${causalResumida(p.motivo_rechazo)}`}</Badge> : <EstadoBadge e={p.estado_orden} />}{p.nombre_chofer && <div className="celda-sec">{p.nombre_chofer}</div>}</td>
+            <td className="derecha">{accion(p)}</td>
           </tr>
         ))}
       </Tabla></div>
+      {detalle && <PedidoDetalle id={detalle.id} enfocarDespacho={detalle.ruta} onClose={cerrarDetalle} onCambio={cargar} />}
       {asignando && <AsignarChofer pedido={asignando} onClose={cerrar} onHecho={() => { cerrar(); cargar(); }} />}
     </>
   );
