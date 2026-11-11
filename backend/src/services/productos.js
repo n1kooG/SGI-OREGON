@@ -30,10 +30,10 @@ const NOMBRES = { modelo: 60, nombre: 150, marca: 60 };
 // SQLSTATE 23505 = unique_violation (PK de producto).
 const duplicado = (e, sku) => e.code === '23505' ? new AppError(409, `Ya existe un producto con el SKU ${sku}`, 'SKU_DUPLICADO') : e;
 
-export async function listar(permisos, { q, pagina, limite }) {
+export async function listar(permisos, { q, activo, pagina, limite }) {
   const lim = Math.min(Math.max(parseInt(limite) || 50, 1), 200);
   const pag = Math.max(parseInt(pagina) || 1, 1);
-  return repo.listar(vis(permisos), { q: typeof q === 'string' ? q.trim() : '', limite: lim, offset: (pag - 1) * lim });
+  return repo.listar(vis(permisos), { q: typeof q === 'string' ? q.trim() : '', activo: activo === '1', limite: lim, offset: (pag - 1) * lim });
 }
 
 export async function obtener(permisos, sku) {

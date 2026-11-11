@@ -10,8 +10,11 @@ const select = ({ verCostos, verPrecios }) => `
                             FROM lista_precio l WHERE l.sku = p.sku) AS precios` : ''}
     FROM producto p LEFT JOIN inventario i ON i.sku = p.sku`;
 
-export async function listar(vis, { q, limite, offset }) {
-  const filtro = q ? `WHERE p.sku ILIKE $1 OR p.modelo ILIKE $1 OR p.nombre ILIKE $1 OR p.marca ILIKE $1` : '';
+export async function listar(vis, { q, activo, limite, offset }) {
+  const cond = [];
+  if (q) cond.push('(p.sku ILIKE $1 OR p.modelo ILIKE $1 OR p.nombre ILIKE $1 OR p.marca ILIKE $1)');
+  if (activo) cond.push(`p.estado = 'ACTIVO'`);
+  const filtro = cond.length ? `WHERE ${cond.join(' AND ')}` : '';
   const params = q ? [`%${q.replace(/[\\%_]/g, '\\$&')}%`] : [];
   const { rows } = await query(`${select(vis)} ${filtro} ORDER BY p.sku LIMIT ${limite} OFFSET ${offset}`, params);
   const { rows: [{ total }] } = await query(`SELECT count(*)::int AS total FROM producto p ${filtro}`, params);
