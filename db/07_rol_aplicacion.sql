@@ -29,6 +29,14 @@ SELECT (:'owner_role' = :'app_role') AS roles_iguales \gset
   \quit
 \endif
 
+-- Las claves viajan en ALTER ROLE ... PASSWORD: con log_statement = ddl/all quedarían en el registro del servidor.
+-- Como superusuario se desactiva ese registro en esta sesión; si no lo eres (p. ej. RDS), entrega las claves ya
+-- cifradas (SGI_APP_PASSWORD='SCRAM-SHA-256$4096:...', PostgreSQL las acepta tal cual) o revisa log_statement.
+SELECT current_setting('is_superuser') = 'on' AS es_super \gset
+\if :es_super
+  SET log_statement = 'none';
+\endif
+
 -- ---- Roles --------------------------------------------------------------------------------------
 -- Propietario: dueño de tablas, vistas, funciones y triggers; sin SUPERUSER. Se usa solo para migraciones y scripts.
 SELECT format('CREATE ROLE %I NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE', :'owner_role')
