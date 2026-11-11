@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, mensajeError } from '../api.js';
 import { Alerta, Boton, Campo, Icono, Modal, Tabla, clp, pct, useAviso } from '../componentes/ui.jsx';
+import '../estilos/sprint1.css';
 import { useSesion } from '../sesion.jsx';
 
 const LIM = 10;
 const CANALES = [['WEB', 'Web'], ['MARKETPLACE', 'Marketplace'], ['MAYORISTA', 'Mayorista']];
+// Pasillo y estante van en dos líneas: «Pasillo A - Estante 2».
+const Ubicacion = ({ texto }) => { const [a, ...b] = texto.split(/\s+-\s+/); return <>{a}{b.length > 0 && <div className="dato-sec">{b.join(' - ')}</div>}</>; };
 const precioDe = (p, canal) => p.precios?.[canal]?.precio;
 
 export default function Catalogo() {
@@ -33,7 +36,7 @@ export default function Catalogo() {
   const cerrar = useCallback(() => setPanel(null), []);
 
   return (
-    <>
+    <div className="s1 catalogo">
       <div className="cabecera">
         <div>
           <h1>Catálogo Maestro de Productos</h1>
@@ -62,8 +65,8 @@ export default function Catalogo() {
               <td className="dato">{p.sku}</td>
               <td>{p.nombre}<div className="dato celda-sec">{p.modelo}</div></td>
               <td>{p.marca}</td>
-              <td>{p.ubicacion_bodega ?? <span className="celda-sec">Sin ubicación</span>}</td>
-              <td className="dato derecha">{clp(p.costo_adquisicion_neto) ?? '—'}</td>
+              <td>{p.ubicacion_bodega ? <Ubicacion texto={p.ubicacion_bodega} /> : <span className="celda-sec">Sin ubicación</span>}</td>
+              <td className="dato derecha costo">{clp(p.costo_adquisicion_neto) ?? '—'}</td>
               <td className="dato derecha">{clp(precioDe(p, 'WEB')) ?? '—'}</td>
               <td className="dato derecha">{clp(precioDe(p, 'MAYORISTA')) ?? '—'}</td>
               <td className="dato derecha" style={bajo ? { color: 'var(--danger)' } : undefined}>{bajo && '● '}{p.stock_fisico ?? 0} un.</td>
@@ -83,7 +86,7 @@ export default function Catalogo() {
       </div>
 
       {panel && <FormProducto producto={panel.producto} onClose={cerrar} onCambios={cargar} />}
-    </>
+    </div>
   );
 }
 

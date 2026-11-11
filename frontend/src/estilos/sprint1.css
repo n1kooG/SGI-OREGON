@@ -15,3 +15,35 @@
 .casilla input:checked { background: var(--accent); border-color: var(--accent); }
 .casilla input:checked::after { content: ''; width: 5px; height: 9px; border: solid var(--on-dark); border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
 .login-tarjeta .btn.bloque { font-weight: 500; }
+
+/* Páginas del Sprint 1 con barra lateral */
+.s1 h1 { letter-spacing: -.3px; }
+.s1 .cabecera { align-items: center; margin-bottom: 28px; }
+.s1 .cabecera p { margin-top: 6px; }
+.s1 .btn { font-weight: 500; }
+.s1 .btn .icono { width: 16px; height: 16px; }
+.s1 .barra-herr { margin-bottom: 28px; }
+.s1 .buscador .icono { left: 12px; top: 11px; width: 16px; height: 16px; }
+.s1 .buscador .entrada { padding-left: 38px; padding-right: 12px; border-radius: var(--radio); }
+.s1 .barra-herr > .tenue, .s1 .paginacion { font-size: 13px; line-height: 18px; }
+.s1 .paginacion { margin-top: 28px; gap: 8px; }
+.s1 .paginacion .pags { gap: 8px; }
+.s1 .btn.icono-solo { width: 32px; height: 32px; border-radius: 8px; }
+.s1 .btn.icono-solo .icono { width: 15px; height: 15px; }
+.s1 .btn.pag-activa { border-color: var(--ink); font-size: 13px; font-weight: 400; }
+.s1 .dato-sec { font: 400 13px/18px var(--f-dato); color: var(--ink-3); margin-top: 2px; }
+
+/* Catálogo: tabla de columnas fijas (la columna de descripción absorbe el resto) */
+.catalogo table { table-layout: fixed; }
+.catalogo th { padding: 12px 6px; white-space: normal; vertical-align: middle; }
+.catalogo td { padding: 0 6px; height: 60px; border-top: 0; border-bottom: 1px solid var(--line); }
+.catalogo tr > :first-child { padding-left: 20px; }
+.catalogo tr > :last-child { padding-right: 20px; text-align: center; }
+.catalogo th:last-child { text-align: center; }
+.catalogo td:first-child { font-weight: 500; }
+.catalogo td.costo { font-weight: 500; }
+.catalogo tr > :nth-child(1) { width: 138px; }
+.catalogo tr > :nth-child(3), .catalogo tr > :nth-child(4), .catalogo tr > :nth-child(5), .catalogo tr > :nth-child(6) { width: 108px; }
+.catalogo tr > :nth-child(7) { width: 116px; }
+.catalogo tr > :nth-child(8) { width: 104px; }
+.catalogo tr > :nth-child(9) { width: 82px; }
