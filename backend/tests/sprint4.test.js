@@ -168,7 +168,7 @@ test('T39/T40: stock sin ventas ni ingresos en 60 días aparece como inmovilizad
 
 test('T51: filtros de bitácora por usuario, acción, fecha y paginación; fecha inválida = 400', async () => {
   await ctx.http('GET', '/api/auditoria', ctx.chofer); // genera un ACCESO_DENEGADO del chofer
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = new Date().toLocaleDateString('en-CA'); // fecha local, igual que la base
   const porAccion = await ctx.http('GET', '/api/auditoria?accion=acceso_denegado&usuario=chofer&desde=' + hoy + '&hasta=' + hoy, ctx.admin);
   assert.equal(porAccion.status, 200);
   assert.ok(Array.isArray(porAccion.body) && porAccion.body.length > 0);
