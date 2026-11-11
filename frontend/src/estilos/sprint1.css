@@ -47,3 +47,31 @@
 .catalogo tr > :nth-child(7) { width: 116px; }
 .catalogo tr > :nth-child(8) { width: 104px; }
 .catalogo tr > :nth-child(9) { width: 82px; }
+
+/* Panel lateral y modales (Catálogo y Usuarios) */
+.s1 .campo > label, .s1 .campo > .rotulo { font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.s1 .ayuda { font-size: 13px; line-height: 18px; }
+.s1 .modal.lado { max-width: 560px; }
+.s1 .modal.lado .modal-cab { padding: 24px 32px; align-items: center; }
+.s1 .modal-cab h2 { font-size: 24px; line-height: 30px; letter-spacing: -.12px; }
+.s1 .modal-cab p { font-size: 13px; line-height: 18px; margin-top: 4px; }
+.s1 .modal-cab .btn.icono-solo { width: 36px; height: 36px; border-radius: 8px; }
+.s1 .modal-cab .btn.icono-solo .icono { width: 16px; height: 16px; }
+.s1 .modal-cuerpo { padding: 28px 32px; }
+.s1 .modal.lado .modal-pie { padding: 20px 32px; }
+.s1 .modal.chico .modal-cab { padding: 28px 32px 0; }
+.s1 .modal-cuerpo form { display: flex; flex-direction: column; gap: 16px; }
+.s1 .modal-cuerpo form .campo, .s1 .modal-cuerpo form .alerta { margin: 0; }
+.s1 .modal-cuerpo form .grid2 { gap: 16px; }
+.s1 .seccion { margin: 12px 0 0; }
+.s1 .modal-cuerpo form > .seccion:first-child, .s1 .modal-cuerpo form > .alerta + .seccion { margin-top: 0; }
+.s1 .interruptor { margin-bottom: 0; }
+.s1 .interruptor button { height: 22px; border-radius: 11px; }
+.s1 .interruptor button::after { top: 3px; width: 16px; height: 16px; }
+.s1 .interruptor button[aria-checked='true']::after { transform: translateX(18px); }
+.s1 .precio-fila { grid-template-columns: 104px 1fr 96px; gap: 16px; margin: 0; }
+.s1 .precio-fila .canal { padding: 0; height: 44px; display: flex; align-items: center; font-weight: 400; }
+.s1 .precio-fila > div:last-child { display: flex; flex-direction: column; gap: 6px; }
+.s1 .precio-fila .etiqueta { text-transform: none; letter-spacing: 0; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--ink-2); }
+.s1 .precio-fila .margen { padding: 0; height: 44px; display: flex; align-items: center; font-weight: 500; }
+.s1 .modal-cuerpo p.tenue { line-height: 18px; }
