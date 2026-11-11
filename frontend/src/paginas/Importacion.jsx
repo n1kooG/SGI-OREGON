@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { api, mensajeError } from '../api.js';
-import { Alerta, Badge, Boton, Campo, Tabla, useAviso } from '../componentes/ui.jsx';
+import '../oficina.css';
+import { Alerta, Badge, Boton, Campo, Icono, Tabla, useAviso } from '../componentes/ui.jsx';
 
 const CANALES = ['Mercado Libre', 'Paris', 'Ripley', 'Mayorista', 'Venta Directa Web'];
 
@@ -46,10 +47,10 @@ export default function Importacion() {
   }
 
   return (
-    <>
+    <div className={`vista carga ${sim && !sim.valido ? 'con-informe' : ''}`}>
       <div className="cabecera">
-        <div><h1>Carga Masiva de Pedidos</h1><p>Importa las ventas de un canal desde Excel. Primero simula: no se escribe nada hasta confirmar.</p></div>
-        <Boton icono="caja" onClick={plantilla}>Descargar plantilla</Boton>
+        <div><h1>Importación Masiva de Ventas Multicanal</h1><p>Carga planillas Excel (.xlsx) de Mercado Libre, Ripley, Paris o Mayoristas para rebajar stock en tiempo real.</p></div>
+        <Boton onClick={plantilla}>Descargar plantilla base (.xlsx)</Boton>
       </div>
       <div className="panel">
         <div
@@ -58,8 +59,10 @@ export default function Importacion() {
           onDragLeave={() => setArrastrando(false)}
           onDrop={(e) => { e.preventDefault(); setArrastrando(false); elegir(e.dataTransfer.files[0]); }}
         >
-          <p><strong>{archivo ? archivo.name : 'Arrastra aquí tu archivo .xlsx'}</strong></p>
-          <p className="tenue">{archivo ? `${(archivo.size / 1024).toFixed(0)} KB` : 'o selecciónalo desde tu equipo (máx. 10 MB)'}</p>
+          <div className="zona-icono"><Icono n="factura" /></div>
+          <p><strong>{archivo ? archivo.name : 'Arrastre o seleccione el archivo .xlsx de ventas'}</strong></p>
+          <p className="tenue">{archivo ? `${(archivo.size / 1024).toFixed(0)} KB` : 'Formatos compatibles: Mercado Libre, Paris, Ripley, Venta Directa Web y Mayorista (máx. 10 MB)'}</p>
+          {!archivo && <p className="dato columnas">Columnas: RUT CLIENTE, NOMBRE CLIENTE, SKU, NOMBRE PRODUCTO, CANTIDAD, PRECIO, MARCA</p>}
           <Boton onClick={() => entrada.current.click()}>Seleccionar archivo</Boton>
           <input ref={entrada} type="file" accept=".xlsx" hidden aria-label="Archivo .xlsx" onChange={(e) => { elegir(e.target.files[0]); e.target.value = ''; }} />
         </div>
@@ -69,24 +72,31 @@ export default function Importacion() {
         <Alerta>{error}</Alerta>
         {sim?.valido && <div className="alerta info" role="status">Planilla válida: {sim.pedidos} pedidos, {sim.lineas} líneas ({sim.filas} filas). Puedes importarla.</div>}
         <div className="acciones">
-          <Boton onClick={simular} disabled={!archivo || ocupado}>Simular carga</Boton>
+          <Boton onClick={simular} disabled={!archivo || ocupado}>Simular carga de planilla</Boton>
           <Boton variante="primario" onClick={importar} disabled={!sim?.valido || ocupado}>Importar pedidos</Boton>
         </div>
       </div>
 
       {hecho && (
-        <div className="alerta info" role="status" style={{ marginTop: 20 }}>
+        <div className="alerta info" role="status">
           Lote {hecho.id_lote} importado en {hecho.canal}: {hecho.pedidos} pedidos, {hecho.lineas} líneas, {hecho.unidades} unidades descontadas del stock.
         </div>
       )}
       {sim && !sim.valido && sim.errores?.length > 0 && (
         <>
-          <h2 style={{ margin: '24px 0 12px' }}>Errores por fila <Badge tono="mal">{sim.errores.length}</Badge></h2>
-          <Tabla columnas={[{ t: 'Fila', d: true }, 'Motivo']}>
-            {sim.errores.map((r, i) => <tr key={i}><td className="dato derecha">{r.fila}</td><td>{r.motivo}</td></tr>)}
+          {archivo && (
+            <div className="informe-cab">
+              <div className="zona-icono"><Icono n="factura" /></div>
+              <div><span className="dato">{archivo.name}</span><small>Informe previo de inconsistencias · no se escribió nada en el sistema</small></div>
+              <Badge tono="mal">Carga detenida</Badge>
+            </div>
+          )}
+          <h2 className="subtitulo">{sim.errores.length} {sim.errores.length === 1 ? 'fila con error' : 'filas con error'}</h2>
+          <Tabla columnas={['Fila', 'Motivo']}>
+            {sim.errores.map((r, i) => <tr key={i}><td className="dato fila-n">Fila {r.fila}</td><td>{r.motivo}</td></tr>)}
           </Tabla>
         </>
       )}
-    </>
+    </div>
   );
 }

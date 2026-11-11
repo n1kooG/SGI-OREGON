@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, mensajeError } from '../api.js';
+import '../oficina.css';
 import { Alerta, Badge, Icono, Tabla, clp } from '../componentes/ui.jsx';
 
 const num = (v) => Number(v ?? 0).toLocaleString('es-CL');
@@ -17,7 +18,7 @@ export default function Dashboard() {
 
   const quiebres = k?.quiebres ?? 0;
   return (
-    <>
+    <div className="vista dashboard">
       <div className="cabecera">
         <div>
           <h1>Dashboard General y Métricas</h1>
@@ -53,6 +54,6 @@ export default function Dashboard() {
           );
         })}
       </Tabla>
-    </>
+    </div>
   );
 }
