@@ -11,6 +11,7 @@ import App from './App.jsx';
 import { SesionProvider } from './sesion.jsx';
 import { AvisosProvider } from './componentes/ui.jsx';
 import './styles.css';
+import './paginas/operacion.css';
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>

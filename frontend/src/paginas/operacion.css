@@ -1,0 +1,155 @@
+/* Pantallas operativas (Pedidos, Bodega y Chofer) según el mockup Oregón de Figma.
+   Se importa después de styles.css desde main.jsx; solo agrega o ajusta estilos de estas pantallas. */
+:root {
+  /* Valores de Figma que no existían como token */
+  --sombra-modal: 0 24px 56px rgba(11, 23, 42, .25);
+  --halo-foco: rgba(255, 68, 0, .22);
+}
+
+/* Insignia informativa (cian) con su punto, igual que ok/mal/aviso */
+.badge.info { background: var(--info-bg); color: var(--info); }
+.badge.info::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.tabla-pedidos .badge, .movil .badge { padding: 3px 8px; line-height: 16px; }
+
+/* ---------- Pedidos y Despachos (oficina) ---------- */
+.cabecera.pedidos-cab { margin-bottom: 28px; }
+.pedidos-cab h1 { letter-spacing: -.3px; }
+.pedidos-cab p { margin-top: 6px; }
+.tabla-pedidos table { table-layout: fixed; }
+.tabla-pedidos th { padding: 12px 12px 12px 0; }
+.tabla-pedidos td { padding: 0 12px 0 0; height: 72px; }
+.tabla-pedidos th:first-child, .tabla-pedidos td:first-child { padding-left: 20px; width: 172px; }
+.tabla-pedidos th:last-child, .tabla-pedidos td:last-child { padding-right: 20px; width: 160px; }
+.tabla-pedidos th:nth-child(3), .tabla-pedidos td:nth-child(3) { width: 152px; }
+.tabla-pedidos th:nth-child(4), .tabla-pedidos td:nth-child(4) { width: 192px; }
+.tabla-pedidos th:nth-child(5), .tabla-pedidos td:nth-child(5) { width: 212px; }
+.tabla-pedidos tbody tr:first-child td { border-top: 0; }
+.tabla-pedidos td.dato { font-weight: 500; }
+.tabla-pedidos .celda-sec { font-size: 13px; line-height: 18px; margin-top: 2px; }
+
+/* Modal «Asignar chofer»: 480 px, relleno 32, separación 24 y alineado arriba como en el mockup */
+.velo-modal:has(.asignar-chofer) { align-items: flex-start; padding-top: 160px; }
+.modal:has(.asignar-chofer) { padding: 32px; gap: 24px; border-radius: 18px; box-shadow: var(--sombra-modal); }
+.modal:has(.asignar-chofer) .modal-cab, .modal:has(.asignar-chofer) .modal-cuerpo, .modal:has(.asignar-chofer) .modal-pie { padding: 0; }
+.modal:has(.asignar-chofer) .modal-cab h2 { letter-spacing: -.12px; }
+.modal:has(.asignar-chofer) .modal-cab p { font-size: 13px; line-height: 18px; margin-top: 6px; }
+.modal:has(.asignar-chofer) .modal-cab .icono-solo { width: 36px; height: 36px; border-radius: 8px; }
+.modal:has(.asignar-chofer) .modal-cab .icono { width: 17px; height: 17px; }
+.modal:has(.asignar-chofer) .modal-cuerpo { display: flex; flex-direction: column; gap: 24px; overflow: visible; flex: none; }
+.asignar-chofer { display: contents; }
+.modal:has(.asignar-chofer) .campo { margin: 0; gap: 6px; }
+.modal:has(.asignar-chofer) .campo > label { font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.modal:has(.asignar-chofer) .modal-cuerpo p.tenue { font-size: 13px; line-height: 18px; }
+.modal:has(.asignar-chofer) .alerta { margin: 0; }
+.modal:has(.asignar-chofer) .modal-pie { gap: 12px; }
+
+/* ---------- Móvil: cabecera, navegación inferior y página base ---------- */
+.movil-cab { height: 64px; padding: 12px 20px; border: 1px solid var(--line); }
+.movil-cab .logo { width: 32px; height: 32px; border-radius: 9px; }
+.movil-cab strong { font-size: 15px; line-height: 20px; }
+.movil-cab small { display: block; font-size: 13px; line-height: 18px; }
+.movil-cab .btn { height: auto; padding: 9px 12px; border-radius: 8px; font-size: 13px; line-height: 18px; font-weight: 400; color: var(--ink-2); }
+.movil-cab .btn .icono { width: 16px; height: 16px; }
+.movil-pagina { display: flex; flex-direction: column; gap: 16px; }
+.movil .nav-inferior { height: 72px; background: var(--nav); border-top: 0; }
+.movil .nav-inferior a { position: relative; justify-content: center; gap: 4px; padding: 0; font-size: 12px; line-height: 16px; color: var(--nav-text); }
+.movil .nav-inferior a .icono { width: 22px; height: 22px; }
+.movil .nav-inferior a.active { color: var(--on-dark); box-shadow: none; }
+.movil .nav-inferior a.active::before { content: ''; position: absolute; top: 0; left: 50%; width: 28px; height: 3px; margin-left: -14px; border-radius: 2px; background: var(--accent); }
+.movil .nav-inferior :focus-visible { outline-color: var(--on-dark); }
+
+/* ---------- Bodega: buscador de stock ---------- */
+.buscador-stock { gap: 14px; }
+.buscador-stock .buscador.grande { margin: 0; }
+.buscador-stock .buscador .icono { left: 16px; top: 18px; width: 20px; height: 20px; color: var(--ink); }
+.buscador-stock .buscador.grande .entrada { height: 56px; padding: 0 16px 0 48px; border: 1.5px solid var(--ink); border-radius: 14px; }
+.buscador-stock .buscador.grande .entrada:focus { outline: 0; box-shadow: 0 0 0 3px var(--halo-foco); }
+.buscador-stock .entrada::-webkit-search-cancel-button { display: none; }
+.buscador-stock .ayuda { font-size: 13px; line-height: 18px; }
+.buscador-stock .tarjeta-stock { display: flex; flex-direction: column; gap: 14px; margin: 0; padding: 20px; }
+.buscador-stock .tarjeta-stock.sin-stock { border-left: 4px solid var(--danger); }
+.buscador-stock .chip-sku { padding: 3px 8px; }
+.buscador-stock .tarjeta-stock h2 { margin: 0; font-size: 24px; line-height: 30px; letter-spacing: -.12px; }
+.marca-fila { display: flex; flex-wrap: wrap; gap: 0 6px; font-size: 14px; line-height: 20px; }
+.marca-fila + .marca-fila { margin-top: -10px; }
+.buscador-stock .stock-cols { gap: 16px; margin: 0; padding-top: 14px; }
+.buscador-stock .stock-cols > div { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.buscador-stock .cifra { display: flex; align-items: flex-end; gap: 6px; font: 500 48px/52px var(--f-dato); letter-spacing: -.96px; }
+.buscador-stock .cifra small { font: 400 14px/20px var(--f-ui); letter-spacing: 0; }
+.buscador-stock .ubicacion { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 24px; line-height: 30px; letter-spacing: -.12px; }
+.buscador-stock .ubicacion .icono { width: 20px; height: 20px; color: var(--accent-ink); }
+.buscador-stock .estante { font-size: 14px; line-height: 20px; color: var(--ink-2); }
+
+/* ---------- Bodega: pedidos pendientes ---------- */
+.pedidos-bodega section { display: flex; flex-direction: column; gap: 16px; }
+.pedidos-bodega section > .seccion { margin: 0; }
+.cab-pagina { display: flex; flex-direction: column; gap: 4px; }
+.cab-pagina h1, .movil-pagina h1 { font-size: 24px; line-height: 30px; letter-spacing: -.12px; margin: 0; }
+.cab-pagina p { font-size: 13px; line-height: 18px; }
+.cab-pagina .fila-sb { flex-wrap: nowrap; gap: 12px; }
+.cab-pagina h1 { flex: 1; min-width: 0; }
+.pedidos-bodega .cab-pagina .badge { flex: none; }
+.pedidos-bodega .fila-sb { flex-wrap: nowrap; }
+.pedidos-bodega .tarjeta-pedido { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 16px; border-radius: 16px; }
+.pedidos-bodega .tarjeta-pedido.abierta { gap: 14px; }
+.pedidos-bodega .tarjeta-cab { gap: 10px; }
+.pedidos-bodega .abierta .tarjeta-cab { gap: 14px; }
+.pedidos-bodega .tarjeta-cab strong { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; color: var(--ink); }
+.pedidos-bodega .chip-sku { padding: 3px 8px; }
+.dato-fecha { display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 18px; color: var(--ink-2); }
+.dato-fecha .icono { width: 15px; height: 15px; color: var(--ink-3); }
+.resumen { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ver-detalle { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--ink-2); }
+.pedidos-bodega .tarjeta-cuerpo { gap: 14px; margin-top: 0; padding-top: 14px; }
+.pedidos-bodega .tarjeta-cuerpo > p.tenue { font-size: 13px; line-height: 18px; margin: -4px 0 0; }
+.pedidos-bodega .pastilla { height: auto; padding: 9px 14px; border-radius: 999px; font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.pedidos-bodega .pastilla.activa { background: var(--ink); border-color: var(--ink); color: var(--on-dark); }
+.pedidos-bodega .btn.bloque-sm { height: 40px; }
+.pedidos-bodega .btn.primario.bloque { font-weight: 500; }
+.pedidos-bodega .item-recolectar { gap: 10px; padding: 14px; border-radius: 12px; }
+.pedidos-bodega .item-recolectar strong { font-size: 15px; line-height: 20px; font-weight: 600; }
+.pedidos-bodega .item-recolectar .chip-sku { background: var(--bg); color: var(--ink); border: 1px solid var(--line-strong); }
+.pedidos-bodega .casilla input { appearance: none; width: 18px; height: 18px; margin: 0; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--surface); }
+.pedidos-bodega .casilla input:checked { background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 5 5 9-10'/%3E%3C/svg%3E") center / 14px no-repeat; border-color: var(--accent); }
+.detalle-item { font-size: 13px; line-height: 18px; color: var(--ink-2); white-space: pre-wrap; }
+.pedidos-bodega .item-recolectar .btn.enlace { height: 40px; padding: 10px 16px; border-radius: 10px; font-size: 14px; line-height: 20px; color: var(--ink-2); }
+
+/* ---------- Bodega: descarga de camión ---------- */
+.descarga .cab-pagina .badge { flex: none; background: var(--line); color: var(--ink-2); }
+.descarga form { display: flex; flex-direction: column; gap: 16px; }
+.descarga .campo { margin: 0; gap: 6px; }
+.descarga .campo > label { font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.descarga .alerta { margin: 0; }
+.verificacion { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.verificacion > p { font-size: 13px; line-height: 18px; }
+.verificacion .bulto-fila { gap: 0 10px; }
+.verificacion .bulto-fila .btn { margin-bottom: 0; }
+.descarga .btn.primario.bloque { font-weight: 500; }
+
+/* ---------- Chofer: ruta de reparto y registro de entrega ---------- */
+.ruta-chofer { gap: 14px; }
+.ruta-chofer .tarjeta-pedido { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 16px; border-radius: 16px; }
+.ruta-chofer .fila-sb { flex-wrap: nowrap; }
+.ruta-chofer .chip-sku { padding: 3px 8px; }
+.ruta-chofer .tarjeta-pedido > strong { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; }
+.ruta-chofer .dato-fila { margin: 0; font-size: 13px; line-height: 18px; color: var(--ink-2); }
+.ruta-chofer .dato-fila .icono { width: 15px; height: 15px; margin-top: 1.5px; color: var(--ink-3); }
+.ruta-chofer .dato-fila { white-space: pre-wrap; }
+.ruta-chofer .dato-fila a { text-decoration: none; }
+.ruta-chofer .parada .btn.bloque-sm { height: 48px; margin: 0; }
+.ruta-chofer .botones-cierre { gap: 10px; }
+.ruta-chofer .botones-cierre .btn { font-weight: 500; }
+.cierre { gap: 16px; min-height: calc(100vh - 64px); }
+.cierre > h1 { margin: 0; }
+.cierre > p:first-of-type { margin: -12px 0 0; font-size: 13px; line-height: 18px; }
+.cierre .campo { margin: 0; gap: 6px; }
+.cierre .campo > label, .cierre .campo > .rotulo { font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.cierre .foto-cierre { gap: 8px; }
+.cierre textarea.entrada { height: 112px; padding: 14px; resize: none; }
+.cierre .btn.bloque-sm { height: 48px; }
+.cierre > p.tenue:not(:first-of-type) { font-size: 13px; line-height: 18px; }
+.cierre .alerta { margin: 0; }
+.cierre-pie { gap: 16px; padding-top: 0; }
+.cierre-pie .btn.bloque { font-weight: 500; }
+.cierre-pie .btn.enlace { width: 100%; height: 48px; padding: 0 24px; border-radius: 10px; color: var(--ink-2); }
+.cierre-pie .btn.enlace:hover { text-decoration: none; background: var(--bg); }

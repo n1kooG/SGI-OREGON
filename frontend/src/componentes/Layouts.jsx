@@ -75,7 +75,7 @@ export function MovilBodega() {
         <NavLink to="/bodega" end><Icono n="casa" />Inicio</NavLink>
         <NavLink to="/bodega/buscador"><Icono n="search" />Buscador</NavLink>
         <NavLink to="/bodega/pedidos"><Icono n="lista" />Pedidos</NavLink>
-        <NavLink to="/bodega/descarga"><Icono n="camion" />Descarga</NavLink>
+        <NavLink to="/bodega/descarga"><Icono n="camion" />Despacho</NavLink>
       </nav>
     </div>
   );

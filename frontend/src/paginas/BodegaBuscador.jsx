@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import { api, mensajeError } from '../api.js';
 import { Alerta, Icono } from '../componentes/ui.jsx';
 
+// «Pasillo A - Estante 2»: el pasillo destacado con su pin y el estante debajo.
+function UbicacionBodega({ valor }) {
+  const [pasillo, ...resto] = (valor ?? 'Sin ubicación').split(' - ');
+  return <><div className="ubicacion">{valor && <Icono n="pin" />}{pasillo}</div>{resto.length > 0 && <span className="estante">{resto.join(' - ')}</span>}</>;
+}
+
 export default function BodegaBuscador() {
   const [q, setQ] = useState('');
   const [res, setRes] = useState(null); // null = aún no se busca
@@ -22,13 +28,13 @@ export default function BodegaBuscador() {
   }, [q]);
 
   return (
-    <div className="movil-pagina">
+    <div className="movil-pagina buscador-stock">
       <span className="etiqueta">Búsqueda rápida de pasillo y stock</span>
       <div className="buscador grande">
         <Icono n="search" />
         <input className="entrada" type="search" autoFocus aria-label="Buscar por SKU o modelo" placeholder="SKU o modelo (ej. TH-45)" value={q} onChange={(e) => setQ(e.target.value)} autoComplete="off" />
       </div>
-      <p className="ayuda">Escribe al menos 2 caracteres del SKU, modelo o nombre.</p>
+      <p className="ayuda">Búsqueda predictiva optimizada para celular (&lt; 2 segundos)</p>
       <Alerta>{error}</Alerta>
       {res && !res.length && !error && <p className="vacio">Sin resultados para «{q.trim()}».</p>}
       {res?.map((p) => (
@@ -38,10 +44,11 @@ export default function BodegaBuscador() {
             <span className={`badge ${p.stock_disponible > 0 ? 'ok' : 'mal'}`}>{p.stock_disponible > 0 ? `${p.stock_disponible} un. disponibles` : 'Sin stock disponible'}</span>
           </div>
           <h2>{p.nombre}</h2>
-          <p className="tenue">{[p.marca && `Marca: ${p.marca}`, p.modelo && `Modelo: ${p.modelo}`].filter(Boolean).join(' · ')}</p>
+          {p.marca && <p className="marca-fila"><span className="tenue">Marca:</span><span>{p.marca}</span></p>}
+          {p.modelo && p.modelo !== p.sku && <p className="marca-fila"><span className="tenue">Modelo:</span><span>{p.modelo}</span></p>}
           <div className="stock-cols">
             <div><span className="etiqueta">Stock físico</span><div className="cifra">{p.stock_fisico}<small> un.</small></div>{p.stock_reservado > 0 && <span className="tenue">{p.stock_reservado} reservadas</span>}</div>
-            <div><span className="etiqueta">Ubicación en bodega</span><div className="ubicacion">{p.ubicacion_bodega ?? 'Sin ubicación'}</div></div>
+            <div><span className="etiqueta">Ubicación en bodega</span><UbicacionBodega valor={p.ubicacion_bodega} /></div>
           </div>
         </article>
       ))}
