@@ -1,8 +1,8 @@
 import ExcelJS from 'exceljs';
-import PDFDocument from 'pdfkit';
+import { readFileSync } from 'node:fs';
 import * as repo from '../repositories/auditoria.js';
 import { AppError } from '../errors.js';
-import { C, marca, rotulo } from '../pdf/estilo.js';
+import { C, LOGO, MARCA, crearPdf, aBuffer, marca, rotulo, recortar, fechaHora } from '../pdf/estilo.js';
 
 const MAX_EXPORTAR = 10000; // protege memoria
 const bad = (m) => new AppError(400, m, 'VALIDACION');
@@ -37,7 +37,7 @@ export const opcionesFiltros = () => repo.opcionesFiltros();
 
 const COLS = [['Fecha y hora', 'fecha', 21], ['Usuario', 'usuario', 28], ['Rol', 'rol', 16], ['Acción', 'accion', 22], ['Módulo', 'modulo', 20], ['IP de origen', 'ip', 17]];
 const TZ = 'America/Santiago';
-const hora = (d) => new Date(d).toLocaleString('es-CL', { timeZone: TZ, hourCycle: 'h23' }).replace(',', '');
+const hora = fechaHora;
 const fila = (r) => ({ fecha: r.fecha_hora, usuario: r.usuario ?? '—', rol: r.rol ?? '—', accion: r.accion, modulo: r.modulo, ip: r.ip_origen });
 const fmt = (s) => s.split('-').reverse().join('-');
 const NOTA = 'Los registros no se pueden modificar ni borrar.';
@@ -73,26 +73,31 @@ export async function exportar(q = {}) {
   return { buffer: await pdf(rows, resumen), tipo: 'application/pdf', nombre, filas: rows.length };
 }
 
-const FINO = { style: 'thin', color: { argb: 'FFE4E9F0' } };
-const BORDE = { top: FINO, bottom: FINO, left: FINO, right: FINO };
+const FINO = { style: 'thin', color: { argb: 'FFE6EBE9' } };
+const BORDE = { bottom: FINO };
+const ARGB = (c) => `FF${c.slice(1).toUpperCase()}`;
+// Excel no puede declarar fuentes de respaldo: Poppins solo en títulos (si falta, Excel sustituye sin romper nada); datos en Calibri y Consolas, que vienen con Office.
+const F = { titulo: 'Poppins', texto: 'Calibri', mono: 'Consolas' };
 
 async function xlsx(rows, resumen) {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'Tienda Oregón';
+  wb.creator = MARCA; wb.lastModifiedBy = MARCA; wb.company = MARCA; wb.title = 'Bitácora de auditoría';
   const h = wb.addWorksheet('Bitácora', { views: [{ state: 'frozen', ySplit: 5, showGridLines: false }] });
   h.columns = COLS.map(([, key, width]) => ({ key, width }));
-  const unir = (n, texto, font) => { h.mergeCells(n, 1, n, COLS.length); const c = h.getCell(n, 1); c.value = texto; c.font = font; c.alignment = { vertical: 'middle' }; };
-  unir(1, 'Tienda Oregón', { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFF4400' } });
-  unir(2, 'Bitácora de auditoría', { name: 'Calibri', size: 18, bold: true, color: { argb: 'FF0B172A' } });
-  unir(3, `Filtros: ${resumen}`, { name: 'Calibri', size: 10, color: { argb: 'FF657185' } });
-  unir(4, `Generada el ${hora(new Date())}  ·  ${rows.length} registro(s)  ·  ${NOTA}`, { name: 'Calibri', size: 10, color: { argb: 'FF657185' } });
-  h.getRow(2).height = 26;
+  const unir = (n, texto, font, indent = 0) => { h.mergeCells(n, 1, n, COLS.length); const c = h.getCell(n, 1); c.value = texto; c.font = { color: { argb: ARGB(C.tinta) }, ...font }; c.alignment = { vertical: 'middle', indent }; };
+  unir(1, MARCA, { name: F.titulo, size: 13, bold: true, color: { argb: ARGB(C.naranjaTexto) } }, 4);
+  unir(2, 'Bitácora de auditoría', { name: F.titulo, size: 18, bold: true });
+  unir(3, `Filtros: ${resumen}`, { name: F.texto, size: 10, color: { argb: ARGB(C.tinta3) } });
+  unir(4, `Generada el ${hora(new Date())}  ·  ${rows.length} registro(s)  ·  ${NOTA}`, { name: F.texto, size: 10, color: { argb: ARGB(C.tinta3) } });
+  h.getRow(1).height = 34; h.getRow(2).height = 28;
+  h.addImage(wb.addImage({ buffer: readFileSync(LOGO), extension: 'png' }), { tl: { col: 0.12, row: 0.08 }, ext: { width: 27, height: 30 } });
   const cab = h.getRow(5);
   cab.values = COLS.map(([t]) => t);
   cab.height = 22;
   cab.eachCell((c) => {
-    c.font = { name: 'Calibri', bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
-    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0B172A' } };
+    c.font = { name: F.texto, bold: true, size: 9, color: { argb: ARGB(C.tinta2) } };
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ARGB(C.fondo) } };
+    c.border = { bottom: { style: 'medium', color: { argb: ARGB(C.naranja) } } };
     c.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
   });
   rows.forEach((r, n) => {
@@ -100,63 +105,62 @@ async function xlsx(rows, resumen) {
     x.eachCell((c, i) => {
       c.border = BORDE;
       c.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
-      c.font = { name: i === 6 ? 'Consolas' : 'Calibri', size: 10, color: { argb: 'FF0B172A' } };
-      if (n % 2) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7FAFC' } };
+      c.font = { name: i === 1 || i === 6 ? F.mono : F.texto, size: i === 1 || i === 6 ? 9 : 10, bold: i === 4, color: { argb: ARGB(C.tinta) } };
+      if (n % 2) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ARGB(C.fondo) } };
     });
     x.getCell(1).numFmt = 'dd-mm-yyyy hh:mm:ss';
   });
   h.autoFilter = { from: { row: 5, column: 1 }, to: { row: 5, column: COLS.length } };
-  h.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, printTitlesRow: '5:5' };
+  h.pageSetup = { orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, printTitlesRow: '5:5', margins: { left: 0.5, right: 0.5, top: 0.6, bottom: 0.7, header: 0.3, footer: 0.3 } };
+  h.headerFooter = { oddFooter: `&L&9${MARCA} · Bitácora de auditoría&R&9Página &P de &N` };
   return Buffer.from(await wb.xlsx.writeBuffer());
 }
 
 async function pdf(rows, resumen) {
-  const M = 36, ancho = [112, 170, 92, 140, 130, 126], W = ancho.reduce((a, b) => a + b, 0), RH = 19;
-  const doc = new PDFDocument({ margin: M, size: 'A4', layout: 'landscape', bufferPages: true, info: { Title: 'Bitácora de auditoría', Author: 'Tienda Oregón' } });
-  const partes = [];
-  doc.on('data', (c) => partes.push(c));
-  const fin = new Promise((ok) => doc.on('end', ok));
-  const tope = doc.page.height - 56;
+  const M = 36, ancho = [122, 166, 96, 170, 112, 104], W = ancho.reduce((a, b) => a + b, 0), RH = 20;
+  const doc = crearPdf('Bitácora de auditoría', { size: 'A4', layout: 'landscape', bufferPages: true });
+  const tope = doc.page.height - 58;
   const x = ancho.map((_, i) => M + ancho.slice(0, i).reduce((a, b) => a + b, 0));
+  // Cabecera de página: logo y marca a la izquierda, tipo de documento a la derecha, filete de marca (naranja + cian).
+  const encabezado = () => {
+    marca(doc, M, 26, 12.5);
+    rotulo(doc, 'Documento de control interno', M, 34, { width: W, align: 'right' });
+    doc.moveTo(M, 56).lineTo(M + W, 56).lineWidth(0.75).strokeColor(C.linea).stroke();
+    doc.rect(M, 55, 44, 2).fill(C.naranja);
+    doc.rect(M + 44, 55, 22, 2).fill(C.cian);
+  };
+  // Cabecera de la tabla: se repite en cada página. Rótulos grises y línea inferior, como en la pantalla.
   const cabecera = (y) => {
-    doc.rect(M, y, W, 20).fill(C.tinta);
-    COLS.forEach(([t], i) => doc.font('Helvetica-Bold').fontSize(7.5).fillColor(C.blanco).text(t.toUpperCase(), x[i] + 8, y + 6.5, { width: ancho[i] - 12, characterSpacing: 0.6, lineBreak: false }));
+    COLS.forEach(([t], i) => rotulo(doc, t, x[i] + 8, y + 7, { tam: 7, color: C.tinta2, width: ancho[i] - 12 }));
+    doc.moveTo(M, y + 20).lineTo(M + W, y + 20).lineWidth(1.2).strokeColor(C.tinta).stroke();
     return y + 20;
   };
-  const fondo = () => doc.rect(0, 0, doc.page.width, doc.page.height).fill(C.blanco);
-  doc.on('pageAdded', fondo);
-  fondo();
-  // Encabezado de marca
-  marca(doc, M, M - 4, 13, C.tinta);
-  rotulo(doc, 'Documento de control interno', M, M, { width: W, align: 'right' });
-  doc.moveTo(M, M + 20).lineTo(M + W, M + 20).lineWidth(0.75).strokeColor(C.linea).stroke();
-  doc.font('Helvetica-Bold').fontSize(21).fillColor(C.tinta).text('Bitácora de auditoría', M, M + 32, { lineBreak: false });
-  doc.font('Helvetica').fontSize(9).fillColor(C.tinta3).text(`Filtros: ${resumen}`, M, M + 62, { width: W, lineBreak: false, ellipsis: true })
-    .text(`Generada el ${hora(new Date())}  ·  ${rows.length} registro(s)`, M, M + 75, { lineBreak: false });
-  let y = cabecera(M + 98);
-  if (!rows.length) doc.font('Helvetica-Oblique').fontSize(9).fillColor(C.tinta3).text('No hay registros para los filtros indicados.', M + 8, y + 8, { lineBreak: false });
+  doc.on('pageAdded', encabezado);
+  encabezado();
+  doc.font('Titulo').fontSize(21).fillColor(C.tinta).text('Bitácora de auditoría', M, 74, { lineBreak: false });
+  doc.font('Texto').fontSize(9).fillColor(C.tinta3).text(recortar(doc, `Filtros: ${resumen}`, 'Texto', 9, W), M, 104, { lineBreak: false });
+  doc.text(`Generada el ${hora(new Date())}  ·  ${rows.length} registro(s)`, M, 117, { lineBreak: false });
+  let y = cabecera(138);
+  if (!rows.length) doc.font('Texto').fontSize(9).fillColor(C.tinta3).text('No hay registros para los filtros indicados.', M + 8, y + 10, { lineBreak: false });
   rows.forEach((r, n) => {
-    if (y + RH > tope) { doc.addPage(); y = cabecera(M); }
-    doc.rect(M, y, W, RH).fill(n % 2 ? C.fondo : C.blanco); // relleno explícito: no depende de la transparencia del visor
+    if (y + RH > tope) { doc.addPage(); y = cabecera(70); }
+    if (n % 2) doc.rect(M, y, W, RH).fill(C.fondo); // relleno explícito: no depende de la transparencia del visor
     COLS.forEach(([, k], i) => {
-      const mono = k === 'ip', v = k === 'fecha' ? hora(r.fecha) : r[k];
-      doc.font(mono ? 'Courier' : k === 'accion' ? 'Helvetica-Bold' : 'Helvetica').fontSize(mono ? 8 : 8.5).fillColor(C.tinta)
-        .text(v, x[i] + 8, y + 5.5, { width: ancho[i] - 12, lineBreak: false, ellipsis: true });
+      const mono = k === 'ip' || k === 'fecha', v = k === 'fecha' ? hora(r.fecha) : r[k], f = mono ? 'Mono' : k === 'accion' ? 'TextoB' : 'Texto', t = mono ? 7.8 : 8.5;
+      doc.font(f).fontSize(t).fillColor(k === 'rol' ? C.tinta2 : C.tinta).text(recortar(doc, v, f, t, ancho[i] - 14), x[i] + 8, y + (mono ? 6.5 : 6), { lineBreak: false });
     });
-    doc.moveTo(M, y + RH).lineTo(M + W, y + RH).lineWidth(0.4).strokeColor(C.linea).stroke();
+    doc.moveTo(M, y + RH).lineTo(M + W, y + RH).lineWidth(0.5).strokeColor(C.linea).stroke();
     y += RH;
   });
-  // Pie en todas las páginas: aviso de inmutabilidad y «Página X de Y».
-  const { count, start } = doc.bufferedPageRange();
+  // Pie en todas las páginas: aviso de inmutabilidad, fecha de generación y «Página X de Y».
+  const { count, start } = doc.bufferedPageRange(), gen = hora(new Date());
   for (let i = 0; i < count; i++) {
     doc.switchToPage(start + i);
-    doc.page.margins.bottom = 0; // sin esto escribir en el pie crearía una página nueva
-    const py = doc.page.height - 36;
-    doc.moveTo(M, py - 8).lineTo(M + W, py - 8).lineWidth(0.75).strokeColor(C.linea).stroke();
-    doc.font('Helvetica').fontSize(8).fillColor(C.tinta3).text(NOTA, M, py, { lineBreak: false });
+    const py = doc.page.height - 34;
+    doc.moveTo(M, py - 9).lineTo(M + W, py - 9).lineWidth(0.75).strokeColor(C.linea).stroke();
+    doc.font('Texto').fontSize(8).fillColor(C.tinta3).text(`${NOTA}`, M, py, { lineBreak: false });
+    doc.text(`${MARCA}  ·  ${gen}`, M, py, { width: W, align: 'center', lineBreak: false });
     doc.text(`Página ${i + 1} de ${count}`, M, py, { width: W, align: 'right', lineBreak: false });
   }
-  doc.end();
-  await fin;
-  return Buffer.concat(partes);
+  return aBuffer(doc);
 }

@@ -17,6 +17,9 @@ const FUENTES = { Titulo: 'poppins-latin-700-normal', TituloM: 'poppins-latin-60
 export function crearPdf(titulo, opts = {}) {
   const doc = new PDFDocument({ margin: 0, ...opts, info: { Title: titulo, Author: MARCA, Creator: MARCA, Producer: MARCA } });
   for (const [k, v] of Object.entries(FUENTES)) doc.registerFont(k, f(v));
+  // El subconjunto latino de JetBrains Mono trae ligaduras sin contorno («::» en una IP rompe fontkit): se desactivan.
+  const fk = doc.font('Mono')._font.font, layout = fk.layout.bind(fk);
+  fk.layout = (t, f, ...r) => layout(t, f ?? { calt: false, liga: false, clig: false }, ...r);
   doc.font('Texto');
   return doc;
 }
