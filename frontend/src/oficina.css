@@ -49,10 +49,10 @@
 .vista .linea-fila .btn { margin-bottom: 0; }
 .vista .zona-pdf { gap: 10px; }
 .vista .zona-carga.compacta { border: 0; padding: 0; gap: 14px; background: none; }
-.vista .zona-carga.compacta .icono, .vista .zona-carga.compacta .icono-solo + .btn { display: none; }
+.vista .zona-carga.compacta > .icono { display: none; }
 .vista .zona-carga.compacta .btn { order: 1; }
 .vista .zona-carga.compacta .zona-texto { order: 2; font-size: 13px; line-height: 18px; }
-.vista .zona-carga.compacta .icono-solo { order: 3; display: inline-flex; }
+.vista .zona-carga.compacta .icono-solo { order: 3; }
 .vista .resumen { align-self: flex-end; width: 340px; max-width: 100%; display: flex; flex-direction: column; gap: 16px; }
 .vista .totales { width: 100%; margin: 0; padding: 20px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; display: flex; flex-direction: column; gap: 10px; }
 .vista .totales > div { padding: 0; align-items: center; font-size: 13px; line-height: 18px; }
@@ -101,3 +101,4 @@
   .vista.dashboard th, .vista.auditoria th { width: auto !important; }
   .vista .resumen { width: 100%; }
 }
+.vista .panel > .btn { align-self: flex-start; }
