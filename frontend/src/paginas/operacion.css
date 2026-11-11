@@ -214,3 +214,4 @@
 .movil.bodega .modal .modal-pie .btn { flex: 1; }
 .movil.bodega .modal .modal-cab .icono-solo { display: none; }
 .movil.bodega .modal .modal-cuerpo p { font-size: 14px; line-height: 20px; }
+.movil.bodega .nav-inferior a .icono { color: var(--accent); }
