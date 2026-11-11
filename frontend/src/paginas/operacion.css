@@ -76,9 +76,6 @@
 .buscador-stock .stock-cols > div { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
 .buscador-stock .cifra { display: flex; align-items: flex-end; gap: 6px; font: 500 48px/52px var(--f-dato); letter-spacing: -.96px; }
 .buscador-stock .cifra small { font: 400 14px/20px var(--f-ui); letter-spacing: 0; }
-.buscador-stock .ubicacion { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 24px; line-height: 30px; letter-spacing: -.12px; }
-.buscador-stock .ubicacion .icono { width: 20px; height: 20px; color: var(--accent-ink); }
-.buscador-stock .estante { font-size: 14px; line-height: 20px; color: var(--ink-2); }
 
 /* ---------- Bodega: pedidos pendientes ---------- */
 .pedidos-bodega section { display: flex; flex-direction: column; gap: 16px; }
@@ -155,3 +152,151 @@
 .cierre-pie .btn.bloque { font-weight: 500; }
 .cierre-pie .btn.enlace { width: 100%; height: 48px; padding: 0 24px; border-radius: 10px; color: var(--ink-2); }
 .cierre-pie .btn.enlace:hover { text-decoration: none; background: var(--bg); }
+
+/* ======================================================================
+   Bodega · flujos nuevos (inicio, descargas, rechazados, buscador, pedidos)
+   ====================================================================== */
+/* Botón principal de Bodega: relleno naranja oscuro con texto blanco (contraste AA) */
+.movil.bodega .btn.primario { background: var(--accent-ink); border-color: var(--accent-ink); }
+.movil.bodega .btn.primario:hover { background: #a63a00; border-color: #a63a00; }
+.movil.bodega .btn.primario:disabled { opacity: .5; cursor: not-allowed; }
+.movil.bodega .btn.bloque { height: 48px; }
+
+/* Inicio */
+.bodega-inicio { gap: 12px; }
+.bodega-inicio .saludo { display: flex; flex-direction: column; gap: 2px; }
+.bodega-inicio .saludo h1 { font-size: 22px; line-height: 30px; font-weight: 600; letter-spacing: 0; }
+.bodega-inicio .saludo .tenue { font-size: 13px; line-height: 18px; }
+.bodega-inicio h2 { font-size: 18px; line-height: 26px; }
+.tarjeta-trabajo { display: flex; align-items: center; gap: 12px; min-height: 88px; padding: 12px 12px 12px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; text-decoration: none; }
+.tarjeta-trabajo:hover { border-color: var(--line-strong); }
+.cifra-trabajo { flex: none; width: 52px; font: 700 32px/40px var(--f-dato); color: var(--ink); }
+.texto-trabajo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 13px; line-height: 18px; color: var(--ink-2); }
+.texto-trabajo strong { font-size: 15px; line-height: 20px; font-weight: 600; color: var(--ink); }
+.flecha-trabajo { flex: none; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); }
+.flecha-trabajo .icono { width: 20px; height: 20px; }
+.tarjeta-trabajo.peligro { background: var(--danger-bg); border-color: var(--danger); }
+.tarjeta-trabajo.peligro .cifra-trabajo { color: var(--danger); }
+.tarjeta-trabajo.peligro .flecha-trabajo { background: var(--surface); }
+.tarjeta-trabajo.critico { border: 2px solid var(--accent); padding: 11px 11px 11px 15px; }
+.al-dia, .sin-nada { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 460px; padding: 24px 32px; text-align: center; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; }
+.al-dia p, .sin-nada p { font-size: 14px; line-height: 20px; color: var(--ink-2); }
+.al-dia .btn { align-self: stretch; margin-top: 4px; }
+.sello-ok { display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; border-radius: 999px; background: var(--ok-bg); color: var(--ok); }
+.sello-ok .icono { width: 28px; height: 28px; stroke-width: 2.4; }
+.sin-nada .sello-ok { background: var(--info-bg); color: var(--info); }
+
+/* Rechazados por reingresar */
+.rechazados .cab-pagina h1 { white-space: normal; }
+.rechazados .cab-pagina .fila-sb { align-items: flex-start; }
+.nota-info { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border-radius: 12px; background: var(--info-bg); border: 1px solid var(--teal); color: var(--info); font-size: 13px; line-height: 18px; }
+.nota-info .icono { width: 16px; height: 16px; margin-top: 1px; }
+.rechazados .tarjeta-pedido, .descarga .tarjeta-pedido { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 16px; border-radius: 16px; }
+.rechazados .tarjeta-pedido > strong, .descarga .tarjeta-pedido > strong { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; }
+.rechazados .fila-sb, .descarga .tarjeta-pedido .fila-sb { flex-wrap: nowrap; }
+.dato-fecha .icono { flex: none; }
+.causal { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 10px; background: var(--danger-bg); font-size: 14px; line-height: 20px; color: var(--ink); }
+.causal small { font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.unidades-cuadro { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); font-size: 13px; color: var(--ink-2); }
+.unidades-cuadro b { font: 700 20px/26px var(--f-dato); color: var(--ink); }
+.movil.bodega .velo-modal { align-items: flex-start; padding: 188px 20px 0; }
+.movil.bodega .modal { max-width: 350px; padding: 20px; gap: 12px; }
+.movil.bodega .modal .modal-cab, .movil.bodega .modal .modal-cuerpo, .movil.bodega .modal .modal-pie { padding: 0; }
+.movil.bodega .modal .modal-cab h2 { font-size: 20px; line-height: 28px; }
+.movil.bodega .modal .modal-cab p { margin-top: 12px; font: 500 12px/16px var(--f-dato); color: var(--ink-2); }
+.movil.bodega .modal .modal-pie { gap: 12px; }
+.movil.bodega .modal .modal-pie .btn { flex: 1; }
+.movil.bodega .modal .modal-cab .icono-solo { display: none; }
+.movil.bodega .modal .modal-cuerpo p { font-size: 14px; line-height: 20px; }
+.movil.bodega .nav-inferior a .icono { color: var(--accent); }
+.movil.bodega .modal-pie .btn { height: 48px; border-radius: 10px; }
+
+/* Descarga: conteo por SKU */
+.volver { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; padding: 4px 8px 4px 0; margin-top: 4px; border: 0; background: none; font-size: 14px; line-height: 20px; color: var(--ink-2); cursor: pointer; }
+.volver .icono { width: 18px; height: 18px; }
+.descarga > .btn.enlace { align-self: center; height: auto; padding: 8px; font-size: 13px; line-height: 18px; color: var(--ink-2); text-decoration: underline; white-space: normal; text-align: center; }
+.cab-factura { display: flex; flex-direction: column; gap: 10px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.cab-factura .fila-sb { flex-wrap: nowrap; }
+.cab-factura h1 { font-size: 20px; line-height: 28px; letter-spacing: 0; margin: 0; }
+.estado-conteo { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border-radius: 12px; font-size: 13px; line-height: 18px; color: var(--ink-2); }
+.estado-conteo > div { display: flex; flex-direction: column; gap: 2px; }
+.estado-conteo strong { font-size: 15px; line-height: 20px; font-weight: 600; color: var(--ink); }
+.estado-conteo .icono { width: 22px; height: 22px; margin-top: 3px; stroke-width: 2.2; }
+.estado-conteo.ok { background: var(--ok-bg); }
+.estado-conteo.ok .icono { color: var(--ok); }
+.estado-conteo.aviso { background: var(--warn-bg); }
+.estado-conteo.aviso .icono { color: var(--warn); }
+.titulo-lista { font-size: 13px; line-height: 18px; }
+.conteo { padding-bottom: 168px; }
+.linea-conteo { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.linea-conteo.falta { border: 2px solid var(--warn); padding: 15px; }
+.linea-conteo.sobra { border: 2px solid var(--info); padding: 15px; }
+.linea-conteo .fila-sb { flex-wrap: nowrap; }
+.linea-conteo > strong { font-size: 15px; line-height: 20px; font-weight: 600; }
+.control-conteo { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.esperadas { display: flex; flex-direction: column; }
+.esperadas small { font-size: 13px; line-height: 18px; color: var(--ink-3); }
+.esperadas b { font: 700 20px/26px var(--f-dato); }
+.stepper { display: flex; align-items: center; gap: 8px; }
+.stepper button, .stepper input { height: 48px; border-radius: 10px; }
+.stepper button { width: 48px; display: flex; align-items: center; justify-content: center; padding: 0; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); cursor: pointer; }
+.stepper button:disabled { opacity: .4; cursor: not-allowed; }
+.stepper .mas { background: var(--accent-soft); border-color: var(--accent-soft); color: var(--accent-ink); }
+.stepper input { width: 64px; padding: 0; text-align: center; background: var(--bg); border: 1px solid var(--line); font: 500 20px/26px var(--f-dato); -moz-appearance: textfield; appearance: textfield; }
+.stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.linea-conteo.falta .stepper input { border: 2px solid var(--warn); }
+.linea-conteo.sobra .stepper input { border: 2px solid var(--info); }
+.campo-ubi { display: flex; flex-direction: column; gap: 6px; font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.con-icono { position: relative; display: block; }
+.con-icono .icono { position: absolute; left: 14px; top: 16px; width: 16px; height: 16px; color: var(--ink-3); }
+.con-icono .entrada { width: 100%; height: 48px; padding: 0 14px 0 40px; border-radius: 10px; font-size: 15px; }
+.pie-fijo { position: fixed; left: 0; bottom: 72px; width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 8px; padding: 12px 20px 16px; background: var(--surface); border-top: 1px solid var(--line); z-index: 10; }
+.pie-fijo p { font-size: 12px; line-height: 16px; text-align: center; color: var(--ink-2); }
+.pie-fijo .alerta { margin: 0; }
+
+/* Buscador de bodega (diseño de flujos): ficha apilada con ubicación editable */
+.buscador-stock { gap: 12px; }
+.rotulo-busca { font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.buscador-stock .buscador.grande .entrada { border: 1px solid var(--line-strong); height: 56px; }
+.buscador-stock .buscador.grande .entrada:focus { border-color: var(--ink); }
+.buscador-stock .buscador .icono { color: var(--ink-3); }
+.buscador-stock .ayuda { display: block; }
+.buscador-stock .tarjeta-stock { gap: 12px; padding: 20px; border-radius: 16px; }
+.buscador-stock .tarjeta-stock.editando { border: 2px solid var(--accent); padding: 19px; }
+.buscador-stock .tarjeta-stock .fila-sb { flex-wrap: nowrap; }
+.buscador-stock .tarjeta-stock h2 { font-size: 24px; line-height: 32px; }
+.buscador-stock .stock-cols { grid-template-columns: 1fr; gap: 12px; padding-top: 12px; }
+.buscador-stock .stock-cols > div { width: 100%; }
+.buscador-stock .etiqueta { font-size: 12px; line-height: 16px; letter-spacing: 0; text-transform: none; font-weight: 400; color: var(--ink-2); }
+.buscador-stock .editando .stock-cols > div:last-child > .etiqueta { font-size: 13px; font-weight: 500; color: var(--ink); }
+.buscador-stock .cifra { align-items: baseline; font: 500 32px/40px var(--f-titulo); letter-spacing: 0; }
+.chip-ubicacion { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px; background: var(--info-bg); color: var(--info); font-size: 15px; line-height: 20px; font-weight: 500; }
+.chip-ubicacion .icono { width: 16px; height: 16px; }
+.chip-ubicacion.vacia { background: var(--line); color: var(--ink-2); }
+.buscador-stock .stock-cols .btn.bloque { margin-top: 4px; }
+.campo-ubicacion { display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 14px; border: 2px solid var(--accent); border-radius: 10px; background: var(--surface); }
+.campo-ubicacion .entrada { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; box-shadow: none; background: none; font-size: 15px; }
+.campo-ubicacion .dato { flex: none; color: var(--ink-3); }
+.buscador-stock .editando .ayuda { font-size: 13px; line-height: 18px; }
+.acciones-ubi { display: flex; gap: 12px; width: 100%; }
+.acciones-ubi .btn { flex: 1; }
+.buscador-stock .alerta { margin: 0; }
+.buscador-stock .stock-cols > div { align-items: stretch; }
+.buscador-stock .chip-ubicacion { align-self: flex-start; }
+
+/* Pedidos pendientes (diseño de flujos): contadores, secciones y refresco */
+.pedidos-bodega .actualizar-fila { gap: 12px; }
+.pedidos-bodega .actualizar-fila .tenue { font-size: 13px; line-height: 18px; }
+.pedidos-bodega .actualizar-fila .btn { height: 44px; padding: 0 16px; }
+.contadores { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.contador { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 8px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; font-size: 13px; line-height: 18px; color: var(--ink-2); }
+.contador b { grid-column: 1 / -1; font: 500 28px/36px var(--f-titulo); color: var(--ink); }
+.punto { width: 6px; height: 6px; border-radius: 50%; background: var(--info); }
+.punto.aviso { background: var(--warn); }
+.punto.ok { background: var(--ok); }
+.pedidos-bodega section > .fila-sb h2 { font-size: 18px; line-height: 26px; }
+.pedidos-bodega .resumen .icono { width: 18px; height: 18px; color: var(--ink-2); }
+.chofer-fila { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); font-size: 14px; line-height: 20px; color: var(--ink); }
+.chofer-fila .icono { width: 16px; height: 16px; color: var(--ink-3); }
+.pedidos-bodega .tarjeta-pedido > strong { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; }
+.pedidos-bodega .tarjeta-pedido { gap: 10px; }

@@ -75,14 +75,14 @@ export function Movil({ panel, children }) {
 // Bodega: cabecera + contenido + navegación inferior (Inicio, Buscador, Pedidos y Descarga).
 export function MovilBodega() {
   return (
-    <div className="movil con-nav">
+    <div className="movil con-nav bodega">
       <CabMovil panel="Panel bodega" />
       <main><Outlet /></main>
       <nav className="nav-inferior" aria-label="Navegación de bodega">
         <NavLink to="/bodega" end><Icono n="casa" />Inicio</NavLink>
         <NavLink to="/bodega/buscador"><Icono n="search" />Buscador</NavLink>
         <NavLink to="/bodega/pedidos"><Icono n="lista" />Pedidos</NavLink>
-        <NavLink to="/bodega/descarga"><Icono n="camion" />Despacho</NavLink>
+        <NavLink to="/bodega/descarga"><Icono n="camion" />Descarga</NavLink>
       </nav>
     </div>
   );
