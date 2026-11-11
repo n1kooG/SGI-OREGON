@@ -76,6 +76,36 @@ marca de «cambio obligatorio» (no existe esa columna): debe rotar su clave tra
 `PUT /api/auth/clave` o con `clave-usuario.mjs`. Los permisos de los roles viven en `db/roles_permisos.sql`
 (fuente única del seed y del arranque).
 
+## Entrega, rechazo y resúmenes de Bodega
+
+Migración para bases existentes (idempotente): `psql -d sgi_oregon -f db/09_firma_y_reingreso.sql` (columnas de firma, receptor
+y reingreso en `despacho`, transición `RECHAZADO → EN_CAMION`, permisos `entregas:reingresar` y `pedidos:documentar`). Las bases
+nuevas la traen en `db/01_modelo_datos.sql` y `db/roles_permisos.sql`.
+
+Decisiones de modelo: `despacho.id_orden` deja de ser `UNIQUE` y pasa a un índice único parcial (un solo despacho `PENDIENTE` por
+pedido), de modo que un rechazo reprogramado conserva su historial de intentos. `RECHAZADO → EN_CAMION` solo lo permite el trigger
+si el último despacho del pedido está rechazado **y reingresado**. Los listados de pedidos toman el último despacho.
+
+| Método y ruta | Permiso | Cuerpo → respuesta |
+|---|---|---|
+| `PATCH /api/despachos/:id` | `entregas:registrar` (CHOFER) | JSON o multipart: `estado` (ENTREGADO/RECHAZADO), `motivo`, `latitud`, `longitud`, `nombre_receptor` (≤120), archivos `foto` (JPG/PNG) y `firma` (PNG, ≤1 MB). Firma y receptor solo aplican a ENTREGADO (400 en RECHAZADO). → `{ id_despacho, id_orden, estado_entrega, evidencia, firma, nombre_receptor }` |
+| `POST /api/despachos/:id/reingresar` | `entregas:reingresar` (BODEGA, ADMIN) | sin cuerpo → `{ id_despacho, id_orden, estado_orden: "EN_CAMION", unidades, reingresado_en }`. 409 `NO_RECHAZADO` / `YA_REINGRESADO`; 404 |
+| `GET /api/despachos/historial?pagina=1&limite=20` | `ruta:leer` (CHOFER) | → `{ total, pagina, limite, items[] }` con las columnas de `mi-ruta`, solo entregas cerradas del chofer, la más reciente primero (`limite` 1–100) |
+| `GET /api/despachos/:id` | `ruta:leer` (CHOFER) | → parada con `items: [{ sku, nombre, modelo, cantidad }]`, `motivo_rechazo`, `nombre_receptor`, `tiene_firma`; 404 si es de otro chofer. Sin precios ni costos |
+| `GET /api/despachos/mi-ruta/resumen` | `ruta:leer` (CHOFER) | → `{ pendientes, entregadas, rechazadas }` (entregadas y rechazadas = cerradas hoy). `mi-ruta` sigue devolviendo un arreglo y ahora incluye `nombre_receptor` y `tiene_firma` |
+| `GET /api/pedidos?por_reingresar=1` | `pedidos:leer` o `pedidos:preparar` | → solo RECHAZADO sin reingreso. Todos los listados y `GET /api/pedidos/:id` traen `motivo_rechazo`, `nombre_receptor`, `reingresado_en`, `reingresado` (el detalle también `tiene_firma`) |
+| `GET /api/pedidos/resumen` | `pedidos:leer` o `pedidos:preparar` | → `{ pendiente_preparacion, armado, etiquetado, en_camion_esperando_chofer, rechazados_por_reingresar }` |
+| `GET /api/inventario/resumen` | `inventario:consultar` o `inventario:leer` | → `{ sin_ubicacion, stock_critico }` |
+| `GET /api/compras/descargas/pendientes` | `compras:confirmar_descarga` o `compras:recepcionar` | → `[{ id_recepcion, numero_factura, nombre_proveedor, fecha_emision, fecha_recepcion, unidades, detalle: [{ sku, cantidad }] }]`, de la más antigua a la más reciente; sin montos |
+| `PATCH /api/pedidos/:id/documento` | `pedidos:documentar` (ADMIN) | `{ numero_documento }` (solo dígitos y guion, ≤20; vacío o `null` lo quita) → `{ id_orden, numero_documento_sii }`; audita `DOCUMENTO_SII` |
+
+La firma se guarda en S3 como `firmas/<id_despacho>.png` (igual que `evidencias/<id>.<ext>`) y se audita solo su clave. Con
+`STORAGE_ENABLED=false` la imagen se descarta sin error y `url_firma_s3` queda `NULL`; el nombre del receptor sí se guarda.
+Firma y receptor son opcionales; con `EXIGIR_RECEPTOR_ENTREGA=true` un ENTREGADO sin ninguno de los dos responde 400
+`RECEPTOR_OBLIGATORIO`. El reingreso suma el stock de cada línea (los observers de stock crítico se notifican tras el commit),
+marca `reingresado_en`/`id_usuario_reingreso`, deja el pedido en `EN_CAMION` (listo para `asignar-chofer`, que crea un despacho
+nuevo) y audita `REINGRESO` con orden, despacho y unidades, todo en una transacción.
+
 ## Producción
 
 Con `NODE_ENV=production` la API no arranca si `JWT_SECRET` tiene menos de 32 caracteres o es el valor de ejemplo.
@@ -84,6 +114,6 @@ Genera uno con `node -e "console.log(require('crypto').randomBytes(32).toString(
 ## Hallazgos de la auditoría pendientes
 
 No se abordaron en este trabajo: límite de memoria al leer `.xlsx` (bomba de descompresión), paginación del listado de
-pedidos, stock y salida de una entrega rechazada, reasignación de despachos al dar de baja a un chofer, límite de
+pedidos, reasignación de despachos al dar de baja a un chofer, límite de
 peticiones en el login, revocación individual de tokens (`jti`/logout; el cambio de clave revoca las sesiones por
 usuario) y los hallazgos Bajo/Informativos restantes.

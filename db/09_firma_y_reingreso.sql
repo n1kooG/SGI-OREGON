@@ -2,7 +2,7 @@
 --  · despacho: firma (clave S3), nombre del receptor y registro del reingreso físico de un rechazo.
 --  · Un pedido rechazado y reingresado vuelve a EN_CAMION y puede tener un despacho nuevo: la restricción UNIQUE (id_orden)
 --    pasa a un índice único parcial (un solo despacho PENDIENTE por pedido); el historial de intentos se conserva.
---  · Permiso entregas:reingresar para ADMINISTRADOR y BODEGA.
+--  · Permisos: entregas:reingresar (ADMINISTRADOR y BODEGA) y pedidos:documentar (ADMINISTRADOR, N° de boleta/factura SII, T30).
 ALTER TABLE despacho ADD COLUMN IF NOT EXISTS url_firma_s3          VARCHAR(255);
 ALTER TABLE despacho ADD COLUMN IF NOT EXISTS nombre_receptor       VARCHAR(120);
 ALTER TABLE despacho ADD COLUMN IF NOT EXISTS reingresado_en        TIMESTAMPTZ;
@@ -39,3 +39,5 @@ END $$;
 
 UPDATE rol SET permisos = permisos || '["entregas:reingresar"]'::jsonb
  WHERE nombre_rol IN ('ADMINISTRADOR', 'BODEGA') AND NOT (permisos ? 'entregas:reingresar');
+UPDATE rol SET permisos = permisos || '["pedidos:documentar"]'::jsonb
+ WHERE nombre_rol = 'ADMINISTRADOR' AND NOT (permisos ? 'pedidos:documentar');

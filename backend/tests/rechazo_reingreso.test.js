@@ -147,3 +147,9 @@ test('PI-05: Bodega no puede sacar un RECHAZADO de ese estado sin reingresar (40
   sumados = { 'TH-4500': sumados['TH-4500'] + 2, 'UT-FORNO': sumados['UT-FORNO'] + 1 };
   assert.equal(await estado(id), 'EN_CAMION');
 });
+
+test('Permisos: entregas:reingresar para ADMINISTRADOR y BODEGA; pedidos:documentar solo para ADMINISTRADOR; CHOFER ninguno', async () => {
+  const roles = Object.fromEntries((await query(`SELECT nombre_rol, permisos FROM rol`)).rows.map((r) => [r.nombre_rol, r.permisos]));
+  assert.deepEqual(['ADMINISTRADOR', 'BODEGA', 'CHOFER'].map((n) => roles[n].includes('entregas:reingresar')), [true, true, false]);
+  assert.deepEqual(['ADMINISTRADOR', 'BODEGA', 'CHOFER'].map((n) => roles[n].includes('pedidos:documentar')), [true, false, false]);
+});

@@ -48,6 +48,7 @@ router.get('/:id(\\d+)/etiqueta', autenticar, preparar, ah(async (req, res) => {
   const { pdf, nombre } = await svc.etiqueta(req, id(req));
   res.set('Content-Disposition', `attachment; filename="${nombre.replace(/[^\w.-]/g, '_')}"`).type('application/pdf').send(pdf);
 }));
+router.patch('/:id(\\d+)/documento', autenticar, requierePermiso('pedidos:documentar'), ah(async (req, res) => res.json(await svc.documentar(req, id(req), req.body?.numero_documento))));
 router.post('/:id(\\d+)/asignar-chofer', autenticar, requierePermiso('pedidos:asignar_chofer'), ah(async (req, res) => res.json(await svc.asignarChofer(req, id(req), req.body?.id_chofer))));
 
 export default router;

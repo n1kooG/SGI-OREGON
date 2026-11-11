@@ -91,3 +91,9 @@ export async function resumen() {
     en_camion_esperando_chofer: por.EN_CAMION ?? 0, rechazados_por_reingresar: n,
   };
 }
+
+export const documentoActual = async (c, id) => {
+  const { rows } = await c.query(`SELECT numero_documento_sii FROM orden_venta WHERE id_orden = $1 FOR UPDATE`, [id]);
+  return rows.length ? { numero: rows[0].numero_documento_sii } : null;
+};
+export const fijarDocumento = (c, id, numero) => c.query(`UPDATE orden_venta SET numero_documento_sii = $2 WHERE id_orden = $1`, [id, numero]);

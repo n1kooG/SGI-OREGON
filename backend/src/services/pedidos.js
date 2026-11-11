@@ -94,3 +94,20 @@ export async function asignarChofer(req, id, idChofer) {
     });
   } catch (e) { return dePg(e); }
 }
+
+// T30: el N° de boleta/factura SII lo registra o corrige el Administrador. Vacío o null lo quita; si no cambia no se escribe ni se audita.
+export async function documentar(req, id, numero) {
+  if (numero !== undefined && numero !== null && typeof numero !== 'string') throw bad('numero_documento debe ser texto');
+  const n = (numero ?? '').trim();
+  if (n && !/^[0-9-]{1,20}$/.test(n)) throw bad('numero_documento admite solo dígitos y guion (máximo 20 caracteres)');
+  return conTransaccion(async (c) => {
+    const actual = await repo.documentoActual(c, id);
+    if (!actual) throw new AppError(404, 'Pedido no encontrado', 'NO_ENCONTRADO');
+    const nuevo = n || null;
+    if (actual.numero !== nuevo) {
+      await repo.fijarDocumento(c, id, nuevo);
+      await auditar(req, { idUsuario: req.usuario.id_usuario, tabla: 'orden_venta', accion: 'DOCUMENTO_SII', antes: { id_orden: id, numero_documento_sii: actual.numero }, despues: { id_orden: id, numero_documento_sii: nuevo } }, c);
+    }
+    return { id_orden: id, numero_documento_sii: nuevo };
+  });
+}
