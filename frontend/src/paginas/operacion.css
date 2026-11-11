@@ -10,6 +10,8 @@
 .badge.info { background: var(--info-bg); color: var(--info); }
 .badge.info::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .tabla-pedidos .badge, .movil .badge { padding: 3px 8px; line-height: 16px; }
+/* Un estado largo (p. ej. «Rechazado · causal») baja de línea dentro de su celda y no invade la columna Acción. */
+.tabla-pedidos td .badge { max-width: 100%; white-space: normal; }
 
 /* ---------- Pedidos y Despachos (oficina) ---------- */
 .cabecera.pedidos-cab { margin-bottom: 28px; }

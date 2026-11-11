@@ -9,8 +9,8 @@ export const ESTADOS = {
   EN_RUTA: ['En ruta (chofer)', 'aviso'], ENTREGADO: ['Entregado', 'ok'], RECHAZADO: ['Rechazado', 'mal'],
 };
 export const EstadoBadge = ({ e }) => <Badge tono={ESTADOS[e]?.[1]}>{ESTADOS[e]?.[0] ?? e}</Badge>;
-// La causal es texto libre del chofer: en la tabla va resumida (primera frase, tope de 28 caracteres).
-const causalResumida = (m = '') => { const t = m.split(/[.:;\n]/)[0].trim(); return t.length > 28 ? `${t.slice(0, 27)}…` : t; };
+// La causal es texto libre del chofer («Causal — detalle»): en la tabla va resumida (solo la causal, tope de 28 caracteres).
+const causalResumida = (m = '') => { const t = m.split(/[.:;\n]| — /)[0].trim(); return t.length > 28 ? `${t.slice(0, 27)}…` : t; };
 export const fechaCorta = (f) => new Date(f).toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' }).replaceAll('-', '/');
 
 function AsignarChofer({ pedido, onClose, onHecho }) {
