@@ -124,6 +124,8 @@
 .verificacion > p { font-size: 13px; line-height: 18px; }
 .verificacion .bulto-fila { gap: 0 10px; }
 .verificacion .bulto-fila .btn { margin-bottom: 0; }
+.verificacion .bulto-ubi { grid-column: 1 / -1; margin-top: 8px; }
+.verificacion .bulto-ubi .entrada { font-family: var(--f-dato); }
 .descarga .btn.primario.bloque { font-weight: 500; }
 
 /* ---------- Chofer: ruta de reparto y registro de entrega ---------- */
