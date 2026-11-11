@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, mensajeError } from '../api.js';
 import { Alerta, Boton, Campo, Icono, Modal, Tabla, clp, pct, useAviso } from '../componentes/ui.jsx';
+import '../estilos/sprint1.css';
 import { useSesion } from '../sesion.jsx';
 
 const LIM = 10;
 const CANALES = [['WEB', 'Web'], ['MARKETPLACE', 'Marketplace'], ['MAYORISTA', 'Mayorista']];
+// Pasillo y estante van en dos líneas: «Pasillo A - Estante 2».
+const Ubicacion = ({ texto }) => { const [a, ...b] = texto.split(/\s+-\s+/); return <>{a}{b.length > 0 && <div className="dato-sec">{b.join(' - ')}</div>}</>; };
 const precioDe = (p, canal) => p.precios?.[canal]?.precio;
 
 export default function Catalogo() {
@@ -33,7 +36,7 @@ export default function Catalogo() {
   const cerrar = useCallback(() => setPanel(null), []);
 
   return (
-    <>
+    <div className="s1 catalogo">
       <div className="cabecera">
         <div>
           <h1>Catálogo Maestro de Productos</h1>
@@ -62,8 +65,8 @@ export default function Catalogo() {
               <td className="dato">{p.sku}</td>
               <td>{p.nombre}<div className="dato celda-sec">{p.modelo}</div></td>
               <td>{p.marca}</td>
-              <td>{p.ubicacion_bodega ?? <span className="celda-sec">Sin ubicación</span>}</td>
-              <td className="dato derecha">{clp(p.costo_adquisicion_neto) ?? '—'}</td>
+              <td>{p.ubicacion_bodega ? <Ubicacion texto={p.ubicacion_bodega} /> : <span className="celda-sec">Sin ubicación</span>}</td>
+              <td className="dato derecha costo">{clp(p.costo_adquisicion_neto) ?? '—'}</td>
               <td className="dato derecha">{clp(precioDe(p, 'WEB')) ?? '—'}</td>
               <td className="dato derecha">{clp(precioDe(p, 'MAYORISTA')) ?? '—'}</td>
               <td className="dato derecha" style={bajo ? { color: 'var(--danger)' } : undefined}>{bajo && '● '}{p.stock_fisico ?? 0} un.</td>
@@ -83,7 +86,7 @@ export default function Catalogo() {
       </div>
 
       {panel && <FormProducto producto={panel.producto} onClose={cerrar} onCambios={cargar} />}
-    </>
+    </div>
   );
 }
 
@@ -170,15 +173,14 @@ function FormProducto({ producto, onClose, onCambios }) {
         <div className="grid2">
           {verCostos && <Campo etiqueta="Costo de adquisición neto ($)" type="number" min="0" inputMode="decimal" value={f.costo} onChange={set('costo')} error={err.costo} placeholder="0" />}
           <Campo etiqueta="Stock mínimo (un.)" type="number" min="0" value={f.stock_minimo} onChange={set('stock_minimo')} error={err.stock_minimo} />
-          {editar && <Campo etiqueta="Ubicación en bodega" value={producto.ubicacion_bodega ?? ''} readOnly placeholder="Sin ubicación" />}
-          {editar && <Campo etiqueta="Stock físico (un.)" value={producto.stock_fisico ?? 0} readOnly />}
+          <Campo etiqueta="Ubicación en bodega" value={producto?.ubicacion_bodega ?? ''} readOnly placeholder={editar ? 'Sin ubicación' : 'Ej. Pasillo A - Estante 2'} />
+          <Campo etiqueta="Stock físico (un.)" value={producto?.stock_fisico ?? 0} readOnly />
         </div>
-        {editar && (
-          <div className="interruptor">
-            <button type="button" role="switch" aria-checked={f.activo} aria-label="Producto activo" onClick={() => setF({ ...f, activo: !f.activo })} />
-            <span>Producto activo</span><span className="tenue">Inactivar no borra el historial.</span>
-          </div>
-        )}
+        {/* Un producto nuevo siempre nace activo: el interruptor solo se opera al editar. */}
+        <div className="interruptor">
+          <button type="button" role="switch" aria-checked={f.activo} aria-label="Producto activo" disabled={!editar} onClick={() => setF({ ...f, activo: !f.activo })} />
+          <span>Producto activo</span><span className="tenue">Inactivar no borra el historial.</span>
+        </div>
 
         <div className="seccion etiqueta">Precios por canal</div>
         {CANALES.map(([c, nombre]) => {

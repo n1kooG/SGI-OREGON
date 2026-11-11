@@ -2,23 +2,20 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alerta, Boton, Campo, Logo } from '../componentes/ui.jsx';
 import { mensajeError } from '../api.js';
+import '../estilos/sprint1.css';
 import { HOME, useSesion } from '../sesion.jsx';
 
 const KEY = 'sgi_correo';
 const correoGuardado = () => { try { return localStorage.getItem(KEY) ?? ''; } catch { return ''; } };
 const guardar = (v) => { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch { /* sin almacenamiento */ } };
 
-// Estantería decorativa del fondo.
+// Estantería decorativa del fondo (medidas del diseño: 1440 × 828).
+const CAJAS = [[40, 100, 110, 70], [190, 86, 130, 84], [470, 106, 96, 64], [760, 78, 120, 92], [1010, 96, 104, 74], [1190, 82, 128, 88], [20, 330, 120, 90], [270, 350, 100, 70], [560, 324, 128, 96], [880, 354, 96, 66], [1100, 340, 120, 80], [1290, 344, 100, 76], [150, 584, 128, 86], [400, 596, 100, 74], [640, 580, 116, 90], [940, 600, 128, 70], [1210, 586, 96, 84]];
 const Fondo = () => (
-  <svg aria-hidden="true" preserveAspectRatio="xMidYMid slice">
-    <defs>
-      <pattern id="est" width="360" height="250" patternUnits="userSpaceOnUse">
-        <path d="M0 246h360" stroke="#17524e" strokeWidth="6" /><path d="M120 0v246M240 0v246" stroke="#17524e" strokeWidth="2" />
-        <rect x="40" y="100" width="110" height="140" rx="4" fill="none" stroke="#1d5f5a" strokeWidth="2" />
-        <rect x="190" y="70" width="130" height="170" rx="4" fill="none" stroke="#1d5f5a" strokeWidth="2" />
-      </pattern>
-    </defs>
-    <rect width="100%" height="100%" fill="url(#est)" />
+  <svg aria-hidden="true" viewBox="0 0 1440 828" preserveAspectRatio="xMidYMid slice">
+    {Array.from({ length: 13 }, (_, i) => <rect key={i} x={i * 120} y="0" width="2" height="828" />)}
+    {[170, 420, 670].map((y) => <rect key={y} x="0" y={y} width="1440" height="6" />)}
+    {CAJAS.map(([x, y, w, h]) => <rect key={x + '-' + y} x={x + 1} y={y + 1} width={w - 2} height={h - 2} rx="3" fill="none" stroke="currentColor" strokeWidth="2" />)}
   </svg>
 );
 
