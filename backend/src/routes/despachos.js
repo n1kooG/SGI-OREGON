@@ -18,4 +18,7 @@ router.patch('/:id(\\d+)', autenticar, requierePermiso('entregas:registrar'), co
   res.json(await svc.cerrar(req, Number(req.params.id), req.body ?? {}, req.files?.foto?.[0] ?? null, req.files?.firma?.[0] ?? null));
 }));
 
+// PI-05: Bodega o Administrador reingresan un rechazo (devuelve el stock y deja el pedido listo para reasignar).
+router.post('/:id(\\d+)/reingresar', autenticar, requierePermiso('entregas:reingresar'), ah(async (req, res) => res.json(await svc.reingresar(req, Number(req.params.id)))));
+
 export default router;

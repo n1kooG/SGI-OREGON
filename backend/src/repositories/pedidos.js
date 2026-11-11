@@ -1,16 +1,21 @@
 import { query } from '../db.js';
 
-export async function listar(estados, canal) {
+// Un pedido reprogramado tiene varios despachos: se toma siempre el último (el vigente o el más reciente).
+const ULTIMO_DESPACHO = `LEFT JOIN LATERAL (SELECT * FROM despacho x WHERE x.id_orden = o.id_orden ORDER BY x.id_despacho DESC LIMIT 1) ds ON true`;
+
+export async function listar(estados, canal, porReingresar = false) {
   const { rows } = await query(
     `SELECT o.id_orden, o.codigo_externo, o.canal_origen, o.fecha_orden, o.nombre_cliente, o.comuna, o.estado_orden,
             (SELECT COALESCE(SUM(d.cantidad_vendida), 0)::int FROM detalle_venta d WHERE d.id_orden = o.id_orden) AS unidades,
-            ds.id_usuario_chofer, u.nombre_completo AS nombre_chofer, ds.estado_entrega
+            ds.id_usuario_chofer, u.nombre_completo AS nombre_chofer, ds.estado_entrega,
+            ds.motivo_rechazo, ds.nombre_receptor, ds.reingresado_en, (ds.reingresado_en IS NOT NULL) AS reingresado
        FROM orden_venta o
-       LEFT JOIN despacho ds ON ds.id_orden = o.id_orden
+       ${ULTIMO_DESPACHO}
        LEFT JOIN usuario u ON u.id_usuario = ds.id_usuario_chofer
       WHERE ($1::text[] IS NULL OR o.estado_orden = ANY($1)) AND ($2::text IS NULL OR o.canal_origen = $2)
+        AND (NOT $3::boolean OR (ds.estado_entrega = 'RECHAZADO' AND ds.reingresado_en IS NULL))
       ORDER BY o.fecha_orden DESC LIMIT 100`,
-    [estados, canal],
+    [estados, canal, porReingresar],
   );
   return rows;
 }
@@ -19,8 +24,10 @@ export async function obtener(id, c = { query }) {
   const { rows } = await c.query(
     `SELECT o.id_orden, o.codigo_externo, o.canal_origen, o.fecha_orden, o.nombre_cliente, o.direccion_despacho, o.comuna,
             o.telefono_contacto, o.estado_orden, o.numero_documento_sii,
-            ds.id_despacho, ds.id_usuario_chofer, ds.estado_entrega
-       FROM orden_venta o LEFT JOIN despacho ds ON ds.id_orden = o.id_orden WHERE o.id_orden = $1`, [id]);
+            ds.id_despacho, ds.id_usuario_chofer, ds.estado_entrega,
+            ds.motivo_rechazo, ds.nombre_receptor, (ds.url_firma_s3 IS NOT NULL) AS tiene_firma,
+            ds.reingresado_en, (ds.reingresado_en IS NOT NULL) AS reingresado
+       FROM orden_venta o ${ULTIMO_DESPACHO} WHERE o.id_orden = $1`, [id]);
   return rows[0] ?? null;
 }
 

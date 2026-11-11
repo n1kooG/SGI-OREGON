@@ -17,8 +17,14 @@ export async function miRuta(idChofer) {
 }
 
 export const bloquear = async (c, id) =>
-  (await c.query(`SELECT id_despacho, id_orden, id_usuario_chofer, estado_entrega FROM despacho WHERE id_despacho = $1 FOR UPDATE`, [id])).rows[0] ?? null;
+  (await c.query(`SELECT id_despacho, id_orden, id_usuario_chofer, estado_entrega, reingresado_en FROM despacho WHERE id_despacho = $1 FOR UPDATE`, [id])).rows[0] ?? null;
 
 export const cerrar = (c, id, estado, motivo, clave, claveFirma, receptor) => c.query(
   `UPDATE despacho SET estado_entrega = $2, motivo_rechazo = $3, url_evidencia_s3 = $4, url_firma_s3 = $5, nombre_receptor = $6, fecha_cierre = now() WHERE id_despacho = $1`,
   [id, estado, motivo, clave, claveFirma, receptor]);
+
+export const lineasOrden = async (c, idOrden) =>
+  (await c.query(`SELECT sku, cantidad_vendida::int AS cantidad FROM detalle_venta WHERE id_orden = $1 ORDER BY sku`, [idOrden])).rows;
+
+export const marcarReingreso = async (c, id, idUsuario) =>
+  (await c.query(`UPDATE despacho SET reingresado_en = now(), id_usuario_reingreso = $2 WHERE id_despacho = $1 RETURNING reingresado_en`, [id, idUsuario])).rows[0].reingresado_en;

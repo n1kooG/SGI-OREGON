@@ -19,10 +19,13 @@ const dePg = (e) => {
 };
 
 // Bodega (sin pedidos:leer) ve solo lo que debe preparar; el Administrador ve todo para supervisar (CU-06).
-export function listar(req, { estado, canal } = {}) {
+// `por_reingresar` (Bodega y Administrador): solo los RECHAZADO cuyo bulto aún no volvió a bodega; aparte de los 4 estados de bodega.
+export function listar(req, { estado, canal, por_reingresar } = {}) {
   if (estado && !ESTADOS.includes(estado)) throw bad('Estado inválido');
-  const estados = estado ? [estado] : tiene(req, 'pedidos:leer') ? null : BODEGA;
-  return repo.listar(estados, canal ? String(canal) : null);
+  const porReingresar = ['1', 'true'].includes(String(por_reingresar));
+  if (porReingresar && estado && estado !== 'RECHAZADO') throw bad('por_reingresar solo aplica a pedidos RECHAZADO');
+  const estados = porReingresar ? ['RECHAZADO'] : estado ? [estado] : tiene(req, 'pedidos:leer') ? null : BODEGA;
+  return repo.listar(estados, canal ? String(canal) : null, porReingresar);
 }
 
 async function existente(id) {

@@ -1,5 +1,6 @@
 import * as repo from '../repositories/despachos.js';
 import * as pedidos from '../repositories/pedidos.js';
+import { incrementarFisico } from '../repositories/inventario.js';
 import { conTransaccion } from '../db.js';
 import { auditar } from '../audit.js';
 import { AppError } from '../errors.js';
@@ -73,5 +74,34 @@ export async function cerrar(req, id, body = {}, foto = null, firma = null) {
       despues: { id_despacho: id, id_orden: actual.id_orden, estado_entrega: estado, motivo_rechazo: motivo || null, evidencia: clave, firma: claveFirma, nombre_receptor: receptor || null }, // la imagen nunca va a la bitácora: solo su clave
     }, c);
     return { id_despacho: id, id_orden: actual.id_orden, estado_entrega: estado, evidencia: !!clave, firma: !!claveFirma, nombre_receptor: receptor || null };
+  });
+}
+
+// PI-05: el rechazo vuelve físicamente a bodega. Devuelve el stock de cada línea, marca el reingreso y deja el pedido en EN_CAMION
+// para reasignar chofer, todo en una transacción (si falla cualquier paso no queda stock devuelto a medias).
+export async function reingresar(req, id) {
+  return conTransaccion(async (c) => {
+    const d = await repo.bloquear(c, id);
+    if (!d) throw new AppError(404, 'Despacho no encontrado', 'NO_ENCONTRADO');
+    if (d.estado_entrega !== 'RECHAZADO') throw bad('Solo se reingresan despachos rechazados', 409, 'NO_RECHAZADO');
+    if (d.reingresado_en) throw bad('El rechazo ya fue reingresado', 409, 'YA_REINGRESADO');
+    const lineas = await repo.lineasOrden(c, d.id_orden);
+    for (const l of lineas) {
+      if (!(await incrementarFisico(l.sku, l.cantidad, c))) throw bad(`El SKU ${l.sku} no tiene inventario`, 409, 'SIN_INVENTARIO');
+    }
+    const reingresadoEn = await repo.marcarReingreso(c, id, req.usuario.id_usuario);
+    try {
+      await pedidos.fijarEstado(c, d.id_orden, 'EN_CAMION'); // trg_orden_transicion: RECHAZADO -> EN_CAMION
+    } catch (e) {
+      if (e.code === '23514') throw bad(e.message, 409, 'TRANSICION_INVALIDA');
+      throw e;
+    }
+    const unidades = lineas.reduce((n, l) => n + l.cantidad, 0);
+    await auditar(req, {
+      idUsuario: req.usuario.id_usuario, tabla: 'despacho', accion: 'REINGRESO',
+      antes: { id_orden: d.id_orden, estado_orden: 'RECHAZADO' },
+      despues: { id_orden: d.id_orden, id_despacho: id, estado_orden: 'EN_CAMION', unidades, items: lineas },
+    }, c);
+    return { id_despacho: id, id_orden: d.id_orden, estado_orden: 'EN_CAMION', unidades, reingresado_en: reingresadoEn };
   });
 }
