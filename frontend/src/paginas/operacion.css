@@ -155,3 +155,62 @@
 .cierre-pie .btn.bloque { font-weight: 500; }
 .cierre-pie .btn.enlace { width: 100%; height: 48px; padding: 0 24px; border-radius: 10px; color: var(--ink-2); }
 .cierre-pie .btn.enlace:hover { text-decoration: none; background: var(--bg); }
+
+/* ======================================================================
+   Bodega · flujos nuevos (inicio, descargas, rechazados, buscador, pedidos)
+   ====================================================================== */
+/* Botón principal de Bodega: relleno naranja oscuro con texto blanco (contraste AA) */
+.movil.bodega .btn.primario { background: var(--accent-ink); border-color: var(--accent-ink); }
+.movil.bodega .btn.primario:hover { background: #a63a00; border-color: #a63a00; }
+.movil.bodega .btn.primario:disabled { opacity: .5; cursor: not-allowed; }
+.movil.bodega .btn { height: 48px; border-radius: 10px; font-weight: 500; }
+.movil.bodega .btn.icono-solo { width: 34px; height: 34px; }
+.movil.bodega .movil-cab .btn { height: auto; }
+.movil.bodega .btn.bloque { height: 48px; }
+
+/* Inicio */
+.bodega-inicio { gap: 12px; }
+.bodega-inicio .saludo { display: flex; flex-direction: column; gap: 2px; }
+.bodega-inicio .saludo h1 { font-size: 22px; line-height: 30px; font-weight: 600; letter-spacing: 0; }
+.bodega-inicio .saludo .tenue { font-size: 13px; line-height: 18px; }
+.bodega-inicio h2 { font-size: 18px; line-height: 26px; }
+.tarjeta-trabajo { display: flex; align-items: center; gap: 12px; min-height: 88px; padding: 12px 12px 12px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; text-decoration: none; }
+.tarjeta-trabajo:hover { border-color: var(--line-strong); }
+.cifra-trabajo { flex: none; width: 52px; font: 700 32px/40px var(--f-dato); color: var(--ink); }
+.texto-trabajo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 13px; line-height: 18px; color: var(--ink-2); }
+.texto-trabajo strong { font-size: 15px; line-height: 20px; font-weight: 600; color: var(--ink); }
+.flecha-trabajo { flex: none; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); }
+.flecha-trabajo .icono { width: 20px; height: 20px; }
+.tarjeta-trabajo.peligro { background: var(--danger-bg); border-color: var(--danger); }
+.tarjeta-trabajo.peligro .cifra-trabajo { color: var(--danger); }
+.tarjeta-trabajo.peligro .flecha-trabajo { background: var(--surface); }
+.tarjeta-trabajo.critico { border: 2px solid var(--accent); padding: 11px 11px 11px 15px; }
+.al-dia, .sin-nada { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 560px; padding: 24px 32px; text-align: center; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; }
+.al-dia p, .sin-nada p { font-size: 14px; line-height: 20px; color: var(--ink-2); }
+.al-dia .btn { align-self: stretch; margin-top: 4px; }
+.sello-ok { display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; border-radius: 999px; background: var(--ok-bg); color: var(--ok); }
+.sello-ok .icono { width: 28px; height: 28px; stroke-width: 2.4; }
+.sin-nada .sello-ok { background: var(--info-bg); color: var(--info); }
+
+/* Rechazados por reingresar */
+.rechazados .cab-pagina h1 { white-space: normal; }
+.rechazados .cab-pagina .fila-sb { align-items: flex-start; }
+.nota-info { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border-radius: 12px; background: var(--info-bg); border: 1px solid var(--teal); color: var(--info); font-size: 13px; line-height: 18px; }
+.nota-info .icono { width: 16px; height: 16px; margin-top: 1px; }
+.rechazados .tarjeta-pedido { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 16px; border-radius: 16px; }
+.rechazados .tarjeta-pedido > strong { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; }
+.rechazados .fila-sb { flex-wrap: nowrap; }
+.dato-fecha .icono { flex: none; }
+.causal { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 10px; background: var(--danger-bg); font-size: 14px; line-height: 20px; color: var(--ink); }
+.causal small { font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.unidades-cuadro { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); font-size: 13px; color: var(--ink-2); }
+.unidades-cuadro b { font: 700 20px/26px var(--f-dato); color: var(--ink); }
+.movil.bodega .velo-modal { align-items: flex-start; padding: 188px 20px 0; }
+.movil.bodega .modal { max-width: 350px; padding: 20px; gap: 12px; }
+.movil.bodega .modal .modal-cab, .movil.bodega .modal .modal-cuerpo, .movil.bodega .modal .modal-pie { padding: 0; }
+.movil.bodega .modal .modal-cab h2 { font-size: 20px; line-height: 28px; }
+.movil.bodega .modal .modal-cab p { margin-top: 12px; font: 500 12px/16px var(--f-dato); color: var(--ink-2); }
+.movil.bodega .modal .modal-pie { gap: 12px; }
+.movil.bodega .modal .modal-pie .btn { flex: 1; }
+.movil.bodega .modal .modal-cab .icono-solo { display: none; }
+.movil.bodega .modal .modal-cuerpo p { font-size: 14px; line-height: 20px; }
