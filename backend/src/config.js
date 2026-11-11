@@ -18,3 +18,8 @@ export const config = {
 if (!config.jwtSecret || config.jwtSecret.length < 16) {
   throw new Error('JWT_SECRET no definido o demasiado corto (mínimo 16 caracteres). Copia .env.example a .env');
 }
+
+// En producción el secreto de ejemplo del repositorio (público) o uno corto permitiría falsificar sesiones.
+if (process.env.NODE_ENV === 'production' && (config.jwtSecret.length < 32 || config.jwtSecret.startsWith('cambia-esto'))) {
+  throw new Error('JWT_SECRET débil o igual al valor de ejemplo: en producción usa un secreto aleatorio de al menos 32 caracteres');
+}
