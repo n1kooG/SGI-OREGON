@@ -163,9 +163,6 @@
 .movil.bodega .btn.primario { background: var(--accent-ink); border-color: var(--accent-ink); }
 .movil.bodega .btn.primario:hover { background: #a63a00; border-color: #a63a00; }
 .movil.bodega .btn.primario:disabled { opacity: .5; cursor: not-allowed; }
-.movil.bodega .btn { height: 48px; border-radius: 10px; font-weight: 500; }
-.movil.bodega .btn.icono-solo { width: 34px; height: 34px; }
-.movil.bodega .movil-cab .btn { height: auto; }
 .movil.bodega .btn.bloque { height: 48px; }
 
 /* Inicio */
@@ -197,9 +194,9 @@
 .rechazados .cab-pagina .fila-sb { align-items: flex-start; }
 .nota-info { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border-radius: 12px; background: var(--info-bg); border: 1px solid var(--teal); color: var(--info); font-size: 13px; line-height: 18px; }
 .nota-info .icono { width: 16px; height: 16px; margin-top: 1px; }
-.rechazados .tarjeta-pedido { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 16px; border-radius: 16px; }
-.rechazados .tarjeta-pedido > strong { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; }
-.rechazados .fila-sb { flex-wrap: nowrap; }
+.rechazados .tarjeta-pedido, .descarga .tarjeta-pedido { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 16px; border-radius: 16px; }
+.rechazados .tarjeta-pedido > strong, .descarga .tarjeta-pedido > strong { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; }
+.rechazados .fila-sb, .descarga .tarjeta-pedido .fila-sb { flex-wrap: nowrap; }
 .dato-fecha .icono { flex: none; }
 .causal { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 10px; background: var(--danger-bg); font-size: 14px; line-height: 20px; color: var(--ink); }
 .causal small { font-size: 12px; line-height: 16px; color: var(--ink-2); }
@@ -215,3 +212,47 @@
 .movil.bodega .modal .modal-cab .icono-solo { display: none; }
 .movil.bodega .modal .modal-cuerpo p { font-size: 14px; line-height: 20px; }
 .movil.bodega .nav-inferior a .icono { color: var(--accent); }
+.movil.bodega .modal-pie .btn { height: 48px; border-radius: 10px; }
+
+/* Descarga: conteo por SKU */
+.volver { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; padding: 4px 8px 4px 0; margin-top: 4px; border: 0; background: none; font-size: 14px; line-height: 20px; color: var(--ink-2); cursor: pointer; }
+.volver .icono { width: 18px; height: 18px; }
+.descarga > .btn.enlace { align-self: center; height: auto; padding: 8px; font-size: 13px; line-height: 18px; color: var(--ink-2); text-decoration: underline; white-space: normal; text-align: center; }
+.cab-factura { display: flex; flex-direction: column; gap: 10px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.cab-factura .fila-sb { flex-wrap: nowrap; }
+.cab-factura h1 { font-size: 20px; line-height: 28px; letter-spacing: 0; margin: 0; }
+.estado-conteo { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border-radius: 12px; font-size: 13px; line-height: 18px; color: var(--ink-2); }
+.estado-conteo > div { display: flex; flex-direction: column; gap: 2px; }
+.estado-conteo strong { font-size: 15px; line-height: 20px; font-weight: 600; color: var(--ink); }
+.estado-conteo .icono { width: 22px; height: 22px; margin-top: 3px; stroke-width: 2.2; }
+.estado-conteo.ok { background: var(--ok-bg); }
+.estado-conteo.ok .icono { color: var(--ok); }
+.estado-conteo.aviso { background: var(--warn-bg); }
+.estado-conteo.aviso .icono { color: var(--warn); }
+.titulo-lista { font-size: 13px; line-height: 18px; }
+.conteo { padding-bottom: 168px; }
+.linea-conteo { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.linea-conteo.falta { border: 2px solid var(--warn); padding: 15px; }
+.linea-conteo.sobra { border: 2px solid var(--info); padding: 15px; }
+.linea-conteo .fila-sb { flex-wrap: nowrap; }
+.linea-conteo > strong { font-size: 15px; line-height: 20px; font-weight: 600; }
+.control-conteo { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.esperadas { display: flex; flex-direction: column; }
+.esperadas small { font-size: 13px; line-height: 18px; color: var(--ink-3); }
+.esperadas b { font: 700 20px/26px var(--f-dato); }
+.stepper { display: flex; align-items: center; gap: 8px; }
+.stepper button, .stepper input { height: 48px; border-radius: 10px; }
+.stepper button { width: 48px; display: flex; align-items: center; justify-content: center; padding: 0; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); cursor: pointer; }
+.stepper button:disabled { opacity: .4; cursor: not-allowed; }
+.stepper .mas { background: var(--accent-soft); border-color: var(--accent-soft); color: var(--accent-ink); }
+.stepper input { width: 64px; padding: 0; text-align: center; background: var(--bg); border: 1px solid var(--line); font: 500 20px/26px var(--f-dato); -moz-appearance: textfield; appearance: textfield; }
+.stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.linea-conteo.falta .stepper input { border: 2px solid var(--warn); }
+.linea-conteo.sobra .stepper input { border: 2px solid var(--info); }
+.campo-ubi { display: flex; flex-direction: column; gap: 6px; font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.con-icono { position: relative; display: block; }
+.con-icono .icono { position: absolute; left: 14px; top: 16px; width: 16px; height: 16px; color: var(--ink-3); }
+.con-icono .entrada { width: 100%; height: 48px; padding: 0 14px 0 40px; border-radius: 10px; font-size: 15px; }
+.pie-fijo { position: fixed; left: 0; bottom: 72px; width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 8px; padding: 12px 20px 16px; background: var(--surface); border-top: 1px solid var(--line); z-index: 10; }
+.pie-fijo p { font-size: 12px; line-height: 16px; text-align: center; color: var(--ink-2); }
+.pie-fijo .alerta { margin: 0; }
