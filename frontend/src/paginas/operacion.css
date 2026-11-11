@@ -283,3 +283,20 @@
 .buscador-stock .alerta { margin: 0; }
 .buscador-stock .stock-cols > div { align-items: stretch; }
 .buscador-stock .chip-ubicacion { align-self: flex-start; }
+
+/* Pedidos pendientes (diseño de flujos): contadores, secciones y refresco */
+.pedidos-bodega .actualizar-fila { gap: 12px; }
+.pedidos-bodega .actualizar-fila .tenue { font-size: 13px; line-height: 18px; }
+.pedidos-bodega .actualizar-fila .btn { height: 44px; padding: 0 16px; }
+.contadores { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.contador { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 8px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; font-size: 13px; line-height: 18px; color: var(--ink-2); }
+.contador b { grid-column: 1 / -1; font: 500 28px/36px var(--f-titulo); color: var(--ink); }
+.punto { width: 6px; height: 6px; border-radius: 50%; background: var(--info); }
+.punto.aviso { background: var(--warn); }
+.punto.ok { background: var(--ok); }
+.pedidos-bodega section > .fila-sb h2 { font-size: 18px; line-height: 26px; }
+.pedidos-bodega .resumen .icono { width: 18px; height: 18px; color: var(--ink-2); }
+.chofer-fila { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); font-size: 14px; line-height: 20px; color: var(--ink); }
+.chofer-fila .icono { width: 16px; height: 16px; color: var(--ink-3); }
+.pedidos-bodega .tarjeta-pedido > strong { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; }
+.pedidos-bodega .tarjeta-pedido { gap: 10px; }

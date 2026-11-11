@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, mensajeError } from '../api.js';
-import { Alerta, Badge, Boton, Campo, useAviso } from '../componentes/ui.jsx';
+import { Alerta, Badge, Boton, Campo, Icono, useAviso } from '../componentes/ui.jsx';
 import { ESTADOS, EstadoBadge, fechaCorta } from './Pedidos.jsx';
 
 const Calendario = () => <svg className="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>;
@@ -71,9 +71,11 @@ function Tarjeta({ p, abierta, onAbrir, onCambio }) {
     <article className={`tarjeta-pedido ${abierta ? 'abierta' : ''}`}>
       <button type="button" className="tarjeta-cab" aria-expanded={abierta} onClick={onAbrir}>
         <div className="fila-sb"><span className="chip-sku">#{p.codigo_externo}</span><EstadoBadge e={p.estado_orden} /></div>
-        <span className="dato-fecha"><Calendario />Fecha: {fechaCorta(p.fecha_orden)}</span>
+        {abierta && <span className="dato-fecha"><Calendario />Fecha: {fechaCorta(p.fecha_orden)}</span>}
         <strong>Cliente: {p.nombre_cliente}</strong>
-        <span className="resumen"><Badge tono="info">{p.unidades} un. en total</Badge><span className="ver-detalle">{abierta ? 'Ocultar detalle' : 'Ver detalle'}</span></span>
+        {abierta
+          ? <span className="resumen"><Badge tono="info">{p.unidades} un. en total</Badge><span className="ver-detalle">Ocultar detalle</span></span>
+          : <span className="resumen"><span className="ver-detalle">Toque para ver el detalle</span><Icono n="der" /></span>}
       </button>
       {abierta && (
         <div className="tarjeta-cuerpo">
@@ -103,29 +105,71 @@ function Tarjeta({ p, abierta, onAbrir, onCambio }) {
   );
 }
 
+const POR_PREPARAR = ['PENDIENTE_PREPARACION', 'ARMADO', 'ETIQUETADO'];
+const CONTADORES = [['pendiente_preparacion', 'Sin recolectar', 'aviso'], ['armado', 'Armado', 'info'], ['etiquetado', 'Etiquetado', 'info'], ['en_camion_esperando_chofer', 'En camión', 'ok']];
+const REFRESCO_MS = 60_000;
+const hora = (d) => d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+function EnCamion({ p }) {
+  const asignado = p.nombre_chofer && p.estado_entrega !== 'RECHAZADO'; // un chofer de un intento rechazado ya no cuenta
+  return (
+    <article className="tarjeta-pedido">
+      <div className="fila-sb"><span className="chip-sku">#{p.codigo_externo}</span><Badge tono={asignado ? 'ok' : undefined}>{asignado ? 'Chofer asignado' : 'Sin chofer'}</Badge></div>
+      <strong>Cliente: {p.nombre_cliente}</strong>
+      {p.comuna && <span className="dato-fecha"><Icono n="pin" />{p.comuna}</span>}
+      <span className="chofer-fila"><Icono n="persona" />Chofer: {asignado ? p.nombre_chofer : 'sin asignar aún'}</span>
+    </article>
+  );
+}
+
 export default function BodegaPedidos() {
   const [filas, setFilas] = useState(null);
+  const [res, setRes] = useState(null);
   const [error, setError] = useState('');
+  const [cuando, setCuando] = useState(null);
+  const [cargando, setCargando] = useState(false);
   const [abierta, setAbierta] = useState(null);
   const cargar = useCallback(async () => {
-    try { setFilas((await api('/pedidos')).data); setError(''); } catch (e) { setError(mensajeError(e)); setFilas((f) => f ?? []); }
+    setCargando(true);
+    try {
+      const [l, r] = await Promise.all([api('/pedidos'), api('/pedidos/resumen')]);
+      setFilas(l.data); setRes(r.data); setCuando(new Date()); setError('');
+    } catch (e) { setError(mensajeError(e)); setFilas((f) => f ?? []); } finally { setCargando(false); }
   }, []);
-  useEffect(() => { cargar(); }, [cargar]);
+  useEffect(() => {
+    cargar();
+    const t = setInterval(cargar, REFRESCO_MS);
+    return () => clearInterval(t);
+  }, [cargar]);
 
-  const porCanal = Map.groupBy(filas ?? [], (p) => p.canal_origen);
-  const pendientes = (filas ?? []).filter((p) => p.estado_orden === 'PENDIENTE_PREPARACION').length;
+  const porPreparar = (filas ?? []).filter((p) => POR_PREPARAR.includes(p.estado_orden));
+  const enCamion = (filas ?? []).filter((p) => p.estado_orden === 'EN_CAMION');
   return (
     <div className="movil-pagina pedidos-bodega">
-      <div className="cab-pagina"><div className="fila-sb"><h1>Pedidos pendientes</h1><Badge tono="ink">{pendientes} sin recolectar</Badge></div>
-      <p className="tenue">Toque una orden para desplegar los productos a recolectar</p></div>
+      <div className="cab-pagina"><h1>Pedidos pendientes</h1></div>
+      <div className="fila-sb actualizar-fila">
+        <span className="tenue">{cuando ? `Actualizado hoy a las ${hora(cuando)}` : 'Cargando…'}</span>
+        <Boton icono="refrescar" onClick={cargar} disabled={cargando}>Actualizar</Boton>
+      </div>
       <Alerta>{error}</Alerta>
-      {filas && !filas.length && !error && <p className="vacio">No hay pedidos pendientes.</p>}
-      {[...porCanal].map(([canal, ps]) => (
-        <section key={canal}>
-          <div className="seccion etiqueta">{canal}</div>
-          {ps.map((p) => <Tarjeta key={p.id_orden} p={p} abierta={abierta === p.id_orden} onAbrir={() => setAbierta(abierta === p.id_orden ? null : p.id_orden)} onCambio={cargar} />)}
+      {res && (
+        <div className="contadores">
+          {CONTADORES.map(([k, rotulo, tono]) => <div className="contador" key={k}><span className={`punto ${tono}`} />{rotulo}<b>{res[k]}</b></div>)}
+        </div>
+      )}
+      {filas && !error && !porPreparar.length && !enCamion.length && <p className="vacio">No hay pedidos pendientes.</p>}
+      {porPreparar.length > 0 && (
+        <section>
+          <div className="fila-sb"><h2>Por preparar</h2><Badge tono="ink">{porPreparar.length} {porPreparar.length === 1 ? 'pedido' : 'pedidos'}</Badge></div>
+          {porPreparar.map((p) => <Tarjeta key={p.id_orden} p={p} abierta={abierta === p.id_orden} onAbrir={() => setAbierta(abierta === p.id_orden ? null : p.id_orden)} onCambio={cargar} />)}
         </section>
-      ))}
+      )}
+      {enCamion.length > 0 && (
+        <section>
+          <div className="fila-sb"><h2>En camión, esperando chofer</h2><Badge tono="ink">{enCamion.length}</Badge></div>
+          {enCamion.map((p) => <EnCamion key={p.id_orden} p={p} />)}
+        </section>
+      )}
     </div>
   );
 }
