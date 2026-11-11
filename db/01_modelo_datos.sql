@@ -224,7 +224,8 @@ BEGIN
   IF NEW.estado_orden = OLD.estado_orden THEN RETURN NEW; END IF;
   IF (OLD.estado_orden = ANY (bodega) AND NEW.estado_orden = ANY (bodega))
      OR (OLD.estado_orden = 'EN_CAMION' AND NEW.estado_orden = 'EN_RUTA')
-     OR (OLD.estado_orden = 'EN_RUTA'   AND NEW.estado_orden IN ('ENTREGADO', 'RECHAZADO')) THEN
+     OR (OLD.estado_orden = 'EN_RUTA'   AND NEW.estado_orden IN ('ENTREGADO', 'RECHAZADO'))
+     OR (OLD.estado_orden = 'RECHAZADO' AND NEW.estado_orden = 'EN_CAMION') THEN      -- reprogramación tras el reingreso
     RETURN NEW;
   END IF;
   RAISE EXCEPTION 'Transición de estado no permitida: % -> %', OLD.estado_orden, NEW.estado_orden
@@ -249,7 +250,7 @@ CREATE INDEX ix_detventa_sku ON detalle_venta (sku);                        -- r
 
 CREATE TABLE despacho (
   id_despacho        INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  id_orden           INTEGER      NOT NULL UNIQUE                           -- orden 1 : 0..1 despacho
+  id_orden           INTEGER      NOT NULL                                  -- orden 1 : 0..n despachos (reprogramación tras un rechazo)
                      REFERENCES orden_venta (id_orden) ON UPDATE RESTRICT ON DELETE RESTRICT,
   id_usuario_chofer  INTEGER      NOT NULL REFERENCES usuario (id_usuario)
                      ON UPDATE RESTRICT ON DELETE RESTRICT,
@@ -258,13 +259,21 @@ CREATE TABLE despacho (
                      CHECK (estado_entrega IN ('PENDIENTE', 'ENTREGADO', 'RECHAZADO')),
   motivo_rechazo     VARCHAR(300),
   fecha_cierre       TIMESTAMPTZ,
-  url_evidencia_s3   TEXT,                                                  -- foto de rechazo / firma en S3
+  url_evidencia_s3   TEXT,                                                  -- foto de evidencia en S3
+  url_firma_s3       VARCHAR(255),                                          -- firma del receptor (PNG) en S3
+  nombre_receptor    VARCHAR(120),
+  reingresado_en     TIMESTAMPTZ,                                           -- el rechazo volvió físicamente a bodega (PI-05)
+  id_usuario_reingreso INTEGER REFERENCES usuario (id_usuario) ON UPDATE RESTRICT ON DELETE RESTRICT,
   CONSTRAINT ck_rechazo_con_causal
         CHECK (estado_entrega <> 'RECHAZADO' OR length(btrim(coalesce(motivo_rechazo, ''))) > 0),
   CONSTRAINT ck_cierre_coherente
-        CHECK ((estado_entrega = 'PENDIENTE') = (fecha_cierre IS NULL))
+        CHECK ((estado_entrega = 'PENDIENTE') = (fecha_cierre IS NULL)),
+  CONSTRAINT ck_reingreso_coherente
+        CHECK ((reingresado_en IS NULL) = (id_usuario_reingreso IS NULL) AND (reingresado_en IS NULL OR estado_entrega = 'RECHAZADO'))
 );
 CREATE INDEX ix_despacho_chofer_estado ON despacho (id_usuario_chofer, estado_entrega);
+CREATE INDEX ix_despacho_orden ON despacho (id_orden);
+CREATE UNIQUE INDEX ux_despacho_orden_abierto ON despacho (id_orden) WHERE estado_entrega = 'PENDIENTE';   -- un solo despacho abierto por pedido
 
 -- Regla: solo un usuario activo con rol CHOFER puede ser asignado a un despacho
 CREATE OR REPLACE FUNCTION fn_despacho_solo_chofer() RETURNS trigger LANGUAGE plpgsql AS $$

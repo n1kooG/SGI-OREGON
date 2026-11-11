@@ -101,6 +101,18 @@ SELECT pg_temp.espera_valor('VD-05', 'HU07: cierre de entrega con causal es acep
 UPDATE despacho SET estado_entrega='PENDIENTE', motivo_rechazo=NULL, fecha_cierre=NULL
  WHERE id_orden=(SELECT id_orden FROM orden_venta WHERE codigo_externo='ORD-1025');
 
+-- PI-05: rechazo completo y reprogramación (se restaura el estado de la orden al final)
+UPDATE orden_venta SET estado_orden = 'RECHAZADO' WHERE codigo_externo = 'ORD-1025';
+SELECT pg_temp.espera_error('VD-06', 'PI-05: RECHAZADO -> ENTREGADO sigue fuera del flujo', '23514',
+  $q$UPDATE orden_venta SET estado_orden = 'ENTREGADO' WHERE codigo_externo = 'ORD-1025'$q$);
+SELECT pg_temp.espera_valor('VD-07', 'PI-05: RECHAZADO -> EN_CAMION (reprogramar) es aceptado', '1',
+  $q$WITH u AS (UPDATE orden_venta SET estado_orden = 'EN_CAMION' WHERE codigo_externo = 'ORD-1025' RETURNING 1) SELECT count(*)::text FROM u$q$);
+UPDATE orden_venta SET estado_orden = 'EN_RUTA' WHERE codigo_externo = 'ORD-1025';
+SELECT pg_temp.espera_error('VD-08', 'PI-05: un pedido no admite dos despachos PENDIENTES a la vez', '23505',
+  $q$INSERT INTO despacho (id_orden, id_usuario_chofer) SELECT id_orden, id_usuario_chofer FROM despacho WHERE id_orden = (SELECT id_orden FROM orden_venta WHERE codigo_externo='ORD-1025')$q$);
+SELECT pg_temp.espera_error('VD-09', 'PI-05: solo un despacho RECHAZADO puede registrar reingreso', '23514',
+  $q$UPDATE despacho SET reingresado_en = now(), id_usuario_reingreso = id_usuario_chofer WHERE id_orden = (SELECT id_orden FROM orden_venta WHERE codigo_externo='ORD-1025')$q$);
+
 SELECT pg_temp.espera_error('AUD-01', 'AuditLog: UPDATE no permitido', '42501',
   $q$UPDATE audit_log SET accion = 'ALTERADO'$q$);
 SELECT pg_temp.espera_error('AUD-02', 'AuditLog: DELETE no permitido', '42501',
