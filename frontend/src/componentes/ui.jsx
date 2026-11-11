@@ -1,3 +1,4 @@
+import logoIcono from '../assets/logo-icono.png';
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState } from 'react';
 
 const RUTAS = {
@@ -25,7 +26,7 @@ const RUTAS = {
 };
 export const Icono = ({ n }) => <svg className="icono" viewBox="0 0 24 24" aria-hidden="true">{RUTAS[n]}</svg>;
 
-export const Logo = () => <span className="logo" aria-hidden="true">ó</span>;
+export const Logo = () => <img className="logo" src={logoIcono} alt="" />;
 
 export function Boton({ variante, icono, children, ...p }) {
   return <button type="button" {...p} className={`btn ${variante ?? ''} ${p.className ?? ''}`}>{icono && <Icono n={icono} />}{children}</button>;

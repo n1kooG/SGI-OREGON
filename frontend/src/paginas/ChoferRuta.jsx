@@ -11,7 +11,7 @@ const ubicar = () => new Promise((ok) => {
   navigator.geolocation.getCurrentPosition((p) => ok(p.coords), () => ok(null), { timeout: 8000, maximumAge: 60000 });
 });
 
-function Cierre({ parada, estado, onVolver, onHecho }) {
+function Cierre({ parada, n, estado, onVolver, onHecho }) {
   const aviso = useAviso();
   const rechazo = estado === 'RECHAZADO';
   const [motivo, setMotivo] = useState('');
@@ -49,9 +49,9 @@ function Cierre({ parada, estado, onVolver, onHecho }) {
   return (
     <form className="movil-pagina cierre" onSubmit={confirmar}>
       <h1>{rechazo ? 'Rechazar entrega' : 'Confirmar entrega'}</h1>
-      <p className="tenue">Orden {parada.codigo_externo} · {parada.nombre_cliente}</p>
-      {rechazo && <Campo como="textarea" etiqueta="Causal del rechazo *" rows={5} maxLength={300} placeholder="Describe el motivo (obligatorio)" value={motivo} onChange={(e) => setMotivo(e.target.value)} />}
-      <div className="campo">
+      <p className="tenue">Parada {n} · Orden #{parada.codigo_externo} · {parada.nombre_cliente}</p>
+      {rechazo && <Campo como="textarea" etiqueta="Causal del rechazo *" rows={5} maxLength={300} placeholder="Describa el motivo (obligatorio)" value={motivo} onChange={(e) => setMotivo(e.target.value)} />}
+      <div className="campo foto-cierre">
         <span className="rotulo">Foto de evidencia (opcional)</span>
         <label className="btn bloque-sm" style={{ height: 48 }}>
           {foto ? foto.name : 'Adjuntar foto'}
@@ -81,8 +81,8 @@ export default function ChoferRuta() {
 
   const pendientes = (ruta ?? []).filter((d) => d.estado_entrega === 'PENDIENTE').length;
   return (
-    <div className="movil-pagina">
-      <div className="fila-sb"><h1>Ruta de reparto diaria</h1><Badge tono="ink">{pendientes} {pendientes === 1 ? 'parada pendiente' : 'paradas pendientes'}</Badge></div>
+    <div className="movil-pagina ruta-chofer">
+      <div className="cab-pagina"><div className="fila-sb"><h1>Ruta de reparto diaria</h1><Badge tono="ink">{pendientes} {pendientes === 1 ? 'parada pendiente' : 'paradas pendientes'}</Badge></div></div>
       <Alerta>{error}</Alerta>
       {ruta && !ruta.length && !error && <p className="vacio">No tienes entregas asignadas.</p>}
       {ruta?.map((d, i) => {
@@ -90,18 +90,18 @@ export default function ChoferRuta() {
         return (
           <article className="tarjeta-pedido parada" key={d.id_despacho}>
             <div className="fila-sb">
-              <span className="chip-sku">Parada {i + 1} · Orden {d.codigo_externo}</span>
+              <span className="chip-sku">Parada {i + 1} · Orden #{d.codigo_externo}</span>
               <Badge tono={abierta ? 'aviso' : d.estado_entrega === 'ENTREGADO' ? 'ok' : 'mal'}>{abierta ? 'Pendiente' : d.estado_entrega === 'ENTREGADO' ? 'Entregado' : 'Rechazado'}</Badge>
             </div>
             <strong>{d.nombre_cliente}</strong>
             <p className="dato-fila"><Icono n="pin" />{[d.direccion_despacho, d.comuna].filter(Boolean).join(', ') || 'Sin dirección registrada'}</p>
-            <p className="dato-fila"><Icono n="tel" />{d.telefono_contacto ? <a href={`tel:${d.telefono_contacto.replace(/[^\d+]/g, '')}`}>{d.telefono_contacto}</a> : 'Sin teléfono'} · Bultos: {d.bultos}</p>
+            <p className="dato-fila"><Icono n="tel" />{d.telefono_contacto ? <a href={`tel:${d.telefono_contacto.replace(/[^\d+]/g, '')}`}>{d.telefono_contacto}</a> : 'Sin teléfono'}{'  ·  '}Bultos: {d.bultos}</p>
             {abierta && (
               <>
                 <a className="btn bloque-sm" href={mapa(d)} target="_blank" rel="noopener noreferrer">Abrir mapa</a>
                 <div className="botones-cierre">
-                  <Boton variante="primario" onClick={() => setCierre({ parada: d, estado: 'ENTREGADO' })}>Entregado</Boton>
-                  <Boton variante="peligro" onClick={() => setCierre({ parada: d, estado: 'RECHAZADO' })}>Rechazado</Boton>
+                  <Boton variante="primario" onClick={() => setCierre({ parada: d, n: i + 1, estado: 'ENTREGADO' })}>Entregado</Boton>
+                  <Boton variante="peligro" onClick={() => setCierre({ parada: d, n: i + 1, estado: 'RECHAZADO' })}>Rechazado</Boton>
                 </div>
               </>
             )}

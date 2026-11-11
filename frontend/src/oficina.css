@@ -1,0 +1,112 @@
+/* Pantallas de oficina (Dashboard, Compras, Carga Masiva, Auditoría) según el mockup Oregón.
+   Todo cuelga de .vista para no tocar el resto de las pantallas. */
+.vista { display: flex; flex-direction: column; gap: 28px; --fila: 52px; }
+.vista > * { margin-top: 0; margin-bottom: 0; }
+.vista .cabecera { margin: 0; align-items: center; gap: 24px; flex-wrap: nowrap; }
+.vista .cabecera h1 { letter-spacing: -.3px; }
+.vista .cabecera p { margin-top: 6px; }
+.vista .alerta { margin: 0; }
+.vista .subtitulo { margin: 0; color: var(--ink); }
+
+/* Tabla: encabezado 12/20, filas de alto fijo, 12 px entre columnas */
+.vista .tabla-wrap { border-radius: 14px; }
+.vista.dashboard table { table-layout: fixed; }
+.vista th { padding: 12px 6px; }
+.vista td { padding: 0 6px; height: var(--fila); }
+.vista th:first-child, .vista td:first-child { padding-left: 20px; }
+.vista th:last-child, .vista td:last-child { padding-right: 20px; }
+.vista .vacio { border-top: 1px solid var(--line); }
+
+/* Campos: etiqueta de 12 px */
+.vista .campo { margin-bottom: 0; }
+.vista .campo > label, .vista .campo > .rotulo { font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.vista .btn { font-weight: 500; }
+.vista .btn.primario { font-weight: 500; }
+
+/* Dashboard */
+.vista.dashboard { --fila: 60px; }
+.vista .kpis { gap: 16px; margin: 0; }
+.vista .kpi { gap: 10px; }
+.vista .kpi-valor, .vista .kpi-num { font: 500 28px/34px var(--f-dato); letter-spacing: -.56px; }
+.vista .kpi-num { display: flex; align-items: baseline; height: 34px; }
+.vista .kpi-num small { font: 400 16px/34px var(--f-ui); letter-spacing: -.32px; color: var(--ink-3); margin-left: 6px; }
+.vista .kpi-pie { font-size: 13px; line-height: 18px; }
+.vista .aviso-quiebres { height: auto; padding: 9px 14px; font-size: 12px; line-height: 16px; }
+.vista.dashboard td.dato:first-child { font-weight: 500; }
+.vista.dashboard th:nth-child(1) { width: 166px; }
+.vista.dashboard th:nth-child(3) { width: 192px; }
+.vista.dashboard th:nth-child(4), .vista.dashboard th:nth-child(5) { width: 142px; }
+.vista.dashboard th:nth-child(6) { width: 206px; }
+
+/* Compras y Facturas */
+.vista.compras { --fila: 52px; }
+.vista.compras form { display: flex; flex-direction: column; gap: 28px; }
+.vista .panel { max-width: none; display: flex; flex-direction: column; gap: 20px; padding: 24px; }
+.vista .panel .seccion { margin: 0; display: block; font: 600 15px/20px var(--f-ui); letter-spacing: 0; text-transform: none; color: var(--ink); }
+.vista .panel .seccion::after { content: none; }
+.vista .grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px 16px; }
+.vista .linea-fila { grid-template-columns: 2fr 120px 200px auto; gap: 16px; }
+.vista .linea-fila .btn { margin-bottom: 0; }
+.vista .zona-pdf { gap: 10px; }
+.vista .zona-carga.compacta { border: 0; padding: 0; gap: 14px; background: none; }
+.vista .zona-carga.compacta > .icono { display: none; }
+.vista .zona-carga.compacta .btn { order: 1; }
+.vista .zona-carga.compacta .zona-texto { order: 2; font-size: 13px; line-height: 18px; }
+.vista .zona-carga.compacta .icono-solo { order: 3; }
+.vista .resumen { align-self: flex-end; width: 340px; max-width: 100%; display: flex; flex-direction: column; gap: 16px; }
+.vista .totales { width: 100%; margin: 0; padding: 20px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; display: flex; flex-direction: column; gap: 10px; }
+.vista .totales > div { padding: 0; align-items: center; font-size: 13px; line-height: 18px; }
+.vista .totales dd { font-weight: 500; }
+.vista .totales .total { margin: 0; padding-top: 12px; border-top: 1px solid var(--line-strong); }
+.vista .totales .total dt { font: 600 15px/20px var(--f-ui); }
+.vista .totales .total dd { font-size: 28px; line-height: 34px; letter-spacing: -.56px; }
+.vista .resumen .btn { width: 100%; height: 48px; }
+.vista .resumen .nota { color: var(--ink-3); font-size: 13px; line-height: 18px; }
+.vista .panel > .ayuda { margin: 0; }
+
+/* Carga Masiva */
+.vista.carga { --fila: 56px; }
+.vista.carga .panel { padding: 0; background: none; border: 0; gap: 20px; }
+.vista.carga .zona-carga { background: var(--surface); border: 2px dashed var(--line-strong); border-radius: 14px; min-height: 400px; justify-content: center; gap: 8px; margin: 0; }
+.vista.carga .zona-carga.activa { border-color: var(--accent); }
+.vista.carga .zona-icono { width: 64px; height: 64px; border-radius: 14px; background: var(--bg); display: grid; place-items: center; color: var(--ink-3); margin-bottom: 6px; }
+.vista.carga .zona-icono .icono { width: 26px; height: 26px; }
+.vista.carga .zona-carga strong { font: 500 22px/28px var(--f-titulo); color: var(--ink); }
+.vista.carga .zona-carga .tenue { font-size: 13px; line-height: 18px; }
+.vista.carga .zona-carga .btn { margin-top: 12px; }
+.vista.carga .acciones { margin-top: 0; }
+.vista .informe-cab { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.vista .informe-cab .zona-icono { width: 40px; height: 40px; border-radius: 10px; background: var(--bg); display: grid; place-items: center; color: var(--ink-3); margin: 0; }
+.vista .informe-cab > div:nth-child(2) { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.vista .informe-cab .dato { font-weight: 500; overflow-wrap: anywhere; }
+.vista .informe-cab small { font-size: 13px; line-height: 18px; color: var(--ink-3); }
+
+/* Reportes y Auditoría */
+.vista.auditoria { --fila: 56px; }
+.vista .filtros-aud { gap: 16px; margin: 0; grid-template-columns: repeat(4, 1fr); }
+.vista .nota-aud { margin: 0; }
+.vista.auditoria td.dato { color: var(--ink-2); }
+.vista.auditoria table { table-layout: fixed; }
+.vista.auditoria th:nth-child(1) { width: 162px; }
+.vista.auditoria th:nth-child(2) { width: 181px; }
+.vista.auditoria th:nth-child(3) { width: 142px; }
+.vista.auditoria th:nth-child(5) { width: 123px; }
+.vista.auditoria th:nth-child(6) { width: 161px; }
+
+@media (max-width: 899px) {
+  .vista .cabecera { flex-wrap: wrap; }
+  .vista .grid5 { grid-template-columns: 1fr 1fr; }
+  .vista .filtros-aud { grid-template-columns: 1fr 1fr; }
+  .vista.dashboard table, .vista.auditoria table { table-layout: auto; }
+  .vista.dashboard th, .vista.auditoria th { width: auto !important; }
+  .vista .resumen { width: 100%; }
+}
+.vista .panel > .btn { align-self: flex-start; }
+.vista.carga .zona-carga .columnas { font-size: 11px; line-height: 16px; letter-spacing: .04em; color: var(--ink-3); margin-top: 6px; }
+/* Con el informe de errores a la vista, la zona de carga se compacta (sigue disponible para elegir otro archivo) */
+.vista.con-informe .zona-carga { min-height: 0; padding: 16px; flex-direction: row; justify-content: center; gap: 16px; }
+.vista.con-informe .zona-carga .zona-icono { display: none; }
+.vista.con-informe .zona-carga strong { font: 500 15px/20px var(--f-ui); }
+.vista.con-informe .zona-carga .btn { margin: 0; }
+.vista.carga th:first-child { width: 140px; }
+.vista.carga td.fila-n { font-weight: 500; }

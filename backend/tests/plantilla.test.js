@@ -8,7 +8,7 @@ test('plantilla: cabecera con estilo, ejemplo gris, validación de cantidad y ho
   await wb.xlsx.load(await plantilla());
   const h = wb.getWorksheet('Ventas');
   assert.deepEqual(h.getRow(1).values.slice(1), COLUMNAS);
-  assert.equal(h.getCell('A1').fill.fgColor.argb, 'FF0B172A');
+  assert.equal(h.getCell('A1').fill.fgColor.argb, 'FF0E3B38');
   assert.equal(h.views[0].ySplit, 1);
   assert.match(String(h.getCell('A2').value), /\(ejemplo\)/);
   assert.equal(h.getCell('E3').dataValidation.type, 'whole');
