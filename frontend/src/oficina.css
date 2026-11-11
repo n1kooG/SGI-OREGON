@@ -84,14 +84,20 @@
 /* Reportes y Auditoría */
 .vista.auditoria { --fila: 56px; }
 .vista .filtros-aud { gap: 16px; margin: 0; grid-template-columns: repeat(4, 1fr); }
-.vista .nota-aud { margin: -12px 0 0; }
+.vista .nota-aud { margin: 0; }
 .vista.auditoria td.dato { color: var(--ink-2); }
+.vista.auditoria table { table-layout: fixed; }
+.vista.auditoria th:nth-child(1) { width: 162px; }
+.vista.auditoria th:nth-child(2) { width: 181px; }
+.vista.auditoria th:nth-child(3) { width: 142px; }
+.vista.auditoria th:nth-child(5) { width: 123px; }
+.vista.auditoria th:nth-child(6) { width: 161px; }
 
 @media (max-width: 899px) {
   .vista .cabecera { flex-wrap: wrap; }
   .vista .grid5 { grid-template-columns: 1fr 1fr; }
   .vista .filtros-aud { grid-template-columns: 1fr 1fr; }
-  .vista.dashboard table { table-layout: auto; }
-  .vista.dashboard th { width: auto !important; }
+  .vista.dashboard table, .vista.auditoria table { table-layout: auto; }
+  .vista.dashboard th, .vista.auditoria th { width: auto !important; }
   .vista .resumen { width: 100%; }
 }

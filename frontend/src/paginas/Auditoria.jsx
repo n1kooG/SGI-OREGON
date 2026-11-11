@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, ApiError, mensajeError, token } from '../api.js';
+import '../oficina.css';
 import { Alerta, Boton, Campo, Tabla, useAviso } from '../componentes/ui.jsx';
 
 const fmt = (f) => new Date(f).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
@@ -44,7 +45,7 @@ export default function Auditoria() {
   }
 
   return (
-    <>
+    <div className="vista auditoria">
       <div className="cabecera">
         <div>
           <h1>Reportes y Bitácora de Auditoría</h1>
@@ -84,6 +85,6 @@ export default function Auditoria() {
         ))}
       </Tabla>
       <p className="nota-aud">Los registros no se pueden modificar ni borrar.</p>
-    </>
+    </div>
   );
 }
