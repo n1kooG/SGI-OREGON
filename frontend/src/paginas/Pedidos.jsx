@@ -7,7 +7,7 @@ export const ESTADOS = {
   EN_RUTA: ['En ruta (chofer)', 'aviso'], ENTREGADO: ['Entregado', 'ok'], RECHAZADO: ['Rechazado', 'mal'],
 };
 export const EstadoBadge = ({ e }) => <Badge tono={ESTADOS[e]?.[1]}>{ESTADOS[e]?.[0] ?? e}</Badge>;
-export const fechaCorta = (f) => new Date(f).toLocaleDateString('es-CL');
+export const fechaCorta = (f) => new Date(f).toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' }).replaceAll('-', '/');
 
 function AsignarChofer({ pedido, onClose, onHecho }) {
   const aviso = useAviso();

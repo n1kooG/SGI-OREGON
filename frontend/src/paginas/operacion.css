@@ -79,3 +79,35 @@
 .buscador-stock .ubicacion { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 24px; line-height: 30px; letter-spacing: -.12px; }
 .buscador-stock .ubicacion .icono { width: 20px; height: 20px; color: var(--accent-ink); }
 .buscador-stock .estante { font-size: 14px; line-height: 20px; color: var(--ink-2); }
+
+/* ---------- Bodega: pedidos pendientes ---------- */
+.pedidos-bodega section { display: flex; flex-direction: column; gap: 16px; }
+.pedidos-bodega section > .seccion { margin: 0; }
+.cab-pagina { display: flex; flex-direction: column; gap: 4px; }
+.cab-pagina h1, .movil-pagina h1 { font-size: 24px; line-height: 30px; letter-spacing: -.12px; margin: 0; }
+.cab-pagina p { font-size: 13px; line-height: 18px; }
+.pedidos-bodega .cab-pagina .badge { flex: none; }
+.pedidos-bodega .fila-sb { flex-wrap: nowrap; }
+.pedidos-bodega .tarjeta-pedido { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 16px; border-radius: 16px; }
+.pedidos-bodega .tarjeta-pedido.abierta { gap: 14px; }
+.pedidos-bodega .tarjeta-cab { gap: 10px; }
+.pedidos-bodega .abierta .tarjeta-cab { gap: 14px; }
+.pedidos-bodega .tarjeta-cab strong { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; color: var(--ink); }
+.pedidos-bodega .chip-sku { padding: 3px 8px; }
+.dato-fecha { display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 18px; color: var(--ink-2); }
+.dato-fecha .icono { width: 15px; height: 15px; color: var(--ink-3); }
+.resumen { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ver-detalle { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--ink-2); }
+.pedidos-bodega .tarjeta-cuerpo { gap: 14px; margin-top: 0; padding-top: 14px; }
+.pedidos-bodega .tarjeta-cuerpo > p.tenue { font-size: 13px; line-height: 18px; margin: -4px 0 0; }
+.pedidos-bodega .pastilla { height: auto; padding: 9px 14px; border-radius: 999px; font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.pedidos-bodega .pastilla.activa { background: var(--ink); border-color: var(--ink); color: var(--on-dark); }
+.pedidos-bodega .btn.bloque-sm { height: 40px; }
+.pedidos-bodega .btn.primario.bloque { font-weight: 500; }
+.pedidos-bodega .item-recolectar { gap: 10px; padding: 14px; border-radius: 12px; }
+.pedidos-bodega .item-recolectar strong { font-size: 15px; line-height: 20px; font-weight: 600; }
+.pedidos-bodega .item-recolectar .chip-sku { background: var(--bg); color: var(--ink); border: 1px solid var(--line-strong); }
+.pedidos-bodega .casilla input { appearance: none; width: 18px; height: 18px; margin: 0; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--surface); }
+.pedidos-bodega .casilla input:checked { background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 5 5 9-10'/%3E%3C/svg%3E") center / 14px no-repeat; border-color: var(--accent); }
+.detalle-item { font-size: 13px; line-height: 18px; color: var(--ink-2); white-space: pre-wrap; }
+.pedidos-bodega .item-recolectar .btn.enlace { height: 40px; padding: 10px 16px; border-radius: 10px; font-size: 14px; line-height: 20px; color: var(--ink-2); }

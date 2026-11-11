@@ -3,6 +3,7 @@ import { api, mensajeError } from '../api.js';
 import { Alerta, Badge, Boton, Campo, useAviso } from '../componentes/ui.jsx';
 import { ESTADOS, EstadoBadge, fechaCorta } from './Pedidos.jsx';
 
+const Calendario = () => <svg className="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>;
 const FLUJO = ['PENDIENTE_PREPARACION', 'ARMADO', 'ETIQUETADO', 'EN_CAMION'];
 
 function Comentario({ idOrden, sku }) {
@@ -67,11 +68,12 @@ function Tarjeta({ p, abierta, onAbrir, onCambio }) {
   const items = det?.items ?? [];
   const completo = items.length > 0 && items.every((i) => marcados[i.sku]);
   return (
-    <article className="tarjeta-pedido">
+    <article className={`tarjeta-pedido ${abierta ? 'abierta' : ''}`}>
       <button type="button" className="tarjeta-cab" aria-expanded={abierta} onClick={onAbrir}>
-        <div className="fila-sb"><span className="chip-sku">{p.codigo_externo}</span><EstadoBadge e={p.estado_orden} /></div>
-        <strong>{p.nombre_cliente}</strong>
-        <span className="tenue">{fechaCorta(p.fecha_orden)} · {p.unidades} un. · {abierta ? 'Ocultar detalle' : 'Ver detalle'}</span>
+        <div className="fila-sb"><span className="chip-sku">#{p.codigo_externo}</span><EstadoBadge e={p.estado_orden} /></div>
+        <span className="dato-fecha"><Calendario />Fecha: {fechaCorta(p.fecha_orden)}</span>
+        <strong>Cliente: {p.nombre_cliente}</strong>
+        <span className="resumen"><Badge tono="info">{p.unidades} un. en total</Badge><span className="ver-detalle">{abierta ? 'Ocultar detalle' : 'Ver detalle'}</span></span>
       </button>
       {abierta && (
         <div className="tarjeta-cuerpo">
@@ -79,15 +81,16 @@ function Tarjeta({ p, abierta, onAbrir, onCambio }) {
           <div className="estados" role="group" aria-label="Cambiar estado">
             {FLUJO.map((e) => <button type="button" key={e} className={`pastilla ${p.estado_orden === e ? 'activa' : ''}`} aria-pressed={p.estado_orden === e} disabled={ocupado} onClick={() => p.estado_orden !== e && estado(e)}>{ESTADOS[e][0]}</button>)}
           </div>
-          <Boton className="bloque-sm" onClick={etiqueta}>Descargar etiqueta de este pedido</Boton>
+          <Boton className="bloque-sm" onClick={etiqueta}>Descargar etiquetas de este pedido</Boton>
           <Alerta>{error}</Alerta>
           <span className="etiqueta">Detalle de productos a recolectar ({p.unidades} unidades)</span>
+          <p className="tenue">Marque al recolectar</p>
           {!det && !error && <p className="tenue">Cargando…</p>}
           {items.map((i) => (
             <div className="item-recolectar" key={i.sku}>
-              <label className="casilla"><input type="checkbox" checked={!!marcados[i.sku]} onChange={(e) => setMarcados({ ...marcados, [i.sku]: e.target.checked })} /><span className="chip-sku">{i.sku}</span></label>
+              <label className="casilla"><input type="checkbox" checked={!!marcados[i.sku]} onChange={(e) => setMarcados({ ...marcados, [i.sku]: e.target.checked })} /><span className="chip-sku">SKU: {i.sku}</span></label>
               <strong>{i.nombre}</strong>
-              <span className="tenue">Ubicación: {i.ubicacion_bodega ?? 'sin ubicación'} · Cantidad: {i.cantidad} un.</span>
+              <span className="detalle-item">Ubicación: {(i.ubicacion_bodega ?? 'sin ubicación').replace(' - ', ' · ')}  |  Cantidad: {i.cantidad} un.</span>
               <Comentario idOrden={p.id_orden} sku={i.sku} />
             </div>
           ))}
@@ -112,9 +115,9 @@ export default function BodegaPedidos() {
   const porCanal = Map.groupBy(filas ?? [], (p) => p.canal_origen);
   const pendientes = (filas ?? []).filter((p) => p.estado_orden === 'PENDIENTE_PREPARACION').length;
   return (
-    <div className="movil-pagina">
-      <div className="fila-sb"><h1>Pedidos pendientes</h1><Badge tono="ink">{pendientes} sin recolectar</Badge></div>
-      <p className="tenue">Toque una orden para desplegar los productos a recolectar.</p>
+    <div className="movil-pagina pedidos-bodega">
+      <div className="cab-pagina"><div className="fila-sb"><h1>Pedidos pendientes</h1><Badge tono="ink">{pendientes} sin recolectar</Badge></div>
+      <p className="tenue">Toque una orden para desplegar los productos a recolectar</p></div>
       <Alerta>{error}</Alerta>
       {filas && !filas.length && !error && <p className="vacio">No hay pedidos pendientes.</p>}
       {[...porCanal].map(([canal, ps]) => (
