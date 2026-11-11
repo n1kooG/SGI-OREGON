@@ -39,6 +39,24 @@ export const registrarAcceso = (idUsuario, db = { query }) =>
     [idUsuario],
   );
 
+// Cambio de clave: verifica la clave actual con la fila bloqueada (FOR UPDATE), igual que el login.
+export async function estadoClave(id, password, db) {
+  const { rows } = await db.query(
+    `SELECT (password_hash = crypt($2, password_hash)) AS clave_ok,
+            (bloqueado_hasta IS NOT NULL AND bloqueado_hasta > now()) AS bloqueada
+       FROM usuario WHERE id_usuario = $1 FOR UPDATE`,
+    [id, password],
+  );
+  return rows[0];
+}
+
+// Nueva clave con bcrypt de costo 12 (igual que el alta); reinicia los intentos fallidos y el bloqueo.
+export const actualizarClave = (id, password, db) =>
+  db.query(
+    `UPDATE usuario SET password_hash = crypt($2, gen_salt('bf', 12)), intentos_fallidos = 0, bloqueado_hasta = NULL WHERE id_usuario = $1`,
+    [id, password],
+  );
+
 // El rol y los permisos se leen de la BD en cada petición (M10).
 export async function buscarActivoPorId(id) {
   const { rows } = await query(
