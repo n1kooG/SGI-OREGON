@@ -28,11 +28,13 @@ export default function Descarga() {
   }
 
   return (
-    <div className="movil-pagina">
-      <h1>Descarga de camión</h1>
-      <p className="tenue">Cuenta los bultos por SKU y confírmalos contra el número de factura.</p>
+    <div className="movil-pagina descarga">
+      <div className="cab-pagina">
+        <div className="fila-sb"><h1>Despacho | Descarga camión</h1><Badge>Control de entrada</Badge></div>
+        <p className="tenue">Conteo y verificación física de bultos contra guía de despacho o factura</p>
+      </div>
       {res && (
-        <div className={`alerta ${res.estado_documento === 'CONFORME' ? 'info' : ''}`} role="status" style={{ marginTop: 16 }}>
+        <div className={`alerta ${res.estado_documento === 'CONFORME' ? 'info' : ''}`} role="status">
           Factura {res.numero_factura}: <Badge tono={res.estado_documento === 'CONFORME' ? 'ok' : 'mal'}>{res.estado_documento === 'CONFORME' ? 'Conforme' : 'Con discrepancia'}</Badge>
           {res.discrepancias.length > 0 && (
             <Tabla columnas={['SKU', { t: 'Esperado', d: true }, { t: 'Contado', d: true }]}>
@@ -41,10 +43,12 @@ export default function Descarga() {
           )}
         </div>
       )}
-      <form onSubmit={confirmar} style={{ marginTop: 20 }}>
-        <Campo etiqueta="N° de factura" inputMode="numeric" value={numero} onChange={(e) => setNumero(e.target.value)} maxLength={20} required />
+      <form onSubmit={confirmar}>
+        <Campo etiqueta="Factura o guía" inputMode="numeric" value={numero} onChange={(e) => setNumero(e.target.value)} maxLength={20} required />
         {pedirRut && <Campo etiqueta="RUT del proveedor" ayuda="Esta factura existe para más de un proveedor." value={rut} onChange={(e) => setRut(e.target.value)} required />}
-        <div className="seccion etiqueta">Bultos contados</div>
+        <section className="verificacion">
+        <span className="etiqueta">Verificación física de bultos</span>
+        <p className="tenue">Cuenta los bultos por SKU y confírmalos contra el número de factura.</p>
         {bultos.map((b, i) => (
           <div className="bulto-fila" key={i}>
             <Campo etiqueta="SKU" value={b.sku} onChange={setB(i, 'sku')} required />
@@ -53,8 +57,9 @@ export default function Descarga() {
           </div>
         ))}
         <Boton icono="plus" onClick={() => setBultos([...bultos, fila()])}>Agregar SKU</Boton>
+        </section>
         <Alerta>{error}</Alerta>
-        <Boton type="submit" variante="primario bloque" disabled={ocupado} style={{ marginTop: 16 }}>{ocupado ? 'Confirmando…' : 'Confirmar descarga'}</Boton>
+        <Boton type="submit" variante="primario bloque" disabled={ocupado}>{ocupado ? 'Confirmando…' : 'Confirmar descarga conforme'}</Boton>
       </form>
     </div>
   );

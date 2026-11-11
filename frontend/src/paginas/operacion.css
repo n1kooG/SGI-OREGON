@@ -86,6 +86,8 @@
 .cab-pagina { display: flex; flex-direction: column; gap: 4px; }
 .cab-pagina h1, .movil-pagina h1 { font-size: 24px; line-height: 30px; letter-spacing: -.12px; margin: 0; }
 .cab-pagina p { font-size: 13px; line-height: 18px; }
+.cab-pagina .fila-sb { flex-wrap: nowrap; gap: 12px; }
+.cab-pagina h1 { flex: 1; min-width: 0; }
 .pedidos-bodega .cab-pagina .badge { flex: none; }
 .pedidos-bodega .fila-sb { flex-wrap: nowrap; }
 .pedidos-bodega .tarjeta-pedido { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 16px; border-radius: 16px; }
@@ -111,3 +113,15 @@
 .pedidos-bodega .casilla input:checked { background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 5 5 9-10'/%3E%3C/svg%3E") center / 14px no-repeat; border-color: var(--accent); }
 .detalle-item { font-size: 13px; line-height: 18px; color: var(--ink-2); white-space: pre-wrap; }
 .pedidos-bodega .item-recolectar .btn.enlace { height: 40px; padding: 10px 16px; border-radius: 10px; font-size: 14px; line-height: 20px; color: var(--ink-2); }
+
+/* ---------- Bodega: descarga de camión ---------- */
+.descarga .cab-pagina .badge { flex: none; background: var(--line); color: var(--ink-2); }
+.descarga form { display: flex; flex-direction: column; gap: 16px; }
+.descarga .campo { margin: 0; gap: 6px; }
+.descarga .campo > label { font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.descarga .alerta { margin: 0; }
+.verificacion { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.verificacion > p { font-size: 13px; line-height: 18px; }
+.verificacion .bulto-fila { gap: 0 10px; }
+.verificacion .bulto-fila .btn { margin-bottom: 0; }
+.descarga .btn.primario.bloque { font-weight: 500; }
