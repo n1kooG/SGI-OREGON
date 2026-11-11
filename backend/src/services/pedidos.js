@@ -28,6 +28,8 @@ export function listar(req, { estado, canal, por_reingresar } = {}) {
   return repo.listar(estados, canal ? String(canal) : null, porReingresar);
 }
 
+export const resumen = () => repo.resumen();
+
 async function existente(id) {
   const o = await repo.obtener(id);
   if (!o) throw new AppError(404, 'Pedido no encontrado', 'NO_ENCONTRADO');

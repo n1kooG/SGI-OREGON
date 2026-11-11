@@ -25,4 +25,6 @@ router.post('/descargas', requierePermiso('compras:confirmar_descarga'), ah(asyn
   res.json(await svc.confirmarDescarga(req, req.body ?? {}));
 }));
 
+router.get('/descargas/pendientes', requierePermiso('compras:confirmar_descarga', 'compras:recepcionar'), ah(async (_req, res) => res.json(await svc.descargasPendientes())));
+
 export default router;

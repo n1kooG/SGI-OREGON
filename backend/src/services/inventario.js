@@ -3,6 +3,8 @@ import { conTransaccion } from '../db.js';
 import { auditar } from '../audit.js';
 import { AppError } from '../errors.js';
 
+export const resumen = () => repo.resumen();
+
 // Los comodines de LIKE se escapan: «%» o «_» escritos por el operario se buscan literalmente.
 export const buscar = (q) => (q.length < 2 ? [] : repo.buscar(q.slice(0, 40).replace(/[\\%_]/g, '\\$&')));
 

@@ -80,3 +80,14 @@ export async function rutCliente(id) {
   const { rows } = await query(`SELECT rut_cliente FROM orden_venta WHERE id_orden = $1`, [id]);
   return rows[0]?.rut_cliente ?? null;
 }
+
+// Conteos de la jornada de Bodega. «En camión» = esperando que el administrador asigne chofer (no tiene despacho abierto).
+export async function resumen() {
+  const { rows } = await query(`SELECT estado_orden, count(*)::int AS n FROM orden_venta WHERE estado_orden IN ('PENDIENTE_PREPARACION', 'ARMADO', 'ETIQUETADO', 'EN_CAMION') GROUP BY estado_orden`);
+  const por = Object.fromEntries(rows.map((r) => [r.estado_orden, r.n]));
+  const { rows: [{ n }] } = await query(`SELECT count(*)::int AS n FROM despacho WHERE estado_entrega = 'RECHAZADO' AND reingresado_en IS NULL`);
+  return {
+    pendiente_preparacion: por.PENDIENTE_PREPARACION ?? 0, armado: por.ARMADO ?? 0, etiquetado: por.ETIQUETADO ?? 0,
+    en_camion_esperando_chofer: por.EN_CAMION ?? 0, rechazados_por_reingresar: n,
+  };
+}

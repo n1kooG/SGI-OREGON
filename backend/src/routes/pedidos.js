@@ -40,6 +40,7 @@ router.post('/importaciones', autenticar, importar, conArchivo, ah(async (req, r
 const id = (req) => Number(req.params.id);
 const ver = requierePermiso('pedidos:leer', 'pedidos:preparar');
 const preparar = requierePermiso('pedidos:preparar');
+router.get('/resumen', autenticar, ver, ah(async (_req, res) => res.json(await svc.resumen())));
 router.get('/:id(\\d+)', autenticar, ver, ah(async (req, res) => res.json(await svc.detalle(req, id(req)))));
 router.patch('/:id(\\d+)/estado', autenticar, preparar, ah(async (req, res) => res.json(await svc.cambiarEstado(req, id(req), req.body?.estado))));
 router.post('/:id(\\d+)/comentarios', autenticar, preparar, ah(async (req, res) => res.status(201).json(await svc.comentar(req, id(req), req.body ?? {}))));

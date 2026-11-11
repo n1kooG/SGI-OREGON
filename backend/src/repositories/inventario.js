@@ -54,3 +54,12 @@ export async function ubicacionActual(sku, client) {
 
 export const fijarUbicacion = (sku, ubicacion, client) =>
   client.query(`UPDATE inventario SET ubicacion_bodega = $2 WHERE sku = $1`, [sku, ubicacion]);
+
+// Contadores para el resumen de Bodega: el crítico sale de v_stock_critico (sin reorden sugerido ni costos).
+export async function resumen() {
+  const { rows: [r] } = await query(
+    `SELECT (SELECT count(*)::int FROM producto p JOIN inventario i ON i.sku = p.sku
+              WHERE p.estado = 'ACTIVO' AND (i.ubicacion_bodega IS NULL OR btrim(i.ubicacion_bodega) = '')) AS sin_ubicacion,
+            (SELECT count(*)::int FROM v_stock_critico) AS stock_critico`);
+  return r;
+}

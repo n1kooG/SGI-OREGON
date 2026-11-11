@@ -29,3 +29,19 @@ export const detalleEsperado = async (idRecepcion, c) =>
 
 export const marcarEstado = (c, idRecepcion, estado) =>
   c.query(`UPDATE recepcion_compra SET estado_documento = $2 WHERE id_recepcion = $1`, [idRecepcion, estado]);
+
+// Recepciones cuya descarga aún no se confirmó (sin evento DESCARGA_CONFIRMADA), de la más antigua a la más reciente, sin montos.
+// Los eventos se agrupan una sola vez (ix_audit_tabla_accion los localiza) y se cruzan por hash: no es una subconsulta por factura.
+export async function descargasPendientes() {
+  const { rows } = await query(
+    `SELECT r.id_recepcion, r.numero_factura, r.nombre_proveedor, r.fecha_emision, r.fecha_recepcion,
+            COALESCE(d.unidades, 0)::int AS unidades, COALESCE(d.detalle, '[]'::json) AS detalle
+       FROM recepcion_compra r
+       LEFT JOIN (SELECT DISTINCT (valores_nuevos->>'id_recepcion')::int AS id FROM audit_log
+                   WHERE tabla_afectada = 'recepcion_compra' AND accion = 'DESCARGA_CONFIRMADA') c ON c.id = r.id_recepcion
+       LEFT JOIN LATERAL (SELECT sum(cantidad_recibida) AS unidades, json_agg(json_build_object('sku', sku, 'cantidad', cantidad_recibida) ORDER BY sku) AS detalle
+                            FROM detalle_recepcion WHERE id_recepcion = r.id_recepcion) d ON true
+      WHERE c.id IS NULL
+      ORDER BY r.fecha_recepcion, r.id_recepcion`);
+  return rows;
+}

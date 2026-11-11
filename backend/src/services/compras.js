@@ -101,6 +101,8 @@ export async function registrar(req, body = {}, pdf = null) {
   }
 }
 
+export const descargasPendientes = () => repo.descargasPendientes();
+
 // T49 (CU-11): Bodega confirma la descarga del camión contra el N° de factura con el conteo de bultos por SKU.
 // No cambia stock (ya sumó al registrar la factura); registra quién y cuándo, y marca discrepancias. Sin precios ni costos.
 export async function confirmarDescarga(req, body = {}) {
