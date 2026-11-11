@@ -10,6 +10,7 @@ import comprasRouter from './routes/compras.js';
 import pedidosRouter from './routes/pedidos.js';
 import despachosRouter from './routes/despachos.js';
 import auditoriaRouter from './routes/auditoria.js';
+import reportesRouter from './routes/reportes.js';
 import usuariosRouter from './routes/usuarios.js';
 import healthRouter from './routes/health.js';
 import { manejadorErrores, noEncontrado } from './middleware/errores.js';
@@ -30,6 +31,7 @@ export function crearApp() {
   app.use('/api/pedidos', pedidosRouter);
   app.use('/api/despachos', despachosRouter);
   app.use('/api/auditoria', auditoriaRouter);
+  app.use('/api/reportes', reportesRouter);
   app.use('/api/usuarios', usuariosRouter);
 
   app.use('/api', noEncontrado);
