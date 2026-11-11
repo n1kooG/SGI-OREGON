@@ -34,13 +34,13 @@ export async function obtenerParaAuditoria(db, sku, bloquear = false) {
   return rows[0] ?? null;
 }
 
-export async function crear(db, p) {
+export async function crear(db, p, ubicacion = null) {
   const { rows } = await db.query(
     `INSERT INTO producto (sku, modelo, nombre, marca, descripcion, categoria, costo_adquisicion_neto, stock_minimo)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
      RETURNING sku, modelo, nombre, marca, descripcion, categoria, estado, stock_minimo, costo_adquisicion_neto`,
     [p.sku, p.modelo, p.nombre, p.marca, p.descripcion, p.categoria, p.costo_adquisicion_neto, p.stock_minimo]);
-  await db.query(`INSERT INTO inventario (sku, stock_fisico, stock_reservado) VALUES ($1, 0, 0)`, [p.sku]);
+  await db.query(`INSERT INTO inventario (sku, stock_fisico, stock_reservado, ubicacion_bodega) VALUES ($1, 0, 0, $2)`, [p.sku, ubicacion]);
   return rows[0];
 }
 

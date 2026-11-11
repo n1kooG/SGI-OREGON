@@ -2,6 +2,7 @@ import * as repo from '../repositories/productos.js';
 import { conTransaccion } from '../db.js';
 import { auditar } from '../audit.js';
 import { AppError } from '../errors.js';
+import { validarUbicacion } from './inventario.js';
 
 export const CANALES = ['WEB', 'MARKETPLACE', 'MAYORISTA'];
 const bad = (msg) => new AppError(400, msg, 'VALIDACION');
@@ -56,10 +57,11 @@ export async function crear(req, body = {}) {
     costo_adquisicion_neto: numero(body.costo_adquisicion_neto, 'costo_adquisicion_neto'),
     stock_minimo: body.stock_minimo === undefined ? 0 : numero(body.stock_minimo, 'stock_minimo', { entero: true }),
   };
+  const ubicacion = validarUbicacion(body.ubicacion_bodega);
   try {
     await conTransaccion(async (db) => {
-      const nuevo = await repo.crear(db, p);
-      await auditar(req, { idUsuario: req.usuario.id_usuario, tabla: 'producto', accion: 'CREAR', despues: nuevo }, db);
+      const nuevo = await repo.crear(db, p, ubicacion);
+      await auditar(req, { idUsuario: req.usuario.id_usuario, tabla: 'producto', accion: 'CREAR', despues: { ...nuevo, ...(ubicacion && { ubicacion_bodega: ubicacion }) } }, db);
     });
   } catch (e) { throw duplicado(e, sku); }
   return obtener(req.usuario.permisos, sku);

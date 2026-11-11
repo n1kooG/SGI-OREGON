@@ -1,5 +1,6 @@
 import * as repo from '../repositories/compras.js';
 import * as inventario from '../repositories/inventario.js';
+import { ubicarEn, validarUbicacion } from './inventario.js';
 import { rutValido } from '../repositories/usuarios.js';
 import { conTransaccion } from '../db.js';
 import { auditar } from '../audit.js';
@@ -109,11 +110,13 @@ export async function confirmarDescarga(req, body = {}) {
   const bultos = body.bultos;
   if (!Array.isArray(bultos) || !bultos.length) throw bad('Indica el conteo de bultos por SKU');
   const contado = new Map();
+  const ubicaciones = new Map(); // solo los SKU cuya línea trae «ubicacion»; sin ella no se toca
   for (const [n, b] of bultos.entries()) {
     const sku = String(b?.sku ?? '').replace(/\s+/g, '').toUpperCase();
     if (!sku) throw bad(`Bulto ${n + 1}: el SKU es obligatorio`);
     if (!Number.isInteger(b.cantidad) || b.cantidad < 0) throw bad(`Bulto ${n + 1} (${sku}): la cantidad debe ser un entero ≥ 0`);
     contado.set(sku, (contado.get(sku) ?? 0) + b.cantidad);
+    if (b.ubicacion !== undefined) ubicaciones.set(sku, validarUbicacion(b.ubicacion));
   }
   const recs = await repo.recepcionesPorFactura(numero, rut);
   if (!recs.length) throw bad(`No hay una factura ${numero} registrada`, 404, 'NO_ENCONTRADO');
@@ -128,6 +131,7 @@ export async function confirmarDescarga(req, body = {}) {
       .filter((d) => d.esperado !== d.contado);
     const estado = discrepancias.length ? 'CON_DISCREPANCIA' : 'CONFORME';
     await repo.marcarEstado(c, rec.id_recepcion, estado);
+    for (const [sku, ubicacion] of [...ubicaciones].sort()) await ubicarEn(c, req, sku, ubicacion); // misma transacción: o queda todo o nada
     await auditar(req, {
       idUsuario: req.usuario.id_usuario, tabla: 'recepcion_compra', accion: 'DESCARGA_CONFIRMADA',
       despues: { id_recepcion: rec.id_recepcion, factura: numero, estado, bultos: Object.fromEntries(contado), discrepancias },

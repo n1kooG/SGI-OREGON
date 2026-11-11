@@ -45,3 +45,12 @@ export async function disponiblePorSku(skus) {
        FROM producto p JOIN inventario i ON i.sku = p.sku WHERE p.sku = ANY($1) AND p.estado = 'ACTIVO'`, [skus]);
   return new Map(rows.map((r) => [r.sku, r.disponible]));
 }
+
+// Ubicación actual bloqueando la fila (la lectura y la escritura van en la misma transacción). undefined = SKU sin inventario.
+export async function ubicacionActual(sku, client) {
+  const { rows } = await client.query(`SELECT ubicacion_bodega FROM inventario WHERE sku = $1 FOR UPDATE`, [sku]);
+  return rows[0]?.ubicacion_bodega;
+}
+
+export const fijarUbicacion = (sku, ubicacion, client) =>
+  client.query(`UPDATE inventario SET ubicacion_bodega = $2 WHERE sku = $1`, [sku, ubicacion]);
