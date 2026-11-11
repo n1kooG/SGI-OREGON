@@ -23,9 +23,9 @@ router.get('/alertas', autenticar, requierePermiso('alertas:leer'), ah(async (_r
   res.set('X-Cache', cache).json(data);
 }));
 
-// GET /api/dashboard/graficos  (HU10)
+// GET /api/dashboard/graficos?periodo=semana|mes|anio  (HU10; por defecto mes)
 router.get('/graficos', autenticar, requierePermiso('reportes:leer'), ah(async (req, res) => {
-  const { data, cache } = await svc.graficos(tiene(req, 'costos:leer'));
+  const { data, cache } = await svc.graficos(tiene(req, 'costos:leer'), req.query.periodo);
   res.set('X-Cache', cache).json(data);
 }));
 

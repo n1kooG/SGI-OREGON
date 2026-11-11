@@ -13,55 +13,72 @@ export async function kpis() {
   return { ...k, stock_critico: criticos.length, quiebres: criticos.length, productos_criticos: criticos };
 }
 
+// Nivel de la alerta: «Quiebre inminente» si el stock llegó a la mitad del mínimo o menos; si no, «Bajo mínimo».
+const NIVEL = `CASE WHEN v.stock_fisico * 2 <= v.stock_minimo THEN 'QUIEBRE_INMINENTE' ELSE 'BAJO_MINIMO' END`;
+
 // Tabla «Productos más vendidos y estado de reposición»: unidades vendidas en el mes en curso (sin órdenes rechazadas), máx. 10.
 export async function topProductos() {
   const { rows } = await query(
-    `SELECT p.sku, p.nombre AS producto, p.marca, SUM(d.cantidad_vendida)::int AS ventas_mes, i.stock_fisico AS stock_actual,
-            CASE WHEN v.sku IS NULL THEN 'ABASTECIDO' ELSE 'QUIEBRE_INMINENTE' END AS estado
+    `SELECT p.sku, p.nombre AS producto, p.marca, SUM(d.cantidad_vendida)::int AS ventas_mes, i.stock_fisico AS stock_actual, p.stock_minimo,
+            CASE WHEN v.sku IS NULL THEN 'ABASTECIDO' ELSE ${NIVEL} END AS estado
        FROM detalle_venta d JOIN orden_venta o ON o.id_orden = d.id_orden
        JOIN producto p ON p.sku = d.sku JOIN inventario i ON i.sku = p.sku LEFT JOIN v_stock_critico v ON v.sku = p.sku
       WHERE o.estado_orden <> 'RECHAZADO' AND o.fecha_orden >= date_trunc('month', now())
-      GROUP BY p.sku, p.nombre, p.marca, i.stock_fisico, v.sku ORDER BY ventas_mes DESC, p.sku LIMIT 10`);
+      GROUP BY p.sku, p.nombre, p.marca, i.stock_fisico, p.stock_minimo, v.sku, v.stock_fisico, v.stock_minimo ORDER BY ventas_mes DESC, p.sku LIMIT 10`);
   return rows;
 }
 
 // HU09: SKU en quiebre con reorden sugerido = reponer hasta el doble del mínimo (al menos 1 unidad).
 export async function alertas() {
   const { rows } = await query(
-    `SELECT v.sku, p.modelo, v.stock_fisico, v.stock_minimo, GREATEST(2 * v.stock_minimo - v.stock_fisico, 1)::int AS sugerido_reorden
+    `SELECT v.sku, p.modelo, p.nombre AS producto, v.stock_fisico, v.stock_minimo,
+            GREATEST(2 * v.stock_minimo - v.stock_fisico, 1)::int AS sugerido_reorden, ${NIVEL} AS nivel
        FROM v_stock_critico v JOIN producto p ON p.sku = v.sku ORDER BY (v.stock_fisico - v.stock_minimo), v.sku`);
   return rows;
 }
 
-// HU10 (T39/T40): ventana de 30 días, órdenes rechazadas excluidas. Márgenes = realizado (precio de venta vs. costo vigente) por canal de la orden.
-export async function graficos() {
-  const [ventas, margenes, rotacion, inmovilizado] = await Promise.all([
+const TZ = 'America/Santiago';
+// Canales de origen (Mercado Libre, Paris, Ripley…) agrupados en los tres del informe: Web, Marketplace y Mayorista.
+const GRUPO = `CASE WHEN o.canal_origen = 'Mayorista' THEN 'mayorista' WHEN o.canal_origen ILIKE '%web%' THEN 'web' ELSE 'marketplace' END`;
+const DIA = `(o.fecha_orden AT TIME ZONE '${TZ}')::date`;
+const VENDIDO = `o.estado_orden <> 'RECHAZADO' AND ${DIA} BETWEEN $1::date AND $2::date`;
+
+export const hoy = async () => (await query(`SELECT (now() AT TIME ZONE '${TZ}')::date::text AS d`)).rows[0].d;
+
+// HU10 (T39/T40): períodos [desde, hasta] (fechas locales, inclusive), órdenes rechazadas excluidas.
+// Márgenes = realizado (precio de venta vs. costo vigente) por canal de la orden.
+export async function graficos(desde, hasta) {
+  const p = [desde, hasta];
+  const [ventas, margenes, serie, rotacion, inmovilizado, valoriz] = await Promise.all([
     query(`SELECT o.canal_origen AS canal, SUM(d.subtotal)::float AS total
              FROM orden_venta o JOIN detalle_venta d ON d.id_orden = o.id_orden
-            WHERE o.estado_orden <> 'RECHAZADO' AND o.fecha_orden >= now() - interval '30 days'
-            GROUP BY o.canal_origen ORDER BY total DESC`),
+            WHERE ${VENDIDO} GROUP BY o.canal_origen ORDER BY total DESC`, p),
     query(`SELECT o.canal_origen AS canal,
                   ROUND(100 * SUM(d.subtotal - d.cantidad_vendida * p.costo_adquisicion_neto) / NULLIF(SUM(d.subtotal), 0), 1)::float AS margen_promedio
              FROM orden_venta o JOIN detalle_venta d ON d.id_orden = o.id_orden JOIN producto p ON p.sku = d.sku
-            WHERE o.estado_orden <> 'RECHAZADO' AND o.fecha_orden >= now() - interval '30 days'
-            GROUP BY o.canal_origen ORDER BY margen_promedio DESC NULLS LAST`),
-    // rotación = unidades vendidas en 30 días / stock físico actual (mínimo 1): cuántas veces se "vació" el stock.
-    query(`SELECT p.sku, p.modelo, ROUND(SUM(d.cantidad_vendida)::numeric / GREATEST(i.stock_fisico, 1), 2)::float AS rotacion
+            WHERE ${VENDIDO} GROUP BY o.canal_origen ORDER BY margen_promedio DESC NULLS LAST`, p),
+    query(`SELECT ${DIA}::text AS dia, ${GRUPO} AS grupo, COUNT(DISTINCT o.id_orden)::int AS ordenes, SUM(d.subtotal)::float AS ventas,
+                  SUM(d.subtotal - d.cantidad_vendida * p.costo_adquisicion_neto)::float AS margen_bruto
+             FROM orden_venta o JOIN detalle_venta d ON d.id_orden = o.id_orden JOIN producto p ON p.sku = d.sku
+            WHERE ${VENDIDO} GROUP BY 1, 2`, p),
+    // rotación = unidades vendidas en el período / stock físico actual (mínimo 1): cuántas veces se "vació" el stock.
+    query(`SELECT p.sku, p.modelo, p.nombre AS producto, SUM(d.cantidad_vendida)::int AS unidades, i.stock_fisico AS stock,
+                  ROUND(SUM(d.cantidad_vendida)::numeric / GREATEST(i.stock_fisico, 1), 2)::float AS rotacion
              FROM detalle_venta d JOIN orden_venta o ON o.id_orden = d.id_orden
              JOIN producto p ON p.sku = d.sku JOIN inventario i ON i.sku = p.sku
-            WHERE o.estado_orden <> 'RECHAZADO' AND o.fecha_orden >= now() - interval '30 days'
-            GROUP BY p.sku, p.modelo, i.stock_fisico ORDER BY rotacion DESC, p.sku LIMIT 10`),
-    // inmovilizado = stock > 0 sin ventas ni ingresos en 60 días. dias = null si nunca tuvo movimiento registrado.
+            WHERE ${VENDIDO} GROUP BY p.sku, p.modelo, p.nombre, i.stock_fisico ORDER BY rotacion DESC, p.sku LIMIT 7`, p),
+    // inmovilizado = stock > 0 sin ventas ni ingresos en más de 60 días. dias = null si nunca tuvo movimiento registrado.
     query(`WITH ult AS (
              SELECT sku, MAX(f) AS f FROM (
                SELECT d.sku, o.fecha_orden AS f FROM detalle_venta d JOIN orden_venta o ON o.id_orden = d.id_orden WHERE o.estado_orden <> 'RECHAZADO'
                UNION ALL
                SELECT dr.sku, r.fecha_recepcion FROM detalle_recepcion dr JOIN recepcion_compra r ON r.id_recepcion = dr.id_recepcion) m GROUP BY sku)
-           SELECT p.sku, p.modelo, i.stock_fisico, (i.stock_fisico * p.costo_adquisicion_neto)::float AS valor,
+           SELECT p.sku, p.modelo, p.nombre AS producto, i.stock_fisico, (i.stock_fisico * p.costo_adquisicion_neto)::float AS valor,
                   (CURRENT_DATE - ult.f::date)::int AS dias_sin_movimiento
              FROM producto p JOIN inventario i ON i.sku = p.sku LEFT JOIN ult ON ult.sku = p.sku
             WHERE p.estado = 'ACTIVO' AND i.stock_fisico > 0 AND (ult.f IS NULL OR ult.f < now() - interval '60 days')
-            ORDER BY valor DESC LIMIT 20`),
+            ORDER BY valor DESC, p.sku LIMIT 200`),
+    query(`SELECT COALESCE(SUM(i.stock_fisico * p.costo_adquisicion_neto), 0)::float AS total FROM inventario i JOIN producto p ON p.sku = i.sku WHERE p.estado = 'ACTIVO'`),
   ]);
-  return { ventas_por_canal: ventas.rows, margenes: margenes.rows, rotacion: rotacion.rows, inmovilizado: inmovilizado.rows };
+  return { ventas: ventas.rows, margenes: margenes.rows, serie: serie.rows, rotacion: rotacion.rows, inmovilizado: inmovilizado.rows, valorizacion: valoriz.rows[0].total };
 }
