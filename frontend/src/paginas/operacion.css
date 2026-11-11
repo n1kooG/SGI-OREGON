@@ -42,3 +42,40 @@
 .modal:has(.asignar-chofer) .modal-cuerpo p.tenue { font-size: 13px; line-height: 18px; }
 .modal:has(.asignar-chofer) .alerta { margin: 0; }
 .modal:has(.asignar-chofer) .modal-pie { gap: 12px; }
+
+/* ---------- Móvil: cabecera, navegación inferior y página base ---------- */
+.movil-cab { height: 64px; padding: 12px 20px; border: 1px solid var(--line); }
+.movil-cab .logo { width: 32px; height: 32px; border-radius: 9px; }
+.movil-cab strong { font-size: 15px; line-height: 20px; }
+.movil-cab small { display: block; font-size: 13px; line-height: 18px; }
+.movil-cab .btn { height: auto; padding: 9px 12px; border-radius: 8px; font-size: 13px; line-height: 18px; font-weight: 400; color: var(--ink-2); }
+.movil-cab .btn .icono { width: 16px; height: 16px; }
+.movil-pagina { display: flex; flex-direction: column; gap: 16px; }
+.movil .nav-inferior { height: 72px; background: var(--nav); border-top: 0; }
+.movil .nav-inferior a { position: relative; justify-content: center; gap: 4px; padding: 0; font-size: 12px; line-height: 16px; color: var(--nav-text); }
+.movil .nav-inferior a .icono { width: 22px; height: 22px; }
+.movil .nav-inferior a.active { color: var(--on-dark); box-shadow: none; }
+.movil .nav-inferior a.active::before { content: ''; position: absolute; top: 0; left: 50%; width: 28px; height: 3px; margin-left: -14px; border-radius: 2px; background: var(--accent); }
+.movil .nav-inferior :focus-visible { outline-color: var(--on-dark); }
+
+/* ---------- Bodega: buscador de stock ---------- */
+.buscador-stock { gap: 14px; }
+.buscador-stock .buscador.grande { margin: 0; }
+.buscador-stock .buscador .icono { left: 16px; top: 18px; width: 20px; height: 20px; color: var(--ink); }
+.buscador-stock .buscador.grande .entrada { height: 56px; padding: 0 16px 0 48px; border: 1.5px solid var(--ink); border-radius: 14px; }
+.buscador-stock .buscador.grande .entrada:focus { outline: 0; box-shadow: 0 0 0 3px var(--halo-foco); }
+.buscador-stock .entrada::-webkit-search-cancel-button { display: none; }
+.buscador-stock .ayuda { font-size: 13px; line-height: 18px; }
+.buscador-stock .tarjeta-stock { display: flex; flex-direction: column; gap: 14px; margin: 0; padding: 20px; }
+.buscador-stock .tarjeta-stock.sin-stock { border-left: 4px solid var(--danger); }
+.buscador-stock .chip-sku { padding: 3px 8px; }
+.buscador-stock .tarjeta-stock h2 { margin: 0; font-size: 24px; line-height: 30px; letter-spacing: -.12px; }
+.marca-fila { display: flex; flex-wrap: wrap; gap: 0 6px; font-size: 14px; line-height: 20px; }
+.marca-fila + .marca-fila { margin-top: -10px; }
+.buscador-stock .stock-cols { gap: 16px; margin: 0; padding-top: 14px; }
+.buscador-stock .stock-cols > div { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.buscador-stock .cifra { display: flex; align-items: flex-end; gap: 6px; font: 500 48px/52px var(--f-dato); letter-spacing: -.96px; }
+.buscador-stock .cifra small { font: 400 14px/20px var(--f-ui); letter-spacing: 0; }
+.buscador-stock .ubicacion { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 24px; line-height: 30px; letter-spacing: -.12px; }
+.buscador-stock .ubicacion .icono { width: 20px; height: 20px; color: var(--accent-ink); }
+.buscador-stock .estante { font-size: 14px; line-height: 20px; color: var(--ink-2); }
