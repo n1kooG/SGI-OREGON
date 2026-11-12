@@ -208,6 +208,11 @@ CREATE TABLE orden_venta (
                         CHECK (estado_orden IN ('PENDIENTE_PREPARACION', 'ARMADO', 'ETIQUETADO',
                                                 'EN_CAMION', 'EN_RUTA', 'ENTREGADO', 'RECHAZADO')),
   numero_documento_sii  VARCHAR(20),                                        -- boleta / factura (T30)
+  url_etiqueta            VARCHAR(255),                                     -- clave del PDF de etiqueta importado (etiquetas/<id_orden>.pdf)
+  etiqueta_nombre_archivo VARCHAR(200),
+  etiqueta_importada_en   TIMESTAMPTZ,
+  CONSTRAINT ck_etiqueta_coherente CHECK ((url_etiqueta IS NULL) = (etiqueta_nombre_archivo IS NULL)
+                                      AND (url_etiqueta IS NULL) = (etiqueta_importada_en IS NULL)),
   CONSTRAINT ux_orden_canal_codigo UNIQUE (canal_origen, codigo_externo)    -- evita rebajar stock dos veces
 );
 CREATE INDEX ix_orden_lote          ON orden_venta (id_lote);

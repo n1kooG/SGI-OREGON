@@ -170,6 +170,13 @@ SELECT pg_temp.espera_error('SEG-04', 'Plan de seguridad: intentos fallidos nega
 SELECT pg_temp.espera_valor('SEG-03', 'PU-08: clave incorrecta es rechazada', 'false',
   $q$SELECT (password_hash = crypt('clave-falsa', password_hash))::text FROM usuario WHERE email='admin@tiendaoregon.cl'$q$);
 
+-- ---- Etiqueta importada (coherencia de columnas y permiso) ---------------------------------
+SELECT pg_temp.espera_error('ETQ-01', 'Etiqueta: clave sin nombre ni fecha es rechazada', '23514',
+  $q$INSERT INTO orden_venta (id_lote, codigo_externo, canal_origen, nombre_cliente, url_etiqueta)
+     VALUES ((SELECT min(id_lote) FROM lote_importacion), 'ETQ-PRUEBA', 'Ripley', 'Cliente de prueba', 'etiquetas/1.pdf')$q$);
+SELECT pg_temp.espera_valor('ETQ-02', 'Etiqueta: pedidos:etiquetas solo para ADMINISTRADOR', 'ADMINISTRADOR',
+  $q$SELECT string_agg(nombre_rol, ',') FROM rol WHERE permisos ? 'pedidos:etiquetas'$q$);
+
 \o
 \echo
 \echo '==================== RESULTADO DE PRUEBAS DE INTEGRIDAD ===================='
