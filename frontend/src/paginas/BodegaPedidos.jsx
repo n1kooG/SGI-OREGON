@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, mensajeError } from '../api.js';
+import { api, descargarArchivo, mensajeError } from '../api.js';
 import { Alerta, Badge, Boton, Campo, Icono, useAviso } from '../componentes/ui.jsx';
 import { ESTADOS, EstadoBadge, fechaCorta } from './Pedidos.jsx';
+import { IcoPdf } from './etiquetaComun.jsx';
 
 const Calendario = () => <svg className="icono" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>;
 const FLUJO = ['PENDIENTE_PREPARACION', 'ARMADO', 'ETIQUETADO', 'EN_CAMION'];
@@ -34,6 +35,29 @@ function Comentario({ idOrden, sku }) {
   );
 }
 
+const cargadaEl = (f) => { const d = new Date(f); return d.toDateString() === new Date().toDateString() ? 'hoy' : d.toLocaleDateString('es-CL'); };
+
+// Bodega solo descarga: si el pedido no trae la etiqueta importada, se avisa a quién pedirla.
+function EtiquetaBodega({ p }) {
+  const [descargando, setDescargando] = useState(false);
+  const [error, setError] = useState('');
+  async function bajar() {
+    setError(''); setDescargando(true);
+    try { await descargarArchivo(`/pedidos/${p.id_orden}/etiqueta`, `etiqueta_${p.codigo_externo}.pdf`); }
+    catch (e) { setError(mensajeError(e)); } finally { setDescargando(false); }
+  }
+  if (!p.tiene_etiqueta) return <div className="etq-sin"><Icono n="info" />Sin etiqueta: pídela a jefatura</div>;
+  const hora = new Date(p.etiqueta_importada_en).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return (
+    <div className="etq-bodega">
+      <Boton variante="primario bloque" disabled={descargando} onClick={bajar}>{descargando ? <>Descargando etiqueta…</> : <><IcoPdf />Descargar etiqueta</>}</Boton>
+      {descargando && <progress aria-label="Descargando etiqueta" />}
+      <span className="etq-meta">{p.etiqueta_nombre_archivo} · {descargando ? 'descargando' : `cargada ${cargadaEl(p.etiqueta_importada_en)} ${hora}`}</span>
+      <div aria-live="assertive"><Alerta>{error}</Alerta></div>
+    </div>
+  );
+}
+
 function Tarjeta({ p, abierta, onAbrir, onCambio }) {
   const aviso = useAviso();
   const [det, setDet] = useState(null);
@@ -55,16 +79,6 @@ function Tarjeta({ p, abierta, onAbrir, onCambio }) {
     } catch (e) { setError(mensajeError(e)); return false; } finally { setOcupado(false); }
   }
 
-  async function etiqueta() {
-    setError('');
-    try {
-      const { data } = await api(`/pedidos/${p.id_orden}/etiqueta`, { blob: true });
-      const url = URL.createObjectURL(data);
-      const a = Object.assign(document.createElement('a'), { href: url, download: `etiqueta_${p.codigo_externo}.pdf` });
-      a.click(); URL.revokeObjectURL(url);
-    } catch (e) { setError(mensajeError(e)); }
-  }
-
   const items = det?.items ?? [];
   const completo = items.length > 0 && items.every((i) => marcados[i.sku]);
   return (
@@ -77,13 +91,13 @@ function Tarjeta({ p, abierta, onAbrir, onCambio }) {
           ? <span className="resumen"><Badge tono="info">{p.unidades} un. en total</Badge><span className="ver-detalle">Ocultar detalle</span></span>
           : <span className="resumen"><span className="ver-detalle">Toque para ver el detalle</span><Icono n="der" /></span>}
       </button>
+      <EtiquetaBodega p={p} />
       {abierta && (
         <div className="tarjeta-cuerpo">
           <span className="etiqueta">Cambiar estado</span>
           <div className="estados" role="group" aria-label="Cambiar estado">
             {FLUJO.map((e) => <button type="button" key={e} className={`pastilla ${p.estado_orden === e ? 'activa' : ''}`} aria-pressed={p.estado_orden === e} disabled={ocupado} onClick={() => p.estado_orden !== e && estado(e)}>{ESTADOS[e][0]}</button>)}
           </div>
-          <Boton className="bloque-sm" onClick={etiqueta}>Descargar etiquetas de este pedido</Boton>
           <Alerta>{error}</Alerta>
           <span className="etiqueta">Detalle de productos a recolectar ({p.unidades} unidades)</span>
           <p className="tenue">Marque al recolectar</p>

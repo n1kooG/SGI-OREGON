@@ -86,3 +86,13 @@
 .btn.peligro-solido { background: var(--danger); border-color: var(--danger); color: var(--on-dark); font-weight: 500; }
 .btn.peligro-solido:hover { background: #8f1d14; border-color: #8f1d14; }
 .etq-botones .btn.peligro { font-weight: 500; }
+
+/* Tarjeta de Bodega (móvil) */
+.etq-bodega { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.etq-bodega .btn.bloque { height: 48px; font-weight: 500; }
+.etq-bodega progress { width: 100%; height: 6px; accent-color: var(--accent-ink); }
+.etq-meta { font-size: 13px; line-height: 16px; color: var(--ink-2); overflow-wrap: anywhere; }
+.etq-sin { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 12px 16px; border-radius: 12px; background: var(--warn-bg); color: var(--warn); font-weight: 500; }
+.etq-sin .icono { width: 18px; height: 18px; flex: none; }
+/* dashboard.css define `.tarjeta-cab > div:first-child` (columna) y se cuela en la tarjeta de Bodega: se restituye la fila chip + estado */
+.pedidos-bodega .tarjeta-cab > .fila-sb:first-child { flex: none; flex-direction: row; gap: 10px; }
