@@ -155,4 +155,11 @@
   .dashboard .tabla-mini table { table-layout: auto; }
 }
 
-.espacio-vacio { height: 190px; } /* alto del estado vacío dentro de la tabla de inmovilizado */
+/* En pantallas angostas el gráfico se encoge y el aviso de «sin datos» (superpuesto) lo desbordaría: se le reserva alto */
+@media (max-width: 899px) {
+  .grafico-caja:has(> .g-vacio) { min-height: 300px; }
+}
+
+/* Estado vacío dentro del cuerpo de la tabla de inmovilizado: en el flujo, bajo la cabecera, para no taparla */
+.espacio-vacio { display: grid; place-items: center; min-height: 190px; padding: 16px; border-top: 1px solid var(--line); }
+.espacio-vacio .g-vacio { position: static; transform: none; width: min(100%, 380px); }
