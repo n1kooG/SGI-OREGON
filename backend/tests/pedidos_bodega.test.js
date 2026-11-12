@@ -1,4 +1,4 @@
-// HU05 / T23–T26 (Bodega) y T50 (Administrador): pedidos pendientes, estados, discrepancias, etiqueta y asignación de chofer.
+// HU05 / T23–T26 (Bodega) y T50 (Administrador): pedidos pendientes, estados, discrepancias, y asignación de chofer.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { iniciar, crearPedido, limpiar } from './_aux.js';
@@ -67,7 +67,6 @@ test('T25: RBAC — el chofer y el administrador no preparan (403 + ACCESO_DENEG
   const id = await nuevo();
   for (const tok of [t.chofer, t.admin]) {
     assert.equal((await t.http('PATCH', `/api/pedidos/${id}/estado`, tok, { estado: 'ARMADO' })).status, 403);
-    assert.equal((await t.http('GET', `/api/pedidos/${id}/etiqueta`, tok)).status, 403);
   }
   assert.equal((await t.http('GET', `/api/pedidos/${id}`, t.chofer)).status, 403);
   assert.equal((await t.http('GET', `/api/pedidos/${id}`, null)).status, 401);
@@ -87,15 +86,6 @@ test('T25: comentario de discrepancia (dañado/faltante) queda en la bitácora; 
     assert.equal((await t.http('POST', `/api/pedidos/${id}/comentarios`, t.bodega, mal)).status, 400);
   }
   assert.equal((await t.http('POST', `/api/pedidos/${id}/comentarios`, t.bodega, { sku: 'UT-FORNO', tipo: 'FALTANTE', comentario: 'x' })).status, 422);
-});
-
-test('T25: etiqueta PDF del pedido', async () => {
-  const id = await nuevo();
-  const r = await t.http('GET', `/api/pedidos/${id}/etiqueta`, t.bodega);
-  assert.equal(r.status, 200);
-  assert.match(r.tipo, /application\/pdf/);
-  assert.equal(r.body.subarray(0, 5).toString(), '%PDF-');
-  assert.equal((await t.http('GET', '/api/pedidos/999999999/etiqueta', t.bodega)).status, 404);
 });
 
 test('T50: el Administrador supervisa y asigna chofer: EN_CAMION -> EN_RUTA con despacho y auditoría', async () => {

@@ -123,7 +123,6 @@ test('T32: RBAC y pertenencia — Bodega/Administrador 403; el despacho de otro 
 test('T34: flujo completo — importado/pendiente -> Bodega prepara -> Admin asigna -> Chofer ve y entrega', async () => {
   const id = await nuevo({ lineas: [['TH-4500', 1], ['UT-FORNO', 1]] });
   for (const e of ['ARMADO', 'ETIQUETADO', 'EN_CAMION']) assert.equal((await t.http('PATCH', `/api/pedidos/${id}/estado`, t.bodega, { estado: e })).status, 200);
-  assert.equal((await t.http('GET', `/api/pedidos/${id}/etiqueta`, t.bodega)).status, 200);
   // antes de asignar el chofer no ve nada
   assert.equal((await t.http('GET', '/api/despachos/mi-ruta', t.chofer)).body.some((x) => x.id_orden === id), false);
   assert.equal((await t.http('POST', `/api/pedidos/${id}/asignar-chofer`, t.admin, { id_chofer: t.idChofer })).status, 200);
@@ -132,8 +131,8 @@ test('T34: flujo completo — importado/pendiente -> Bodega prepara -> Admin asi
   assert.equal((await t.http('PATCH', `/api/despachos/${ruta.id_despacho}`, t.chofer, { estado: 'ENTREGADO', latitud: -33.4263, longitud: -70.6155 })).status, 200);
   assert.equal(await estado(id), 'ENTREGADO');
   // recorrido completo en la bitácora, en orden
-  const acciones = (await query(`SELECT accion FROM audit_log WHERE (valores_nuevos->>'id_orden')::int = $1 AND accion IN ('CAMBIO_ESTADO','ETIQUETA','ASIGNACION_CHOFER','ENTREGA') ORDER BY id_log`, [id])).rows.map((r) => r.accion);
-  assert.deepEqual(acciones, ['CAMBIO_ESTADO', 'CAMBIO_ESTADO', 'CAMBIO_ESTADO', 'ETIQUETA', 'ASIGNACION_CHOFER', 'ENTREGA']);
+  const acciones = (await query(`SELECT accion FROM audit_log WHERE (valores_nuevos->>'id_orden')::int = $1 AND accion IN ('CAMBIO_ESTADO','ASIGNACION_CHOFER','ENTREGA') ORDER BY id_log`, [id])).rows.map((r) => r.accion);
+  assert.deepEqual(acciones, ['CAMBIO_ESTADO', 'CAMBIO_ESTADO', 'CAMBIO_ESTADO', 'ASIGNACION_CHOFER', 'ENTREGA']);
   // ni Bodega ni el chofer reciben costos en ninguna respuesta del flujo
   for (const [tok, ruta2] of [[t.bodega, `/api/pedidos/${id}`], [t.chofer, '/api/despachos/mi-ruta']]) {
     assert.doesNotMatch(JSON.stringify((await t.http('GET', ruta2, tok)).body), /costo|margen|valorizacion/i);

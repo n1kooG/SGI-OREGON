@@ -44,10 +44,6 @@ router.get('/resumen', autenticar, ver, ah(async (_req, res) => res.json(await s
 router.get('/:id(\\d+)', autenticar, ver, ah(async (req, res) => res.json(await svc.detalle(req, id(req)))));
 router.patch('/:id(\\d+)/estado', autenticar, preparar, ah(async (req, res) => res.json(await svc.cambiarEstado(req, id(req), req.body?.estado))));
 router.post('/:id(\\d+)/comentarios', autenticar, preparar, ah(async (req, res) => res.status(201).json(await svc.comentar(req, id(req), req.body ?? {}))));
-router.get('/:id(\\d+)/etiqueta', autenticar, preparar, ah(async (req, res) => {
-  const { pdf, nombre } = await svc.etiqueta(req, id(req));
-  res.set('Content-Disposition', `attachment; filename="${nombre.replace(/[^\w.-]/g, '_')}"`).type('application/pdf').send(pdf);
-}));
 router.patch('/:id(\\d+)/documento', autenticar, requierePermiso('pedidos:documentar'), ah(async (req, res) => res.json(await svc.documentar(req, id(req), req.body?.numero_documento))));
 router.post('/:id(\\d+)/asignar-chofer', autenticar, requierePermiso('pedidos:asignar_chofer'), ah(async (req, res) => res.json(await svc.asignarChofer(req, id(req), req.body?.id_chofer))));
 

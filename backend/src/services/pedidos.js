@@ -4,8 +4,6 @@ import { conTransaccion } from '../db.js';
 import { auditar } from '../audit.js';
 import { AppError } from '../errors.js';
 import { tiene } from '../middleware/auth.js';
-import { pdfEtiqueta } from '../pdf/etiqueta.js';
-import { formatearRut } from '../rut.js';
 
 const bad = (msg, status = 400, codigo = 'VALIDACION') => new AppError(status, msg, codigo);
 const BODEGA = ['PENDIENTE_PREPARACION', 'ARMADO', 'ETIQUETADO', 'EN_CAMION']; // los 4 estados reversibles (Tabla 17)
@@ -69,17 +67,6 @@ export async function comentar(req, id, { sku, tipo, comentario } = {}) {
   await conTransaccion((c) => auditar(req, { idUsuario: req.usuario.id_usuario, tabla: 'orden_venta', accion: 'DISCREPANCIA', despues: { id_orden: id, sku: s, tipo, comentario: txt } }, c));
   return { id_orden: id, sku: s, tipo, comentario: txt };
 }
-
-// Etiqueta de despacho 10×15 cm (CU-10). Se genera en memoria; no se guarda.
-export async function etiqueta(req, id) {
-  const o = await detalle(req, id);
-  const rut = await repo.rutCliente(id);
-  const pdf = await pdfEtiqueta(o, rut && (formatearRut(rut) ?? rut));
-  await auditar(req, { idUsuario: req.usuario.id_usuario, tabla: 'orden_venta', accion: 'ETIQUETA', despues: { id_orden: id } });
-  return { pdf, nombre: `etiqueta_${o.codigo_externo}.pdf` };
-}
-
-export { dibujarEtiqueta } from '../pdf/etiqueta.js';
 
 // CU-06 / T50: asigna chofer (EN_CAMION -> EN_RUTA) y crea el despacho en una sola transacción con su auditoría.
 export async function asignarChofer(req, id, idChofer) {
