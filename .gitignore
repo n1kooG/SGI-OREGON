@@ -7,3 +7,6 @@ dist/
 
 # Documentación privada del equipo (no se publica)
 documentacion/
+
+# Etiquetas importadas guardadas en disco (desarrollo, sin S3)
+storage-local/

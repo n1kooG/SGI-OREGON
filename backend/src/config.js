@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url';
+
 export const config = {
   port: Number(process.env.PORT ?? 3000),
   databaseUrl: process.env.DATABASE_URL ?? 'postgres://postgres:postgres@localhost:5432/sgi_oregon',
@@ -14,6 +16,8 @@ export const config = {
   s3Bucket: process.env.S3_BUCKET ?? '',
   // Con true, cerrar una entrega como ENTREGADO exige la firma o el nombre del receptor; por defecto son opcionales.
   exigirReceptorEntrega: process.env.EXIGIR_RECEPTOR_ENTREGA === 'true',
+  // Sin S3 (desarrollo) las etiquetas importadas se guardan en disco, en este directorio.
+  etiquetasDir: process.env.ETIQUETAS_DIR || fileURLToPath(new URL('../storage-local/etiquetas/', import.meta.url)),
   s3Region: process.env.S3_REGION ?? 'sa-east-1',
 };
 
