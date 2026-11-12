@@ -7,6 +7,7 @@ export async function listar(estados, canal, porReingresar = false) {
   const { rows } = await query(
     `SELECT o.id_orden, o.codigo_externo, o.canal_origen, o.fecha_orden, o.nombre_cliente, o.comuna, o.estado_orden,
             (SELECT COALESCE(SUM(d.cantidad_vendida), 0)::int FROM detalle_venta d WHERE d.id_orden = o.id_orden) AS unidades,
+            (o.url_etiqueta IS NOT NULL) AS tiene_etiqueta, o.etiqueta_nombre_archivo, o.etiqueta_importada_en,
             ds.id_usuario_chofer, u.nombre_completo AS nombre_chofer, ds.estado_entrega,
             ds.motivo_rechazo, ds.nombre_receptor, ds.reingresado_en, (ds.reingresado_en IS NOT NULL) AS reingresado
        FROM orden_venta o
@@ -24,6 +25,7 @@ export async function obtener(id, c = { query }) {
   const { rows } = await c.query(
     `SELECT o.id_orden, o.codigo_externo, o.canal_origen, o.fecha_orden, o.nombre_cliente, o.direccion_despacho, o.comuna,
             o.telefono_contacto, o.estado_orden, o.numero_documento_sii, o.rut_cliente,
+            (o.url_etiqueta IS NOT NULL) AS tiene_etiqueta, o.etiqueta_nombre_archivo, o.etiqueta_importada_en,
             ds.id_despacho, ds.id_usuario_chofer, ch.nombre_completo AS nombre_chofer, ds.fecha_asignacion, ds.fecha_cierre,
             (ds.url_evidencia_s3 IS NOT NULL) AS tiene_evidencia, ds.estado_entrega,
             (SELECT a.geolocalizacion FROM audit_log a WHERE a.tabla_afectada = 'despacho' AND a.accion = 'ENTREGA'
@@ -94,3 +96,23 @@ export const documentoActual = async (c, id) => {
   return rows.length ? { numero: rows[0].numero_documento_sii } : null;
 };
 export const fijarDocumento = (c, id, numero) => c.query(`UPDATE orden_venta SET numero_documento_sii = $2 WHERE id_orden = $1`, [id, numero]);
+
+// Etiquetas importadas. La coincidencia con el N° de orden del marketplace usa la misma normalización que `normalizarCodigo` (pdf/leerOrden.js).
+// shortcut: recorre orden_venta sin índice funcional; suficiente para el volumen de la tienda, indexar si crece a cientos de miles de pedidos.
+const NORM_CODIGO_SQL = `regexp_replace(regexp_replace(upper(codigo_externo), '\\s+', '', 'g'), '^(#|ORD-?)*0*', '')`;
+export async function buscarPorCodigo(norm) {
+  const { rows } = await query(`SELECT id_orden, codigo_externo, (url_etiqueta IS NOT NULL) AS tiene_etiqueta FROM orden_venta WHERE ${NORM_CODIGO_SQL} = $1 LIMIT 2`, [norm]);
+  return rows;
+}
+// Bloquea la orden y devuelve su etiqueta actual (o null si el pedido no existe).
+export async function etiquetaActual(c, id) {
+  const { rows } = await c.query(`SELECT codigo_externo, url_etiqueta, etiqueta_nombre_archivo FROM orden_venta WHERE id_orden = $1 FOR UPDATE`, [id]);
+  return rows[0] ?? null;
+}
+export const fijarEtiqueta = (c, id, clave, nombre) => c.query(
+  `UPDATE orden_venta SET url_etiqueta = $2, etiqueta_nombre_archivo = $3, etiqueta_importada_en = now() WHERE id_orden = $1 RETURNING etiqueta_importada_en`, [id, clave, nombre]);
+export const limpiarEtiqueta = (c, id) => c.query(`UPDATE orden_venta SET url_etiqueta = NULL, etiqueta_nombre_archivo = NULL, etiqueta_importada_en = NULL WHERE id_orden = $1`, [id]);
+export async function etiquetaDe(id) {
+  const { rows } = await query(`SELECT codigo_externo, url_etiqueta, etiqueta_nombre_archivo FROM orden_venta WHERE id_orden = $1`, [id]);
+  return rows[0] ?? null;
+}
