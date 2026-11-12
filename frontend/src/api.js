@@ -33,7 +33,16 @@ export async function api(ruta, { metodo = 'GET', cuerpo, publica = false, blob 
     const msg = data?.error ?? (res.status === 403 ? 'No tienes permiso para esta operación' : 'Error de comunicación con el servidor');
     throw new ApiError(res.status, msg, data?.codigo, data?.detalle);
   }
-  return { data, total: Number(res.headers.get('X-Total-Count') ?? 0) };
+  const nombreArchivo = /filename="?([^";]+)"?/.exec(res.headers.get('Content-Disposition') ?? '')?.[1];
+  return { data, total: Number(res.headers.get('X-Total-Count') ?? 0), nombreArchivo };
 }
 
 export const mensajeError = (e) => (e instanceof ApiError ? e.message : 'Ocurrió un error inesperado');
+
+// Descarga un archivo protegido: con fetch autenticado a un Blob y un enlace temporal (un <a href> no lleva el token).
+export async function descargarArchivo(ruta, nombreRespaldo) {
+  const { data, nombreArchivo } = await api(ruta, { blob: true });
+  const url = URL.createObjectURL(data);
+  Object.assign(document.createElement('a'), { href: url, download: nombreArchivo ?? nombreRespaldo }).click();
+  URL.revokeObjectURL(url);
+}

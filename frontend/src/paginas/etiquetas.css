@@ -1,0 +1,23 @@
+/* Etiquetas de envío importadas: columna de Pedidos, modal de importación, bloque del detalle y botón de Bodega. */
+.ico-etq { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Barra de Pedidos: el contador y el botón van al extremo derecho */
+.barra-pedidos .contador-pedidos { margin-left: auto; }
+.barra-pedidos .btn.primario { height: 44px; }
+
+/* Celda «Etiqueta» de la tabla */
+.etq-celda { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.badge.con-icono::before { display: none; }
+.badge.con-icono .ico-etq { width: 12px; height: 12px; }
+.etq-descargar { display: inline-flex; align-items: center; gap: 4px; padding: 2px 0; border: 0; background: none; color: var(--accent-ink); font: 500 13px/16px var(--f-ui); text-decoration: underline; cursor: pointer; border-radius: 4px; }
+.etq-descargar .ico-etq { width: 14px; height: 14px; }
+.etq-descargar:hover { color: var(--accent-ink-hover); }
+.etq-descargar:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+.tabla-pedidos .etq-celda .badge { white-space: nowrap; }
+/* Tabla de layout fijo: al sumar la columna «Etiqueta» se reparten los anchos para que «Cliente / destino» no se aplaste */
+.tabla-pedidos table th:first-child, .tabla-pedidos table td:first-child { width: 128px; }
+.tabla-pedidos table th:nth-child(3), .tabla-pedidos table td:nth-child(3) { width: 124px; }
+.tabla-pedidos table th:nth-child(4), .tabla-pedidos table td:nth-child(4) { width: 150px; }
+.tabla-pedidos table th:nth-child(5), .tabla-pedidos table td:nth-child(5) { width: 200px; }
+.tabla-pedidos table th:nth-child(6), .tabla-pedidos table td:nth-child(6) { width: 150px; }
+.tabla-pedidos table th:last-child, .tabla-pedidos table td:last-child { width: 168px; }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, mensajeError } from '../api.js';
 import { Alerta, Badge, Boton, Campo, Modal, Tabla, useAviso } from '../componentes/ui.jsx';
 import PedidoDetalle from './PedidoDetalle.jsx';
+import { IcoDescargar, IcoPdf, IcoSubir, descargar } from './etiquetaComun.jsx';
 import './admin.css';
 
 export const ESTADOS = {
@@ -51,6 +52,18 @@ function AsignarChofer({ pedido, onClose, onHecho }) {
   );
 }
 
+function CeldaEtiqueta({ p }) {
+  const aviso = useAviso();
+  return (
+    <div className="etq-celda">
+      {!p.tiene_etiqueta ? <Badge>Sin etiqueta</Badge> : <>
+      <span className="badge ok con-icono"><IcoPdf />Cargada</span>
+      <button type="button" className="etq-descargar" aria-label={`Descargar etiqueta del pedido ${p.codigo_externo}`} onClick={() => descargar(p, aviso)}><IcoDescargar />Descargar</button>
+      </>}
+    </div>
+  );
+}
+
 export default function Pedidos() {
   const [canal, setCanal] = useState('');
   const [estado, setEstado] = useState('');
@@ -59,6 +72,7 @@ export default function Pedidos() {
   const [error, setError] = useState('');
   const [asignando, setAsignando] = useState(null);
   const [detalle, setDetalle] = useState(null); // { id, ruta }
+  const [importando, setImportando] = useState(false);
   const canales = useRef(new Set()); // el canal es texto libre: se arma la lista con los vistos
 
   const cargar = useCallback(async () => {
@@ -90,7 +104,7 @@ export default function Pedidos() {
           <p>Control del flujo: preparación en bodega y asignación a hoja de ruta para reparto.</p>
         </div>
       </div>
-      <div className="barra-herr">
+      <div className="barra-herr barra-pedidos">
         <Campo como="select" etiqueta="Canal" className="filtro" value={canal} onChange={(e) => setCanal(e.target.value)}>
           <option value="">Todos los canales</option>
           {[...new Set([...canales.current, canal].filter(Boolean))].sort().map((c) => <option key={c}>{c}</option>)}
@@ -99,10 +113,12 @@ export default function Pedidos() {
           <option value="">Todos los estados</option>
           {Object.entries(ESTADOS).map(([k, [t]]) => <option key={k} value={k}>{t}</option>)}
         </Campo>
+        <span className="tenue contador-pedidos">{filas.length} {filas.length === 1 ? 'pedido' : 'pedidos'} · {new Date().toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+        <Boton variante="primario" onClick={() => setImportando(true)}><IcoSubir />Importar etiquetas</Boton>
       </div>
       <Alerta>{error}</Alerta>
       <div className="tabla-pedidos"><Tabla
-        columnas={['N° orden', 'Cliente / destino', 'Canal', 'Ítems', 'Estado operativo', { t: 'Acción', d: 1 }]}
+        columnas={['N° orden', 'Cliente / destino', 'Canal', 'Ítems', 'Estado operativo', 'Etiqueta', { t: 'Acción', d: 1 }]}
         vacio={cargando ? 'Cargando…' : !filas.length && !error ? 'No hay pedidos con esos filtros.' : null}
       >
         {filas.map((p) => (
@@ -112,6 +128,7 @@ export default function Pedidos() {
             <td style={{ whiteSpace: 'nowrap' }}>{p.canal_origen}</td>
             <td>{p.unidades} un.</td>
             <td>{p.estado_entrega === 'RECHAZADO' ? <Badge tono="mal">Rechazado{p.motivo_rechazo && ` · ${causalResumida(p.motivo_rechazo)}`}</Badge> : <EstadoBadge e={p.estado_orden} />}{p.nombre_chofer && <div className="celda-sec">{p.nombre_chofer}</div>}</td>
+            <td><CeldaEtiqueta p={p} /></td>
             <td className="derecha">{accion(p)}</td>
           </tr>
         ))}
