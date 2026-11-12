@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, mensajeError } from '../api.js';
 import { Alerta, Badge, Boton, Icono, Modal, useAviso } from '../componentes/ui.jsx';
+import EtiquetaEnvio from './EtiquetaEnvio.jsx';
 import { EstadoBadge, fechaCorta } from './Pedidos.jsx';
 import './admin.css';
 
@@ -116,6 +117,8 @@ export default function PedidoDetalle({ id, enfocarDespacho, onClose, onCambio }
               )}
             </>
           )}
+
+          <EtiquetaEnvio pedido={p} onCambio={(campos) => { setP({ ...p, ...campos }); onCambio?.(); }} />
 
           <h3 className="etiqueta">Documento tributario</h3>
           <form className="doc-sii" onSubmit={guardar}>

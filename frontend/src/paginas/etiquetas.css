@@ -66,3 +66,23 @@
 .sel-lista li.activo, .sel-lista li:hover { background: var(--bg); }
 .sel-lista .sel-vacio { color: var(--ink-3); cursor: default; }
 .sel-lista .dato { font-weight: 500; margin-right: 6px; }
+
+/* Bloque «Etiqueta de envío» del detalle */
+.etq-tarjeta { display: flex; flex-direction: column; gap: 12px; padding: 14px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); }
+.etq-tarjeta .etq-fila { align-items: flex-start; }
+.etq-tarjeta .etq-texto .dato { font-size: 13px; }
+.etq-botones { display: flex; flex-wrap: wrap; gap: 8px; }
+.etq-botones .btn { height: 40px; padding: 0 16px; }
+.etq-botones .btn.primario { font-weight: 500; }
+.etq-subir { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px; text-align: left; font: inherit; color: var(--ink); background: var(--surface); border: 1.5px dashed var(--line-strong); border-radius: 12px; cursor: pointer; }
+.etq-subir:hover, .etq-subir.sobre { border-color: var(--accent-ink); background: var(--bg); }
+.etq-subir:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+.etq-subir .etq-texto strong { font-weight: 500; font-size: 15px; line-height: 20px; color: var(--ink); }
+.etq-ayuda { margin: 8px 0 0; font-size: 13px; line-height: 16px; color: var(--ink-2); }
+.etq-confirmar { display: flex; gap: 10px; padding: 14px; border: 1px solid var(--danger); border-radius: 12px; background: var(--surface); }
+.etq-confirmar > .icono { width: 18px; height: 18px; flex: none; margin-top: 1px; stroke: var(--danger); }
+.etq-confirmar strong { display: block; font-weight: 500; font-size: 14px; line-height: 20px; color: var(--ink); }
+.etq-confirmar p { margin: 0 0 12px; font-size: 13px; line-height: 18px; color: var(--ink-2); overflow-wrap: anywhere; }
+.btn.peligro-solido { background: var(--danger); border-color: var(--danger); color: var(--on-dark); font-weight: 500; }
+.btn.peligro-solido:hover { background: #8f1d14; border-color: #8f1d14; }
+.etq-botones .btn.peligro { font-weight: 500; }
