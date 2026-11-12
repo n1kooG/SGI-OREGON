@@ -106,6 +106,28 @@ Firma y receptor son opcionales; con `EXIGIR_RECEPTOR_ENTREGA=true` un ENTREGADO
 marca `reingresado_en`/`id_usuario_reingreso`, deja el pedido en `EN_CAMION` (listo para `asignar-chofer`, que crea un despacho
 nuevo) y audita `REINGRESO` con orden, despacho y unidades, todo en una transacción.
 
+## Etiquetas de despacho importadas
+
+El sistema **no genera** etiquetas: cada marketplace (p. ej. Mercado Libre) las exporta en PDF y el administrador las importa.
+Esquema para bases existentes (idempotente): `psql -d sgi_oregon -f db/10_etiqueta_importada.sql` (columnas `url_etiqueta`,
+`etiqueta_nombre_archivo`, `etiqueta_importada_en` en `orden_venta` y permiso `pedidos:etiquetas` para ADMINISTRADOR). Los pedidos
+anteriores quedan sin etiqueta.
+
+| Método y ruta | Permiso | Cuerpo → respuesta |
+|---|---|---|
+| `POST /api/pedidos/etiquetas` | `pedidos:etiquetas` (ADMIN) | multipart, campo `archivos` repetido (hasta 100 PDF de ≤ 2 MB). Lee el «Nº de orden» de cada PDF y lo busca en `codigo_externo` (sin espacios, mayúsculas, sin `#`/`ORD-` ni ceros iniciales). → 200 `{ total, resultados: [{ archivo, estado, id_orden?, codigo_externo?, motivo? }] }` con `estado` = `ASOCIADA` \| `REEMPLAZADA` \| `NO_RECONOCIDA` (sin N° de orden legible) \| `PEDIDO_NO_ENCONTRADO` (sin pedido, o más de uno) \| `INVALIDO` (no es PDF, vacío, > 2 MB, ilegible). Un archivo malo no aborta el lote. 400 sin archivos o con más de 100; 413 si un archivo supera 3 MB; audita `ETIQUETA_IMPORTADA` por asociación |
+| `PUT /api/pedidos/:id/etiqueta` | `pedidos:etiquetas` (ADMIN) | multipart, campo `archivo` (un PDF): asigna a mano sin leer su texto. → `{ id_orden, estado: "ASOCIADA" \| "REEMPLAZADA", etiqueta_nombre_archivo, etiqueta_importada_en }`. 400 `ARCHIVO_INVALIDO`, 404; audita `ETIQUETA_IMPORTADA` con `manual: true` |
+| `DELETE /api/pedidos/:id/etiqueta` | `pedidos:etiquetas` (ADMIN) | → `{ id_orden }`; borra el archivo y limpia las columnas. 404 `SIN_ETIQUETA` / `NO_ENCONTRADO`; audita `ETIQUETA_ELIMINADA` |
+| `GET /api/pedidos/:id/etiqueta` | `pedidos:preparar` o `pedidos:leer` | → PDF (`application/pdf`, `attachment; filename="etiqueta_<codigo_externo>.pdf"`). 404 `SIN_ETIQUETA` si el pedido no tiene; audita `ETIQUETA` |
+
+`GET /api/pedidos` y `GET /api/pedidos/:id` (Administrador y Bodega) incluyen `tiene_etiqueta`, `etiqueta_nombre_archivo` y
+`etiqueta_importada_en`; la clave de almacenamiento nunca se expone.
+
+Almacenamiento: con S3 activo el PDF queda en `etiquetas/<id_orden>.pdf` (clave determinista, reemplaza la anterior). Con
+`STORAGE_ENABLED=false` (desarrollo) se guarda en disco en `ETIQUETAS_DIR` (por defecto `backend/storage-local/etiquetas/`, ignorado
+por git) como `<id_orden>.pdf`. El nombre del archivo subido solo se guarda como texto (sin rutas); nunca forma parte de una ruta.
+Para reconocer otro marketplace se agrega un patrón a `PATRONES_ORDEN` en `src/pdf/leerOrden.js`.
+
 ## Producción
 
 Con `NODE_ENV=production` la API no arranca si `JWT_SECRET` tiene menos de 32 caracteres o es el valor de ejemplo.
