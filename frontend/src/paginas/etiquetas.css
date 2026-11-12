@@ -21,3 +21,48 @@
 .tabla-pedidos table th:nth-child(5), .tabla-pedidos table td:nth-child(5) { width: 200px; }
 .tabla-pedidos table th:nth-child(6), .tabla-pedidos table td:nth-child(6) { width: 150px; }
 .tabla-pedidos table th:last-child, .tabla-pedidos table td:last-child { width: 168px; }
+
+/* Modal de importación */
+.modal.modal-etq { max-width: 720px; border-radius: 16px; }
+.modal-etq .modal-cab { padding: 28px 28px 0; }
+.modal-etq .modal-cab h2 { font-size: 24px; line-height: 32px; }
+.modal-etq .modal-cab p { color: var(--ink-2); margin-top: 4px; }
+.modal-etq .modal-cuerpo { padding: 20px 28px 0; }
+.modal-etq .modal-pie { padding: 20px 28px 28px; }
+.etq-icono { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex: none; border-radius: 8px; background: var(--bg); color: var(--ink); }
+.etq-icono .ico-etq { width: 18px; height: 18px; }
+.etq-icono.grande { width: 64px; height: 64px; border-radius: 16px; }
+.etq-icono.grande .ico-etq { width: 28px; height: 28px; }
+.etq-zona { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 44px 40px; text-align: center; border: 1.5px dashed var(--line-strong); border-radius: 16px; }
+.etq-zona.sobre { border-color: var(--accent-ink); background: var(--bg); }
+.etq-zona h3 { max-width: 420px; margin: 8px 0 0; font: 500 20px/28px var(--f-ui); }
+.etq-zona p { max-width: 460px; margin: 0 0 8px; color: var(--ink-2); }
+.etq-progreso { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.etq-progreso progress { width: 280px; height: 6px; margin-top: 12px; accent-color: var(--accent-ink); }
+.modal-etq .alerta { margin: 12px 0 0; }
+
+.etq-resumen { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); font-size: 15px; }
+.etq-check { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 12px; background: var(--ok-bg); color: var(--ok); }
+.etq-check.pend { background: var(--warn-bg); color: var(--warn); }
+.etq-check .icono { width: 14px; height: 14px; }
+.etq-nota { margin: 20px 0 8px; font-size: 13px; line-height: 16px; color: var(--ink-2); }
+.etq-lista { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 12px; }
+.etq-archivo { display: flex; flex-direction: column; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.etq-archivo:last-child { border-bottom: 0; }
+.etq-fila { display: flex; align-items: center; gap: 12px; }
+.etq-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 13px; line-height: 16px; color: var(--ink-2); }
+.etq-texto .dato { font-weight: 500; line-height: 18px; color: var(--ink); overflow-wrap: anywhere; }
+.etq-fila .badge { flex: none; }
+.etq-asignar { display: flex; flex-direction: column; gap: 6px; padding-left: 48px; }
+.etq-asignar-fila { display: flex; gap: 8px; }
+.etq-asignar .btn { height: 44px; }
+.etq-asignar .ayuda { font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.sel-pedido { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: var(--radio); background: var(--surface); }
+.sel-pedido:focus-within { outline: 2px solid var(--accent-ink); outline-offset: 1px; }
+.sel-pedido .icono { width: 16px; height: 16px; flex: none; }
+.sel-pedido input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; background: none; font: inherit; }
+.sel-lista { position: absolute; z-index: 5; top: calc(100% + 4px); left: 0; right: 0; max-height: 200px; overflow-y: auto; margin: 0; padding: 4px; list-style: none; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radio); box-shadow: var(--sombra-modal); }
+.sel-lista li { padding: 8px 10px; border-radius: 6px; cursor: pointer; }
+.sel-lista li.activo, .sel-lista li:hover { background: var(--bg); }
+.sel-lista .sel-vacio { color: var(--ink-3); cursor: default; }
+.sel-lista .dato { font-weight: 500; margin-right: 6px; }

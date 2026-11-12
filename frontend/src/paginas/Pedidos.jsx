@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, mensajeError } from '../api.js';
 import { Alerta, Badge, Boton, Campo, Modal, Tabla, useAviso } from '../componentes/ui.jsx';
+import ImportarEtiquetas from './ImportarEtiquetas.jsx';
 import PedidoDetalle from './PedidoDetalle.jsx';
 import { IcoDescargar, IcoPdf, IcoSubir, descargar } from './etiquetaComun.jsx';
 import './admin.css';
@@ -87,6 +88,7 @@ export default function Pedidos() {
   useEffect(() => { cargar(); }, [cargar]);
   const cerrar = useCallback(() => setAsignando(null), []);
   const cerrarDetalle = useCallback(() => setDetalle(null), []);
+  const cerrarImportar = useCallback(() => setImportando(false), []);
   // Un rechazo reingresado vuelve a EN_CAMION: «Reprogramar» reutiliza el modal de asignación.
   const accion = (p) => {
     if (p.estado_orden === 'EN_CAMION') return <Boton variante={p.reingresado ? 'primario' : ''} onClick={() => setAsignando(p)}>{p.reingresado ? 'Reprogramar' : 'Asignar chofer'}</Boton>;
@@ -134,6 +136,7 @@ export default function Pedidos() {
         ))}
       </Tabla></div>
       {detalle && <PedidoDetalle id={detalle.id} enfocarDespacho={detalle.ruta} onClose={cerrarDetalle} onCambio={cargar} />}
+      {importando && <ImportarEtiquetas pedidos={filas} onClose={cerrarImportar} onCambio={cargar} />}
       {asignando && <AsignarChofer pedido={asignando} onClose={cerrar} onHecho={() => { cerrar(); cargar(); }} />}
     </>
   );
