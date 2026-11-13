@@ -18,7 +18,7 @@ router.get('/', autenticar, requierePermiso('pedidos:leer', 'pedidos:preparar'),
 // HU04 / CU-05: importación masiva de ventas desde .xlsx (permiso pedidos:importar). Campos multipart: `archivo` (.xlsx) y `canal`.
 const subida = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024, files: 1 },
+  limits: { fileSize: 10 * 1024 * 1024, files: 1, fields: 10, parts: 12 },
   fileFilter: (_req, f, cb) => (/\.xlsx$/i.test(f.originalname) ? cb(null, true) : cb(new AppError(400, 'Solo se aceptan archivos .xlsx', 'ARCHIVO_INVALIDO'))),
 });
 const conArchivo = (req, res, next) => subida.single('archivo')(req, res, (e) => {
@@ -39,7 +39,7 @@ router.post('/importaciones', autenticar, importar, conArchivo, ah(async (req, r
 }));
 
 // Etiquetas PDF exportadas del marketplace. El tope por archivo es holgado a propósito: los PDF de más de 2 MB se informan como INVALIDO en el lote sin abortarlo.
-const subidaPdf = multer({ storage: multer.memoryStorage(), limits: { fileSize: 3 * 1024 * 1024, files: etq.MAX_ARCHIVOS } });
+const subidaPdf = multer({ storage: multer.memoryStorage(), limits: { fileSize: 3 * 1024 * 1024, files: etq.MAX_ARCHIVOS, fields: 5, parts: etq.MAX_ARCHIVOS + 10 } });
 const conPdf = (campo, varios) => (req, res, next) => (varios ? subidaPdf.array(campo, etq.MAX_ARCHIVOS) : subidaPdf.single(campo))(req, res, (e) => {
   if (!e) return next();
   const grande = e.code === 'LIMIT_FILE_SIZE';

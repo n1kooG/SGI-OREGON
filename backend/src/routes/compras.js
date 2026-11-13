@@ -6,7 +6,7 @@ import * as svc from '../services/compras.js';
 
 const router = Router();
 router.use(autenticar);
-const subida = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
+const subida = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 10, parts: 12 } });
 const conPdf = (req, res, next) => subida.single('pdf')(req, res, (e) => next(e && new AppError(400, e.code === 'LIMIT_FILE_SIZE' ? 'El PDF supera 5 MB' : 'Archivo inválido', 'VALIDACION')));
 
 // Acepta JSON, o multipart con el PDF en `pdf` y el resto en el campo `datos` (JSON).

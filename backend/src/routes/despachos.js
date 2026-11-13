@@ -7,7 +7,7 @@ import * as svc from '../services/despachos.js';
 const router = Router();
 
 // HU07: el Chofer ve su hoja de ruta (ruta:leer) y cierra entregas (entregas:registrar). El cierre admite JSON o multipart con `foto` y `firma` (PNG).
-const subida = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 2 } });
+const subida = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 2, fields: 20, parts: 24 } });
 const conArchivos = (req, res, next) => subida.fields([{ name: 'foto', maxCount: 1 }, { name: 'firma', maxCount: 1 }])(req, res, (e) => {
   if (!e) return next();
   next(new AppError(e.code === 'LIMIT_FILE_SIZE' ? 413 : 400, e.code === 'LIMIT_FILE_SIZE' ? 'El archivo supera 5 MB' : 'Archivo inválido', 'ARCHIVO_INVALIDO'));
