@@ -8,6 +8,17 @@ export const resumen = () => repo.resumen();
 // Los comodines de LIKE se escapan: «%» o «_» escritos por el operario se buscan literalmente.
 export const buscar = (q) => (q.length < 2 ? [] : repo.buscar(q.slice(0, 40).replace(/[\\%_]/g, '\\$&')));
 
+// Productos activos sin ubicación (la misma definición que `sin_ubicacion` del resumen), paginados; `q` filtra por SKU o nombre.
+export async function sinUbicacion({ limite, pagina, q } = {}) {
+  const l = limite === undefined ? 20 : Number(limite);
+  const p = pagina === undefined ? 1 : Number(pagina);
+  if (!Number.isInteger(l) || l < 1 || l > 100) throw new AppError(400, 'limite debe ser un entero entre 1 y 100', 'VALIDACION');
+  if (!Number.isInteger(p) || p < 1) throw new AppError(400, 'pagina debe ser un entero ≥ 1', 'VALIDACION');
+  const texto = typeof q === 'string' ? q.trim().slice(0, 40).replace(/[\\%_]/g, '\\$&') : '';
+  const filas = await repo.sinUbicacion(texto || null, l, (p - 1) * l);
+  return { total: filas[0]?.total ?? 0, pagina: p, limite: l, items: filas.map(({ total, ...f }) => f) };
+}
+
 // Texto recortado de hasta 40 caracteres; vacío o solo espacios = quitar la ubicación (NULL).
 export function validarUbicacion(v) {
   if (v === null || v === undefined) return null;

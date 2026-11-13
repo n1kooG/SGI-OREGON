@@ -12,6 +12,8 @@ router.get('/buscar', autenticar, requierePermiso('inventario:consultar', 'inven
 
 router.get('/resumen', autenticar, requierePermiso('inventario:consultar', 'inventario:leer'), ah(async (_req, res) => res.json(await svc.resumen())));
 
+router.get('/sin-ubicacion', autenticar, requierePermiso('inventario:consultar', 'inventario:leer'), ah(async (req, res) => res.json(await svc.sinUbicacion(req.query))));
+
 // Bodega la fija al descargar; el Administrador la corrige en el Catálogo. No expone costos.
 router.put('/:sku/ubicacion', autenticar, requierePermiso('inventario:ubicar'), ah(async (req, res) => {
   res.json(await svc.ubicar(req, req.params.sku, req.body ?? {}));
