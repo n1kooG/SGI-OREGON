@@ -56,13 +56,21 @@ export function Bienvenida({ texto }) {
   );
 }
 
-function CabMovil({ panel }) {
+// Con `inicio` (Bodega) el logo es un enlace al inicio y la cuenta se abre con su propio botón; sin él (Chofer) el logo abre la cuenta.
+function CabMovil({ panel, inicio }) {
   const { logout } = useSesion();
   const [cuenta, setCuenta] = useState(false);
   return (
     <header className="movil-cab">
-      <Logo />
-      <button type="button" className="quien abrir-cuenta" aria-label="Mi cuenta" onClick={() => setCuenta(true)}><strong>Tienda Oregón</strong><small>{panel}</small></button>
+      {inicio ? (
+        <Link to={inicio} className="quien marca-movil"><Logo /><span><strong>Tienda Oregón</strong><small>{panel}</small></span></Link>
+      ) : (
+        <>
+          <Logo />
+          <button type="button" className="quien abrir-cuenta" aria-label="Mi cuenta" onClick={() => setCuenta(true)}><strong>Tienda Oregón</strong><small>{panel}</small></button>
+        </>
+      )}
+      {inicio && <Boton icono="persona" onClick={() => setCuenta(true)}>Cuenta</Boton>}
       <Boton icono="salir" onClick={logout}>Salir</Boton>
       {cuenta && <MiCuenta onClose={() => setCuenta(false)} />}
     </header>
@@ -107,7 +115,7 @@ export function MovilBodega() {
   if (escritorio) return <EscritorioBodega />;
   return (
     <div className="movil con-nav bodega">
-      <CabMovil panel="Panel bodega" />
+      <CabMovil panel="Panel bodega" inicio="/bodega" />
       <main><Outlet /></main>
       <nav className="nav-inferior" aria-label="Navegación de bodega">
         <NavLink to="/bodega" end><Icono n="casa" />Inicio</NavLink>
