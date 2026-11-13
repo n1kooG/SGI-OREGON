@@ -53,9 +53,10 @@ export async function redisContar(clave, ventanaSegundos) {
   } catch { return undefined; }
 }
 
-export async function redisDecr(clave) {
-  if (!client) return false;
-  try { if (Number(await client.get(clave)) > 0) await client.decr(clave); return true; } catch { return false; }
+// Solo para reiniciar contadores en las pruebas.
+export async function redisBorrarPrefijo(prefijo) {
+  if (!client) return;
+  try { for await (const k of client.scanIterator({ MATCH: `${prefijo}*`, COUNT: 200 })) await client.del(k); } catch { /* sin Redis no hay nada que borrar */ }
 }
 
 export async function conCache(clave, ttlSegundos, calcular) {

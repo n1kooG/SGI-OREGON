@@ -20,7 +20,7 @@ export const config = {
   trustProxy: leerTrustProxy(process.env.TRUST_PROXY),
   // Límite de intentos de login (además del bloqueo de cuenta): por IP y por correo dentro de una ventana fija. 0 desactiva el límite.
   loginVentanaSeg: entero(process.env.LOGIN_VENTANA_SEGUNDOS, 900),
-  loginMaxPorIp: entero(process.env.LOGIN_MAX_POR_IP, 50),
+  loginMaxPorIp: entero(process.env.LOGIN_MAX_POR_IP, 100),
   loginMaxPorCorreo: entero(process.env.LOGIN_MAX_POR_CORREO, 20),
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
   maxIntentos: Number(process.env.MAX_INTENTOS ?? 5),

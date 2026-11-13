@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { crearApp } from '../src/app.js';
 import { config } from '../src/config.js';
 import { iniciarCache, cerrarCache, redisGet } from '../src/cache.js';
-import { reiniciarLimites } from '../src/limiteLogin.js';
+import { reiniciarLimites, claveIp } from '../src/limiteLogin.js';
 import { pool, query } from '../src/db.js';
 
 const PASS = 'Demo-Oregon-2026';
@@ -39,9 +39,22 @@ test('por correo: otro correo desde la misma IP no se ve afectado', async () => 
   assert.equal((await login('admin@tiendaoregon.cl', PASS)).status, 200);
 });
 
-test('un login correcto devuelve su intento: el uso normal no agota el límite', async () => {
-  config.loginMaxPorIp = 2; config.loginMaxPorCorreo = 2;
+test('un login correcto reinicia el contador de su correo pero no el de la IP', async () => {
+  config.loginMaxPorIp = 0; config.loginMaxPorCorreo = 2;
   for (let i = 0; i < 6; i++) assert.equal((await login('admin@tiendaoregon.cl', PASS)).status, 200);
+  config.loginMaxPorIp = 3; config.loginMaxPorCorreo = 0;
+  await reiniciarLimites();
+  await login('x@x.cl', 'mala');
+  assert.equal((await login('admin@tiendaoregon.cl', PASS)).status, 200); // propio y válido: no compensa el intento fallido anterior
+  await login('x@x.cl', 'mala');
+  assert.equal((await login('admin@tiendaoregon.cl', PASS)).status, 429);
+});
+
+test('IPv6: se cuenta por /64 y ::ffff:a.b.c.d equivale a la IPv4', () => {
+  assert.equal(claveIp('2001:db8:1:2:aaaa:bbbb:cccc:dddd'), claveIp('2001:0DB8:1:2::1'));
+  assert.notEqual(claveIp('2001:db8:1:2::1'), claveIp('2001:db8:1:3::1'));
+  assert.equal(claveIp('::ffff:203.0.113.9'), '203.0.113.9');
+  assert.equal(claveIp('127.0.0.1'), '127.0.0.1');
 });
 
 test('el bloqueo vence solo: el administrador entra al terminar la ventana', async () => {
