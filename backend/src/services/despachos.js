@@ -13,6 +13,8 @@ const JPG = [0xff, 0xd8, 0xff];
 const PNG = [0x89, 0x50, 0x4e, 0x47];
 const PNG_FIRMA = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const FIRMA_MAX = 1024 * 1024; // un trazo en un canvas pesa pocos KB
+// «Hoy» y las fechas programadas son de la zona America/Santiago (fn_hoy() en la base), no la del servidor.
+const fueraDeFecha = (d) => bad(`La parada está programada para el ${d.fecha_programada.split('-').reverse().join('-')}: solo se puede cerrar desde ese día`, 409, 'FUERA_DE_FECHA');
 
 export const miRuta = (req) => repo.miRuta(req.usuario.id_usuario);
 export const resumenJornada = (req) => repo.resumenJornada(req.usuario.id_usuario);
@@ -65,6 +67,7 @@ export async function cerrar(req, id, body = {}, foto = null, firma = null) {
   const d = await conTransaccion((c) => repo.bloquear(c, id));
   if (!d || d.id_usuario_chofer !== req.usuario.id_usuario) throw new AppError(404, 'Despacho no encontrado', 'NO_ENCONTRADO'); // no se revela el de otro chofer
   if (d.estado_entrega !== 'PENDIENTE') throw bad('La entrega ya fue cerrada', 409, 'YA_CERRADO');
+  if (d.futura) throw fueraDeFecha(d);
 
   let clave = null;
   if (foto && almacenamientoActivo()) {
@@ -77,6 +80,7 @@ export async function cerrar(req, id, body = {}, foto = null, firma = null) {
   return conTransaccion(async (c) => {
     const actual = await repo.bloquear(c, id);
     if (actual.estado_entrega !== 'PENDIENTE') throw bad('La entrega ya fue cerrada', 409, 'YA_CERRADO');
+    if (actual.futura) throw fueraDeFecha(actual);
     await repo.cerrar(c, id, estado, motivo || null, clave, claveFirma, receptor || null);
     try {
       await pedidos.fijarEstado(c, actual.id_orden, estado); // trg_orden_transicion: solo desde EN_RUTA
