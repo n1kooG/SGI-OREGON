@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { api, mensajeError } from '../../api.js';
 
 const cerrada = (d) => d.estado_entrega !== 'PENDIENTE';
@@ -9,9 +9,18 @@ export const ordenar = (ruta) => [
   ...ruta.filter((d) => !cerrada(d)),
 ];
 
+// Pantalla ancha (escritorio e iPad horizontal): barra lateral y maestro-detalle; por debajo, el diseño móvil.
+const ANCHA = '(min-width: 1024px)';
+export const useAncho = () => useSyncExternalStore(
+  (cb) => { const m = window.matchMedia(ANCHA); m.addEventListener('change', cb); return () => m.removeEventListener('change', cb); },
+  () => window.matchMedia(ANCHA).matches,
+);
+
 export const unidades = (n) => `${n} ${n === 1 ? 'unidad' : 'unidades'}`;
 export const hora = (iso) => new Date(iso).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
 export const fechaLarga = (d, anio = false) => d.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', ...(anio && { year: 'numeric' }) }).replace(',', '');
+export const diaMes = (f) => `${f.slice(8, 10)}-${f.slice(5, 7)}`; // 'AAAA-MM-DD' → 'dd-mm'
+export const fechaCorta = (iso) => new Date(iso).toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' }).replaceAll('/', '-');
 export const direccion = (d) => d.direccion_despacho || 'Sin dirección registrada';
 export const mapaUrl = (d) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([d.direccion_despacho, d.comuna].filter(Boolean).join(', '))}`;
 export const telUrl = (d) => (d.telefono_contacto ? `tel:${d.telefono_contacto.replace(/[^\d+]/g, '')}` : null);
@@ -34,35 +43,45 @@ export function useCausales(paradas) {
 }
 
 // Hoja de ruta + conteos; se vuelve a pedir al regresar a la pestaña (el chofer cambia de app para navegar).
-export function useRuta() {
-  const [e, setE] = useState({ paradas: null, resumen: null, error: '', actualizada: null, cargando: true });
+// `paradas` es la jornada de hoy; las de fecha futura (reprogramadas) van aparte en `futuras`, sin acciones.
+export function useRuta(omitir = false) {
+  const [e, setE] = useState({ paradas: null, futuras: [], resumen: null, error: '', actualizada: null, cargando: !omitir });
   const cargar = useCallback(async () => {
     setE((p) => ({ ...p, cargando: true }));
     try {
       const [r, s] = await Promise.all([api('/despachos/mi-ruta'), api('/despachos/mi-ruta/resumen')]);
-      setE({ paradas: ordenar(r.data), resumen: s.data, error: '', actualizada: new Date(), cargando: false });
+      const todas = ordenar(r.data);
+      setE({ paradas: todas.filter((d) => !d.futura), futuras: todas.filter((d) => d.futura), resumen: s.data, error: '', actualizada: new Date(), cargando: false });
     } catch (err) {
       setE((p) => ({ ...p, error: mensajeError(err), cargando: false, paradas: p.paradas ?? [] }));
     }
   }, []);
   useEffect(() => {
+    if (omitir) return undefined;
     cargar();
     const alVolver = () => document.visibilityState === 'visible' && cargar();
     document.addEventListener('visibilitychange', alVolver);
     return () => document.removeEventListener('visibilitychange', alVolver);
-  }, [cargar]);
+  }, [cargar, omitir]);
   return { ...e, cargar };
 }
 
-// Una parada con su posición en la ruta (la posición solo existe mientras sigue en la hoja de hoy).
-export function useParada(id) {
-  const ruta = useRuta();
-  const [parada, setParada] = useState(null);
-  const [error, setError] = useState('');
+// Detalle de una parada (productos, teléfono, documento y nota del administrador).
+export function useDetalle(id) {
+  const [e, setE] = useState({ id: null, parada: null, error: '' });
   useEffect(() => {
-    setParada(null); setError('');
-    api(`/despachos/${id}`).then(({ data }) => setParada(data)).catch((e) => setError(mensajeError(e)));
+    let vivo = true;
+    api(`/despachos/${id}`).then(({ data }) => vivo && setE({ id, parada: data, error: '' })).catch((err) => vivo && setE({ id, parada: null, error: mensajeError(err) }));
+    return () => { vivo = false; };
   }, [id]);
+  return e.id === id ? e : { parada: null, error: '' }; // al cambiar de parada no se muestra la anterior
+}
+
+// Una parada con su posición en la ruta (la posición solo existe mientras sigue en la hoja de hoy).
+export function useParada(id, rutaExterna) {
+  const propia = useRuta(!!rutaExterna);
+  const ruta = rutaExterna ?? propia;
+  const { parada, error } = useDetalle(id);
   const i = ruta.paradas?.findIndex((d) => String(d.id_despacho) === String(id)) ?? -1;
   return { parada, error, n: i >= 0 ? i + 1 : null, total: ruta.paradas?.length ?? null };
 }
@@ -104,7 +123,7 @@ export function useCierre({ parada, ubicacion, alTerminar }) {
       const notas = [!pos && 'sin ubicación (permiso denegado o no disponible)', foto && !data.evidencia && 'la foto no se guardó (almacenamiento desactivado)', firma && !data.firma && 'la firma no se guardó (almacenamiento desactivado)'].filter(Boolean);
       alTerminar(`${estado === 'RECHAZADO' ? 'Rechazo' : 'Entrega'} registrado${notas.length ? `; ${notas.join('; ')}` : ''}.`);
     } catch (err) {
-      const caducada = err.status === 409 || err.status === 404;
+      const caducada = (err.status === 409 && err.codigo !== 'FUERA_DE_FECHA') || err.status === 404;
       setError(caducada ? `${err.message}. Se actualizará tu ruta.` : mensajeError(err));
       if (caducada) setTimeout(() => alTerminar(null), 1500);
       setOcupado(false);

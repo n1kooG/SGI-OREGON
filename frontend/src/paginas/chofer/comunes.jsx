@@ -1,18 +1,45 @@
-import { Link, Outlet } from 'react-router-dom';
+import { useEffect, useId, useRef, useState } from 'react';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import '@fontsource/poppins/latin-600.css';
 import '@fontsource/inter/latin-700.css';
 import '@fontsource/jetbrains-mono/latin-700.css';
 import '../chofer.css';
-import { Movil } from '../../componentes/Layouts.jsx';
-import NavChofer from '../../componentes/NavChofer.jsx';
+import { useSesion } from '../../sesion.jsx';
+import { Logo } from '../../componentes/ui.jsx';
+import MiCuenta from '../../componentes/MiCuenta.jsx';
+import NavChofer, { LateralChofer } from '../../componentes/NavChofer.jsx';
 import { Ico } from './iconos.jsx';
+import { diaMes } from './datos.js';
 
-const PANEL = 'Chofer: distribución terreno';
+// Cabecera móvil: el logo con el título lleva al Inicio; «Cuenta» y «Salir» son botones aparte.
+function CabChofer({ abrirCuenta }) {
+  const { logout } = useSesion();
+  return (
+    <header className="ch-cab">
+      <Link to="/chofer" className="ch-cab-marca"><Logo /><span><strong>Tienda Oregón</strong><small>Chofer</small></span></Link>
+      <button type="button" className="ch-cab-btn" onClick={abrirCuenta}><Ico n="cuenta" t={18} />Cuenta</button>
+      <button type="button" className="ch-cab-btn" onClick={logout}><Ico n="salir" t={18} />Salir</button>
+    </header>
+  );
+}
 
-// Pantallas de lista: cabecera móvil + contenido + navegación inferior.
-export const ConNav = () => <Movil panel={PANEL}><div className="ch con-nav"><Outlet /></div><NavChofer /></Movil>;
-// Pantallas de una parada (detalle, entrega, rechazo): sin navegación inferior, con su barra de acciones.
-export const SinNav = () => <Movil panel={PANEL}><div className="ch"><Outlet /></div></Movil>;
+// Marco único del chofer: barra lateral fija en pantallas anchas; en móvil, cabecera y navegación inferior
+// (esta solo en las pantallas de lista; detalle, entrega y rechazo llevan su propia barra de acciones).
+const CON_NAV = ['/chofer', '/chofer/ruta', '/chofer/historial'];
+export function LayoutChofer() {
+  const [cuenta, setCuenta] = useState(false);
+  const { pathname } = useLocation();
+  const conNav = CON_NAV.includes(pathname.replace(/\/$/, ''));
+  return (
+    <div className="movil ch-app">
+      <LateralChofer abrirCuenta={() => setCuenta(true)} />
+      <CabChofer abrirCuenta={() => setCuenta(true)} />
+      <main className="ch-principal"><div className={`ch ${conNav ? 'con-nav' : ''}`}><Outlet /></div></main>
+      {conNav && <NavChofer />}
+      {cuenta && <MiCuenta onClose={() => setCuenta(false)} />}
+    </div>
+  );
+}
 
 export const Volver = ({ a, children }) => <div className="ch-volver"><Link to={a}><Ico n="atras" t={24} />{children}</Link></div>;
 
@@ -26,3 +53,56 @@ export const Aviso = ({ children }) => children ? <div className="ch-alerta" rol
 export const BarraAcciones = ({ children }) => <div className="ch-acciones">{children}</div>;
 
 export const TONO = { ENTREGADO: ['ok', 'Entregado'], RECHAZADO: ['mal', 'Rechazado'], PENDIENTE: ['aviso', 'Pendiente'] };
+
+export const Reprogramada = ({ fecha }) => <span className="ch-badge repro"><Ico n="calendario" t={14} />Reprogramada · {diaMes(fecha)}</span>;
+export const NotaAdmin = ({ children }) => <div className="ch-nota-admin"><Ico n="nota" t={18} /><div><strong>Nota del administrador</strong><p>{children}</p></div></div>;
+// Las paradas reprogramadas a días futuros se ven con su nota, sin acciones: el backend no deja cerrarlas antes de su fecha.
+export const Futuras = ({ lista, titulo = 'Próximos días' }) => lista.length > 0 && (
+  <section className="ch-futuras">
+    <div className="ch-fila"><h2>{titulo}</h2><span className="ch-contador">{lista.length}</span></div>
+    {lista.map((d) => (
+      <article key={d.id_despacho}>
+        <div className="ch-fila"><h3>{d.nombre_cliente}</h3><Reprogramada fecha={d.fecha_programada} /></div>
+        <p className="ch-sec">{[d.direccion_despacho || 'Sin dirección registrada', d.comuna, `#${d.codigo_externo}`].filter(Boolean).join(' · ')}</p>
+        {d.nota_admin && <p className="ch-nota-linea"><Ico n="nota" t={14} />Nota: {d.nota_admin}</p>}
+      </article>
+    ))}
+  </section>
+);
+
+// Diálogo centrado de las pantallas anchas (entrega y rechazo). Escape y la X lo cierran; no se cierra al hacer clic fuera
+// para no perder una firma a medio trazar.
+export function Dialogo({ titulo, subtitulo, ancho, onClose, onSubmit, pie, children }) {
+  const ref = useRef(null);
+  const cerrar = useRef(onClose);
+  cerrar.current = onClose;
+  const tid = useId();
+  useEffect(() => {
+    const previo = document.activeElement;
+    const enfocables = () => [...ref.current.querySelectorAll('button, input:not([readonly]), textarea, [href]')].filter((e) => !e.disabled);
+    ref.current.focus();
+    const tecla = (e) => {
+      if (e.key === 'Escape') cerrar.current();
+      if (e.key !== 'Tab') return;
+      const f = enfocables();
+      if (!f.length) return;
+      if (e.shiftKey && (document.activeElement === f[0] || document.activeElement === ref.current)) { e.preventDefault(); f.at(-1).focus(); }
+      else if (!e.shiftKey && document.activeElement === f.at(-1)) { e.preventDefault(); f[0].focus(); }
+    };
+    document.addEventListener('keydown', tecla);
+    return () => { document.removeEventListener('keydown', tecla); previo?.focus?.(); };
+  }, []);
+  const Marco = onSubmit ? 'form' : 'div';
+  return (
+    <div className="ch-velo">
+      <Marco ref={ref} className="ch-dialogo" style={{ maxWidth: ancho }} role="dialog" aria-modal="true" aria-labelledby={tid} tabIndex={-1} onSubmit={onSubmit} noValidate={onSubmit ? true : undefined}>
+        <div className="ch-dialogo-cab">
+          <div><h2 id={tid}>{titulo}</h2>{subtitulo && <p>{subtitulo}</p>}</div>
+          <button type="button" className="ch-cuadro cerrar" aria-label="Cerrar" onClick={onClose}><Ico n="x" t={20} /></button>
+        </div>
+        <div className="ch-dialogo-cuerpo">{children}</div>
+        {pie && <div className="ch-dialogo-pie">{pie}</div>}
+      </Marco>
+    </div>
+  );
+}
