@@ -9,8 +9,13 @@ const INTENTO = `(SELECT count(*)::int FROM despacho x WHERE x.id_orden = o.id_o
             ds.fecha_programada::text AS fecha_programada, ds.nota_admin,
             CASE WHEN ds.estado_entrega = 'RECHAZADO' THEN ds.fecha_cierre END AS fecha_rechazo`;
 
-export async function listar(estados, canal, porReingresar = false) {
-  const { rows } = await query(
+const DONDE = `($1::text[] IS NULL OR o.estado_orden = ANY($1)) AND ($2::text IS NULL OR o.canal_origen = $2)
+        AND (NOT $3::boolean OR (ds.estado_entrega = 'RECHAZADO' AND ds.reingresado_en IS NULL))`;
+
+// `fifo` (Bodega): los más antiguos primero, para que el corte por página nunca oculte lo que lleva más tiempo esperando.
+// El desempate por id_orden da un orden total: sin él, los pedidos de una misma importación comparten fecha y las páginas se repetirían o saltarían filas.
+export async function listar(estados, canal, porReingresar, { limite, offset, fifo }) {
+  const [{ rows }, { rows: [{ total }] }] = await Promise.all([query(
     `SELECT o.id_orden, o.codigo_externo, o.canal_origen, o.fecha_orden, o.nombre_cliente, o.direccion_despacho, o.comuna, o.estado_orden,
             ${INTENTO},
             (SELECT COALESCE(SUM(d.cantidad_vendida), 0)::int FROM detalle_venta d WHERE d.id_orden = o.id_orden) AS unidades,
@@ -20,12 +25,11 @@ export async function listar(estados, canal, porReingresar = false) {
        FROM orden_venta o
        ${ULTIMO_DESPACHO}
        LEFT JOIN usuario u ON u.id_usuario = ds.id_usuario_chofer
-      WHERE ($1::text[] IS NULL OR o.estado_orden = ANY($1)) AND ($2::text IS NULL OR o.canal_origen = $2)
-        AND (NOT $3::boolean OR (ds.estado_entrega = 'RECHAZADO' AND ds.reingresado_en IS NULL))
-      ORDER BY o.fecha_orden DESC LIMIT 100`,
-    [estados, canal, porReingresar],
-  );
-  return rows;
+      WHERE ${DONDE}
+      ORDER BY ${fifo ? 'o.fecha_orden ASC, o.id_orden ASC' : 'o.fecha_orden DESC, o.id_orden DESC'} LIMIT $4 OFFSET $5`,
+    [estados, canal, porReingresar, limite, offset],
+  ), query(`SELECT count(*)::int AS total FROM orden_venta o ${ULTIMO_DESPACHO} WHERE ${DONDE}`, [estados, canal, porReingresar])]);
+  return { filas: rows, total };
 }
 
 export async function obtener(id, c = { query }) {

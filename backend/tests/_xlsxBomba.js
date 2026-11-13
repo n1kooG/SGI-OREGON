@@ -14,9 +14,10 @@ const partes = (hojas) => ({
   'xl/_rels/workbook.xml.rels': `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${hojas.map((_, i) => `<Relationship Id="rId${i + 1}" Type="${REL}/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')}</Relationships>`,
 });
 
+const letra = (i) => (i >= 26 ? letra(Math.floor(i / 26) - 1) : '') + String.fromCharCode(65 + (i % 26));
 const celda = (ref, v) => `<c r="${ref}" t="inlineStr"><is><t>${v}</t></is></c>`;
 const CABECERA = ['RUT CLIENTE', 'NOMBRE CLIENTE', 'SKU', 'NOMBRE PRODUCTO', 'CANTIDAD', 'PRECIO', 'MARCA'];
-const fila = (n, vals) => `<row r="${n}">${vals.map((v, i) => celda(`${String.fromCharCode(65 + i)}${n}`, v)).join('')}</row>`;
+const fila = (n, vals) => `<row r="${n}">${vals.map((v, i) => celda(`${letra(i)}${n}`, v)).join('')}</row>`;
 
 // Genera el XML de una hoja como trozos (iterable): `filas` filas de 7 celdas con texto de `largoCelda` caracteres.
 export function* hojaXml({ filas = 1, largoCelda = 5, dimension = null, columnas = 7 } = {}) {
@@ -29,9 +30,10 @@ export function* hojaXml({ filas = 1, largoCelda = 5, dimension = null, columnas
   yield '</sheetData></worksheet>';
 }
 
-// Construye el ZIP. `hojas`: iterables de trozos de XML (cada uno es una hoja); `mentirTamano`: declara 1 KB descomprimido.
-export function construirXlsx(hojas, { mentirTamano = false } = {}) {
-  const todas = partes(hojas);
+// Construye el ZIP. `hojas`: iterables de trozos de XML (cada uno es una hoja); `mentirTamano`/`mentirTodo`: declaran 1 KB descomprimido
+// (en las hojas / en todas las partes); `renombrar` cambia el nombre de cada parte en el ZIP; `extra`: partes adicionales { nombre: texto }.
+export function construirXlsx(hojas, { mentirTamano = false, mentirTodo = false, renombrar = (n) => n, extra = {} } = {}) {
+  const todas = { ...partes(hojas), ...extra };
   const out = [], central = [];
   let pos = 0;
   const entradas = [];
@@ -44,7 +46,7 @@ export function construirXlsx(hojas, { mentirTamano = false } = {}) {
     entradas.push({ nombre: `xl/worksheets/sheet${i + 1}.xml`, c, tam, datos });
   });
   for (const e of entradas) {
-    const nombre = Buffer.from(e.nombre);
+    const nombre = Buffer.from(renombrar(e.nombre));
     const cab = Buffer.alloc(30);
     cab.writeUInt32LE(0x04034b50, 0); cab.writeUInt16LE(20, 4); cab.writeUInt16LE(8, 8);
     cab.writeUInt32LE(e.c, 14); cab.writeUInt32LE(e.datos.length, 18); cab.writeUInt32LE(e.tam, 22); cab.writeUInt16LE(nombre.length, 26);
@@ -52,7 +54,7 @@ export function construirXlsx(hojas, { mentirTamano = false } = {}) {
     const cen = Buffer.alloc(46);
     cen.writeUInt32LE(0x02014b50, 0); cen.writeUInt16LE(20, 4); cen.writeUInt16LE(20, 6); cen.writeUInt16LE(8, 10);
     cen.writeUInt32LE(e.c, 16); cen.writeUInt32LE(e.datos.length, 20);
-    cen.writeUInt32LE(mentirTamano && e.nombre.includes('worksheets') ? 1024 : e.tam, 24);
+    cen.writeUInt32LE(mentirTodo || (mentirTamano && e.nombre.includes('worksheets')) ? 1024 : e.tam, 24);
     cen.writeUInt16LE(nombre.length, 28); cen.writeUInt32LE(pos, 42);
     central.push(cen, nombre);
     pos += 30 + nombre.length + e.datos.length;

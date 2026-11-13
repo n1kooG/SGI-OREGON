@@ -9,9 +9,10 @@ import multer from 'multer';
 
 const router = Router();
 
-// GET /api/pedidos?estado=PENDIENTE_PREPARACION  (CU-06 supervisión / HU05 lista de picking)
+// GET /api/pedidos?estado=&canal=&pagina=&limite=  (CU-06 supervisión / HU05 lista de picking). Cuerpo = arreglo; el total va en X-Total-Count.
 router.get('/', autenticar, requierePermiso('pedidos:leer', 'pedidos:preparar'), ah(async (req, res) => {
-  res.json(await svc.listar(req, { estado: req.query.estado && String(req.query.estado), canal: req.query.canal, por_reingresar: req.query.por_reingresar }));
+  const { filas, total } = await svc.listar(req, { estado: req.query.estado && String(req.query.estado), canal: req.query.canal, por_reingresar: req.query.por_reingresar, pagina: req.query.pagina, limite: req.query.limite });
+  res.set('X-Total-Count', String(total)).json(filas);
 }));
 
 // HU04 / CU-05: importación masiva de ventas desde .xlsx (permiso pedidos:importar). Campos multipart: `archivo` (.xlsx) y `canal`.

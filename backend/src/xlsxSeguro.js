@@ -51,25 +51,38 @@ function datosDe(buf, e, maxSalida) {
 
 const colNum = (letras) => [...letras].reduce((n, c) => n * 26 + c.charCodeAt(0) - 64, 0);
 
+// Mide el contenido real de una hoja (no lo que declara <dimension>): mayor número de fila, nº de filas y mayor columna.
+function medir(xml) {
+  let filas = 0, mayorFila = 0, columnas = 0;
+  for (const m of xml.matchAll(/<row\b[^>]*>/g)) {
+    filas++;
+    const r = /\sr="(\d+)"/.exec(m[0]);
+    if (r) mayorFila = Math.max(mayorFila, Number(r[1]));
+  }
+  for (const m of xml.matchAll(/<c\b[^>]*?\sr="([A-Za-z]+)\d+"/g)) columnas = Math.max(columnas, colNum(m[1].toUpperCase()));
+  return { filas: Math.max(filas, mayorFila), columnas };
+}
+
 // Lanza AppError 400/413 si el archivo excede los límites. `maxFilas` cuenta las filas de datos (sin la cabecera).
+// Se infla TODA parte con un tope acumulado sobre lo realmente descomprimido (no sobre lo declarado) y se miden las hojas por su contenido.
 export function verificarXlsx(buffer, maxFilas) {
   const lista = entradas(buffer);
-  let total = 0;
+  const vistos = new Set();
+  let declarado = 0, real = 0, hojas = 0;
   for (const e of lista) {
     if (e.cifrado || (e.metodo !== 0 && e.metodo !== 8)) throw NO_VALIDO();
-    total += e.tamano;
-    if (total > LIMITES.descomprimido) throw rechazo(`El archivo descomprimido supera ${LIMITES.descomprimido / 1024 / 1024} MB`, 413);
+    if (e.nombre.startsWith('/') || e.nombre.includes('\\') || e.nombre.split('/').includes('..') || vistos.has(e.nombre.toLowerCase())) throw NO_VALIDO(); // rutas ambiguas: otro lector podría interpretarlas distinto
+    vistos.add(e.nombre.toLowerCase());
+    declarado += e.tamano;
+    if (declarado > LIMITES.descomprimido) throw rechazo(`El archivo descomprimido supera ${LIMITES.descomprimido / 1024 / 1024} MB`, 413);
   }
-  const hojas = lista.filter((e) => /^xl\/worksheets\/[^/]+\.xml$/i.test(e.nombre));
-  if (hojas.length > LIMITES.hojas) throw rechazo(`El libro tiene demasiadas hojas (máximo ${LIMITES.hojas})`);
-  for (const h of hojas) {
-    const xml = datosDe(buffer, h, h.tamano + 1024).toString('utf8'); // el tope es lo declarado: si miente, ERR_BUFFER_TOO_LARGE
-    const dim = /<dimension\s+ref="([A-Z]+)?(\d+)?(?::([A-Z]+)(\d+))?"/.exec(xml);
-    let filas = dim ? Number(dim[4] ?? dim[2] ?? 0) : 0, columnas = dim ? colNum(dim[3] ?? dim[1] ?? '') : 0;
-    if (!dim) { // sin <dimension> (opcional): se mide con las filas del XML
-      const ult = xml.lastIndexOf('<row ');
-      filas = ult < 0 ? 0 : Number(/\sr="(\d+)"/.exec(xml.slice(ult, ult + 200))?.[1] ?? 0);
-    }
+  for (const e of lista) {
+    if (e.nombre.endsWith('/')) continue; // directorio
+    const datos = datosDe(buffer, e, LIMITES.descomprimido - real);
+    real += datos.length;
+    if (!/(^|\/)worksheets\/[^/]*\.xml$/i.test(e.nombre)) continue; // mismo criterio laxo que ExcelJS: cualquier .xml bajo «worksheets/»
+    if (++hojas > LIMITES.hojas) throw rechazo(`El libro tiene demasiadas hojas (máximo ${LIMITES.hojas})`);
+    const { filas, columnas } = medir(datos.toString('utf8'));
     if (filas - 1 > maxFilas) throw rechazo(`La planilla supera ${maxFilas} filas`);
     if (columnas > LIMITES.columnas) throw rechazo(`La planilla supera ${LIMITES.columnas} columnas`);
   }

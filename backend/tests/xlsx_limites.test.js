@@ -60,9 +60,10 @@ test('una cabecera que miente sobre el tamaño descomprimido no esquiva el tope'
 
 test('demasiadas hojas, filas o columnas (por <dimension> o por conteo de filas) se rechazan', async () => {
   await rechaza(construirXlsx(Array.from({ length: LIMITES.hojas + 1 }, () => hojaXml())), 400, /hojas/);
-  await rechaza(construirXlsx([hojaXml({ filas: 3, dimension: `A1:G${MAX_FILAS + 2}` })]), 400, /filas/);
-  await rechaza(construirXlsx([hojaXml({ filas: MAX_FILAS + 1 })]), 400, /filas/); // sin <dimension>: se cuentan las filas del XML
-  await rechaza(construirXlsx([hojaXml({ filas: 1, columnas: LIMITES.columnas + 1, dimension: `A1:${'A'.repeat(1)}${'Z'.repeat(1)}1` })]), 400, /columnas/); // AZ = 52
+  await rechaza(construirXlsx([hojaXml({ filas: MAX_FILAS + 1 })]), 400, /filas/);
+  // <dimension> lo controla el atacante: mentir hacia abajo no sirve, se mide el contenido real
+  await rechaza(construirXlsx([hojaXml({ filas: MAX_FILAS + 1, dimension: 'A1:G10' })]), 400, /filas/);
+  await rechaza(construirXlsx([hojaXml({ filas: 1, columnas: LIMITES.columnas + 1, dimension: 'A1:G1' })]), 400, /columnas/);
 });
 
 test('archivos corruptos o que no son ZIP no rompen: 400', async () => {
@@ -76,4 +77,17 @@ test('las planillas legítimas siguen funcionando: la plantilla y un archivo cer
   assert.equal(filas.length, MAX_FILAS);
   assert.equal(filas[0].sku, 'TH-4500');
   assert.ok(construirXlsx([hojaXml({ filas: MAX_FILAS })]).length < 10 * 1024 * 1024);
+});
+
+test('partes con rutas ambiguas (absolutas, con .. o duplicadas) se rechazan; las hojas fuera de xl/worksheets también se miden', async () => {
+  const dup = construirXlsx([hojaXml(), hojaXml()], { renombrar: (n) => n.replace('sheet2', 'sheet1') });
+  await rechaza(dup, 400, /no es un .xlsx/);
+  await rechaza(construirXlsx([hojaXml()], { renombrar: (n) => n.replace('xl/worksheets/', '/xl/worksheets/') }), 400, /no es un .xlsx/);
+  const lejos = construirXlsx([hojaXml({ filas: MAX_FILAS + 1 })], { renombrar: (n) => n.replace('xl/worksheets/', 'xl/extra/worksheets/') });
+  await rechaza(lejos, 400, /filas/);
+});
+
+test('el tope se aplica a lo realmente descomprimido sumando todas las partes, no solo a las hojas', async () => {
+  const muchas = construirXlsx([hojaXml({ filas: 1 })], { extra: { 'xl/relleno.bin': 'z'.repeat(LIMITES.descomprimido + 1024) }, mentirTamano: true, mentirTodo: true });
+  await rechaza(muchas, 413);
 });

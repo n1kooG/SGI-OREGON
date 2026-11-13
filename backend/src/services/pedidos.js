@@ -16,14 +16,30 @@ const dePg = (e) => {
   throw e;
 };
 
-// Bodega (sin pedidos:leer) ve solo lo que debe preparar; el Administrador ve todo para supervisar (CU-06).
+// Bodega (sin pedidos:leer) ve solo lo que debe preparar (y, aparte, los rechazos por reingresar); el Administrador ve todo para supervisar (CU-06).
 // `por_reingresar` (Bodega y Administrador): solo los RECHAZADO cuyo bulto aún no volvió a bodega; aparte de los 4 estados de bodega.
-export function listar(req, { estado, canal, por_reingresar } = {}) {
+// Paginado: `pagina` (≥ 1) y `limite` (1..LIMITE_MAX, por defecto LIMITE_DEFECTO). Devuelve { filas, total }; el total va en X-Total-Count.
+export const LIMITE_DEFECTO = 100;
+export const LIMITE_MAX = 500;
+const entero = (v, def, nombre, min, max) => {
+  if (v === undefined || v === '') return def;
+  const n = Number(v);
+  if (!Number.isInteger(n) || n < min || n > max) throw bad(`${nombre} debe ser un entero entre ${min} y ${max}`);
+  return n;
+};
+
+export async function listar(req, { estado, canal, por_reingresar, pagina, limite } = {}) {
   if (estado && !ESTADOS.includes(estado)) throw bad('Estado inválido');
+  const pagina_ = entero(pagina, 1, 'pagina', 1, 1_000_000);
+  const limite_ = entero(limite, LIMITE_DEFECTO, 'limite', 1, LIMITE_MAX);
+  const admin = tiene(req, 'pedidos:leer');
   const porReingresar = ['1', 'true'].includes(String(por_reingresar));
   if (porReingresar && estado && estado !== 'RECHAZADO') throw bad('por_reingresar solo aplica a pedidos RECHAZADO');
-  const estados = porReingresar ? ['RECHAZADO'] : estado ? [estado] : tiene(req, 'pedidos:leer') ? null : BODEGA;
-  return repo.listar(estados, canal ? String(canal) : null, porReingresar);
+  if (!admin && estado && !BODEGA.includes(estado) && !porReingresar) throw new AppError(403, 'No tienes permiso para consultar pedidos en ese estado', 'ACCESO_DENEGADO');
+  const estados = porReingresar ? ['RECHAZADO'] : estado ? [estado] : admin ? null : BODEGA;
+  const { filas, total } = await repo.listar(estados, canal ? String(canal) : null, porReingresar, { limite: limite_, offset: (pagina_ - 1) * limite_, fifo: !admin });
+  // Los choferes (nombre e id) son información de administración: Bodega no los necesita para preparar ni reingresar.
+  return { filas: admin ? filas : filas.map(({ id_usuario_chofer, nombre_chofer, ...resto }) => resto), total };
 }
 
 export const resumen = () => repo.resumen();
