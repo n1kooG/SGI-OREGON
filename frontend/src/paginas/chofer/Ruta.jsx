@@ -69,7 +69,7 @@ function RutaMovil() {
       {pendientes.map((d, i) => (
         <article className={`ch-tarjeta pendiente ${d === primera ? 'siguiente' : ''}`} key={d.id_despacho}>
           <div className="ch-fila">
-            <Orden>Parada {cerradas.length + i + 1} · Orden #{d.codigo_externo}</Orden>
+            <Orden>Parada {cerradas.length + i + 1}{!d.reprogramada && ` · Orden #${d.codigo_externo}`}</Orden>
             {d.reprogramada ? <Reprogramada fecha={d.fecha_programada} /> : d === primera ? <span className="ch-badge acento"><i />Siguiente</span> : <Estado tono="aviso">Pendiente</Estado>}
           </div>
           <Link className="ch-cliente" to={`/chofer/ruta/${d.id_despacho}`}><h3>{d.nombre_cliente}</h3><Ico n="der" /></Link>

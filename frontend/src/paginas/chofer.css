@@ -437,3 +437,4 @@ textarea.ch-entrada { height: 96px; padding: 14px 16px; resize: none; line-heigh
   .ch-tabla-vacio .ch-medalla { width: 48px; height: 48px; }
 }
 @media (min-width: 1024px) { .ch-tabla .ch-badge i, .ch-lista .ch-badge i { display: none; } }
+.ch-futuras .ch-nota-linea { padding: 0; background: none; }
