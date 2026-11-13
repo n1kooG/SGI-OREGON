@@ -58,7 +58,14 @@ router.patch('/:id(\\d+)/estado', autenticar, preparar, ah(async (req, res) => r
 router.post('/:id(\\d+)/comentarios', autenticar, preparar, ah(async (req, res) => res.status(201).json(await svc.comentar(req, id(req), req.body ?? {}))));
 router.get('/:id(\\d+)/etiqueta', autenticar, ver, ah(async (req, res) => {
   const { pdf, nombre } = await etq.descargar(req, id(req));
-  res.set('Content-Disposition', `attachment; filename="${nombre.replace(/[^\w.-]/g, '_')}"`).type('application/pdf').send(pdf);
+  // Archivo de un tercero: siempre descarga (attachment), tipo fijo, sin sniffing y con CSP «sandbox», de modo que ni un PDF
+  // con scripts ni una mala configuración del navegador lo ejecuten dentro del origen de la aplicación.
+  res.set({
+    'Content-Disposition': `attachment; filename="${nombre.replace(/[^\w.-]/g, '_')}"`,
+    'X-Content-Type-Options': 'nosniff',
+    'Content-Security-Policy': "default-src 'none'; sandbox",
+    'Cache-Control': 'private, no-store',
+  }).type('application/pdf').send(pdf);
 }));
 router.put('/:id(\\d+)/etiqueta', autenticar, etiquetas, conPdf('archivo', false), ah(async (req, res) => res.json(await etq.asignar(req, id(req), req.file))));
 router.delete('/:id(\\d+)/etiqueta', autenticar, etiquetas, ah(async (req, res) => res.json(await etq.quitar(req, id(req)))));

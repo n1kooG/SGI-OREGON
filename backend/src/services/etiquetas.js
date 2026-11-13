@@ -4,7 +4,7 @@ import { conTransaccion } from '../db.js';
 import { auditar } from '../audit.js';
 import { AppError } from '../errors.js';
 import { guardarArchivo, leerArchivo, borrarArchivo } from '../storage.js';
-import { extraerTexto, extraerNumeroOrden, normalizarCodigo } from '../pdf/leerOrden.js';
+import { leerNumeroOrden, normalizarCodigo } from '../pdf/leerOrden.js';
 
 export const MAX_BYTES = 2 * 1024 * 1024;
 export const MAX_ARCHIVOS = 100;
@@ -15,7 +15,7 @@ export function sanearNombre(nombre) {
   let n = String(nombre ?? '');
   const u = Buffer.from(n, 'latin1').toString('utf8'); // multer entrega los nombres como latin1
   if (!u.includes('�')) n = u;
-  n = n.split(/[\\/]/).pop().replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(-200);
+  n = n.split(/[\\/]/).pop().replace(/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/g, '').trim().slice(-200); // sin control ni marcas bidi (disfrazan la extensión)
   return n || 'etiqueta.pdf';
 }
 
@@ -43,17 +43,25 @@ async function asociar(req, id, buffer, nombre, extra = {}) {
   });
 }
 
-// Importación masiva: cada archivo se resuelve por separado y un archivo malo no aborta el lote.
+const PRESUPUESTO_LOTE_MS = 120_000; // tiempo total máximo de lectura de un lote; el resto se informa para reintentar
+
+// Importación masiva: cada archivo se resuelve por separado y un archivo malo no aborta el lote. La lectura de los PDF (no confiables)
+// corre en workers aislados con tope de tiempo, memoria y concurrencia; la asociación a pedidos sigue siendo secuencial y en orden.
 export async function importar(req, archivos = []) {
   if (!archivos.length) throw new AppError(400, 'Adjunta al menos un PDF (campo archivos)', 'ARCHIVO_INVALIDO');
+  const limite = Date.now() + PRESUPUESTO_LOTE_MS;
+  const lecturas = archivos.map((f) => (motivoInvalido(f.buffer) ? null : (async () => {
+    if (Date.now() > limite) return { fallo: 'Se agotó el tiempo de procesamiento del lote; vuelve a subir este archivo' };
+    try { return { numero: await leerNumeroOrden(f.buffer) }; } catch (e) { return { fallo: e.code === 'TIEMPO_AGOTADO' ? 'El PDF tardó demasiado en leerse' : 'No se pudo leer el PDF' }; }
+  })()));
   const resultados = [];
-  for (const f of archivos) {
+  for (const [i, f] of archivos.entries()) {
     const archivo = sanearNombre(f.originalname);
     const motivo = motivoInvalido(f.buffer);
     if (motivo) { resultados.push({ archivo, estado: 'INVALIDO', motivo }); continue; }
-    let texto;
-    try { texto = await extraerTexto(f.buffer); } catch { resultados.push({ archivo, estado: 'INVALIDO', motivo: 'No se pudo leer el PDF' }); continue; }
-    const numero = extraerNumeroOrden(texto);
+    const lectura = await lecturas[i];
+    if (lectura.fallo) { resultados.push({ archivo, estado: 'INVALIDO', motivo: lectura.fallo }); continue; }
+    const numero = lectura.numero;
     const norm = numero && normalizarCodigo(numero);
     if (!norm) { resultados.push({ archivo, estado: 'NO_RECONOCIDA', motivo: 'No se encontró el N° de orden en el PDF' }); continue; }
     const pedidos = await repo.buscarPorCodigo(norm);

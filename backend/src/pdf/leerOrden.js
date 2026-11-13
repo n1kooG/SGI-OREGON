@@ -1,15 +1,22 @@
 // Lectura del N° de orden del marketplace dentro de un PDF de etiqueta exportado (p. ej. Mercado Libre: «Nº de orden: 3248404545»).
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { ejecutarAislado } from './sandbox.js';
 
 // Se prueban en orden; el primero que calce gana. Para soportar otro marketplace basta agregar un patrón (el valor va en el grupo 1).
-// El valor puede quedar en la línea siguiente al rótulo, por eso \s* cruza saltos de línea.
+// El valor puede quedar en la línea siguiente al rótulo, por eso \s cruza saltos de línea. Los cuantificadores están acotados: sobre texto hostil no hay retroceso cuadrático.
 export const PATRONES_ORDEN = [
-  /N\s*[º°o.]*\s*(?:de\s+)?orden\s*[:#]?\s*([A-Z0-9][A-Z0-9_-]{3,39})(?![\w-])/i,
-  /orden\s+de\s+(?:venta|compra)\s*[:#]?\s*([A-Z0-9][A-Z0-9_-]{3,39})(?![\w-])/i,
-  /\bpedido\s*[:#]\s*([A-Z0-9][A-Z0-9_-]{3,39})(?![\w-])/i,
+  /N\s{0,3}[º°o.]{0,3}\s{0,3}(?:de\s{1,3})?orden\s{0,20}[:#]?\s{0,20}([A-Z0-9][A-Z0-9_-]{3,39})(?![\w-])/i,
+  /orden\s{1,3}de\s{1,3}(?:venta|compra)\s{0,20}[:#]?\s{0,20}([A-Z0-9][A-Z0-9_-]{3,39})(?![\w-])/i,
+  /\bpedido\s{0,3}[:#]\s{0,20}([A-Z0-9][A-Z0-9_-]{3,39})(?![\w-])/i,
 ];
 
 const MAX_PAGINAS = 5; // una etiqueta es de 1 página; no se procesan PDF enormes
+
+// Punto de entrada para PDF no confiables: lectura en un worker con tiempo y memoria acotados (ver sandbox.js). Devuelve el N° de orden o null.
+export async function leerNumeroOrden(buffer, opciones) {
+  const { numero } = await ejecutarAislado(new URL('./leerOrdenWorker.js', import.meta.url), { buffer: new Uint8Array(buffer) }, opciones);
+  return numero;
+}
 
 export async function extraerTexto(buffer) {
   const doc = await getDocument({ data: new Uint8Array(buffer), isEvalSupported: false, disableFontFace: true, useSystemFonts: false, verbosity: 0 }).promise;

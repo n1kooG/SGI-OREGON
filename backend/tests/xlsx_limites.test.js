@@ -107,3 +107,10 @@ test('referencias de fila y columna con comillas simples, espacios o sin r= se m
   await rechaza(hoja(`<row>${'<c><v>1</v></c>'.repeat(LIMITES.columnas + 1)}</row>`), 400, /columnas/); // celdas sin r=: cuenta su posición
   await rechaza(hoja(`<row r="1"><c r='ZZ1'><v>1</v></c></row>`), 400, /columnas/);
 });
+
+test('un «>» dentro de un atributo no oculta filas ni columnas (el recorrido respeta las comillas)', async () => {
+  const hoja = (x) => construirXlsx([[`<worksheet><sheetData>`, x, `</sheetData></worksheet>`]]);
+  await rechaza(hoja(`<row a="x>" r="${MAX_FILAS + 5}"><c r="A1"><v>1</v></c></row>`), 400, /filas/);
+  await rechaza(hoja(`<row r="1"><c a='>' r="ZZ1"><v>1</v></c></row>`), 400, /columnas/);
+  await rechaza(hoja(`<row r="1"><c a="<" r="A1"/></row>`), 400, /no es un .xlsx/); // '<' sin cerrar la etiqueta: XML mal formado
+});

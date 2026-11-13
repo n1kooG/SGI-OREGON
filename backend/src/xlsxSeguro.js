@@ -59,8 +59,13 @@ const ATTR_R = /\sr\s*=\s*["']([A-Za-z]*)(\d*)["']/;
 function medir(xml, maxFilas) {
   let filas = 0, mayorFila = 0, columnas = 0, enFila = 0, pos = 0;
   while ((pos = xml.indexOf('<', pos)) >= 0) {
-    const fin = xml.indexOf('>', pos);
-    if (fin < 0 || fin - pos > TAG_MAX) throw NO_VALIDO();
+    // El cierre '>' se busca respetando las comillas de los atributos (un '>' dentro de un valor no cierra la etiqueta) y con tope de largo.
+    let fin = pos + 1, comilla = '';
+    for (; fin < xml.length && fin - pos <= TAG_MAX; fin++) {
+      const c = xml[fin];
+      if (comilla) { if (c === comilla) comilla = ''; } else if (c === '"' || c === "'") comilla = c; else if (c === '>') break; else if (c === '<') throw NO_VALIDO();
+    }
+    if (fin >= xml.length || xml[fin] !== '>') throw NO_VALIDO();
     const etiqueta = xml.slice(pos, fin);
     pos = fin;
     const esFila = /^<row(?=[\s/]|$)/.test(etiqueta), esCelda = /^<c(?=[\s/]|$)/.test(etiqueta);
