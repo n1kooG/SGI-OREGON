@@ -51,7 +51,7 @@ function InicioEscritorio({ d, alDia, cargar, usuario }) {
           <div className="bi-grilla">
             <TarjetaEsc alDia={alDia} cifra={porPreparar} titulo="Pedidos por preparar" detalle="Órdenes sin recolectar o en armado" a="/bodega/pedidos" boton="Ir a Pedidos" />
             <TarjetaEsc alDia={alDia} cifra={d.descargas} titulo="Descargas pendientes" detalle="Facturas por contar" a="/bodega/descarga" boton="Ir a Descarga" />
-            <TarjetaEsc alDia={alDia} cifra={d.en_camion_esperando_chofer} titulo="En camión, esperando chofer" detalle="Etiquetados y cargados" a="/bodega/pedidos" boton="Ver en Pedidos" />
+            <TarjetaEsc alDia={alDia} cifra={d.en_camion_esperando_chofer} titulo="Listo para despacho, esperando chofer" detalle="Etiquetados, a la espera de chofer" a="/bodega/pedidos" boton="Ver en Pedidos" />
             <TarjetaEsc alDia={alDia} cifra={d.rechazados_por_reingresar} titulo="Rechazados por reingresar" detalle="Requieren atención hoy" a="/bodega/pedidos/rechazados" boton="Ver rechazados" tono={d.rechazados_por_reingresar > 0 ? 'peligro' : ''} />
             <TarjetaEsc alDia={alDia} cifra={d.sin_ubicacion} titulo="Productos sin ubicación" detalle="Asigne pasillo y estante" a="/bodega/buscador" boton="Asignar ubicación" />
             <TarjetaEsc alDia={alDia} cifra={d.stock_critico} titulo="Stock crítico" detalle="Bajo el mínimo de reposición" a="/bodega/buscador" boton="Ver en Buscador" tono={d.stock_critico > 0 ? 'critico' : ''} />
@@ -128,7 +128,7 @@ export default function BodegaInicio() {
         <>
           <Tarjeta cifra={porPreparar} titulo="Pedidos por preparar" detalle="Órdenes sin recolectar o en armado" a="/bodega/pedidos" />
           <Tarjeta cifra={d.descargas} titulo="Descargas pendientes" detalle="facturas por contar" a="/bodega/descarga" />
-          <Tarjeta cifra={d.en_camion_esperando_chofer} titulo="En camión, esperando chofer" detalle="Etiquetados y cargados" a="/bodega/pedidos" />
+          <Tarjeta cifra={d.en_camion_esperando_chofer} titulo="Listo para despacho, esperando chofer" detalle="Etiquetados, a la espera de chofer" a="/bodega/pedidos" />
           <Tarjeta cifra={d.rechazados_por_reingresar} titulo="Rechazados por reingresar" detalle="Requieren atención hoy" a="/bodega/pedidos/rechazados" tono={d.rechazados_por_reingresar > 0 ? 'peligro' : ''} />
           <Tarjeta cifra={d.sin_ubicacion} titulo="Productos sin ubicación" detalle="Asigne pasillo y estante" a="/bodega/buscador" />
           <Tarjeta cifra={d.stock_critico} titulo="Stock crítico" detalle="Bajo el mínimo de reposición" a="/bodega/buscador" tono={d.stock_critico > 0 ? 'critico' : ''} />

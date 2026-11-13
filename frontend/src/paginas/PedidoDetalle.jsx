@@ -7,7 +7,7 @@ import { ddmm, ddmmaaaa } from './ReprogramarEntrega.jsx';
 import './admin.css';
 import './reprogramar.css';
 
-const PASOS = [['PENDIENTE_PREPARACION', 'Sin recolectar'], ['ARMADO', 'Armado'], ['ETIQUETADO', 'Etiquetado'], ['EN_CAMION', 'En camión'], ['EN_RUTA', 'En ruta']];
+const PASOS = [['PENDIENTE_PREPARACION', 'Sin recolectar'], ['ARMADO', 'Armado'], ['ETIQUETADO', 'Etiquetado'], ['EN_CAMION', 'Listo para despacho'], ['EN_RUTA', 'En ruta']];
 
 function LineaTiempo({ estado, rechazado }) {
   const actual = PASOS.findIndex(([k]) => k === estado);

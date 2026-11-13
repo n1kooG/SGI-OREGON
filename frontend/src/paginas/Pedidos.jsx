@@ -8,7 +8,7 @@ import { IcoDescargar, IcoPdf, IcoSubir, descargar } from './etiquetaComun.jsx';
 import './admin.css';
 
 export const ESTADOS = {
-  PENDIENTE_PREPARACION: ['Sin recolectar', 'aviso'], ARMADO: ['Armado', 'info'], ETIQUETADO: ['Etiquetado', 'info'], EN_CAMION: ['En camión', 'info'],
+  PENDIENTE_PREPARACION: ['Sin recolectar', 'aviso'], ARMADO: ['Armado', 'info'], ETIQUETADO: ['Etiquetado', 'info'], EN_CAMION: ['Listo para despacho', 'info'],
   EN_RUTA: ['En ruta (chofer)', 'aviso'], ENTREGADO: ['Entregado', 'ok'], RECHAZADO: ['Rechazado', 'mal'],
 };
 export const EstadoBadge = ({ e }) => <Badge tono={ESTADOS[e]?.[1]}>{ESTADOS[e]?.[0] ?? e}</Badge>;
