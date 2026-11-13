@@ -65,3 +65,67 @@
 .bi-item .chip-sku { align-self: flex-start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bi-lateral .bi-panel:last-child { flex: 1; }
 .bi-lateral .bi-panel:last-child .bi-ver { margin-top: auto; }
+
+/* Buscador: campo de ubicación en línea (móvil y escritorio) */
+.editor-ubi { display: contents; }
+.campo-ubicacion .icono { width: 16px; height: 16px; flex: none; color: var(--ink-3); }
+.acciones-ubi .btn.primario:disabled, .movil.bodega .acciones-ubi .btn.primario:disabled { opacity: 1; background: var(--bg); border: 1px dashed var(--line-strong); color: var(--ink-3); }
+
+/* Buscador: sección «Sin ubicación» */
+.bs-sin-sec { display: flex; flex-direction: column; gap: 8px; }
+.bs-sin-cab { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.bs-sin-cab h2 { font: 400 20px/28px var(--f-titulo); }
+.bs-sin-cab .badge.aviso { padding: 3px 8px; }
+.bs-sin-sec > .tenue { font-size: 13px; line-height: 18px; margin: 0; }
+.bs-vacio { min-height: 0; padding: 28px 24px; gap: 6px; }
+.bs-vacio .sello-ok { width: 40px; height: 40px; }
+.bs-vacio .sello-ok .icono { width: 18px; height: 18px; }
+.bs-vacio strong { font-size: 14px; line-height: 20px; }
+.bs-vacio p { font-size: 13px; line-height: 18px; margin: 0; }
+
+/* Móvil: tarjetas de productos sin ubicación */
+.bs-tarjetas { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+.tarjeta-sin { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.tarjeta-sin.editando { border: 2px solid var(--accent); padding: 15px; }
+.tarjeta-sin > strong { font: 500 16px/22px var(--f-titulo); }
+.tarjeta-sin .marca-fila { margin: 0; align-items: baseline; }
+.tarjeta-sin .btn, .tarjeta-sin .editor-ubi { width: 100%; }
+.tarjeta-sin > .btn { height: 44px; font-weight: 500; }
+.tarjeta-sin .acciones-ubi .btn { height: 44px; }
+.tarjeta-sin .ayuda { font-size: 13px; line-height: 18px; }
+.tarjeta-sin .campo-ubicacion { height: 44px; margin-bottom: 4px; }
+.tarjeta-sin .editor-ubi { display: flex; flex-direction: column; gap: 8px; }
+.btn.ver-mas { height: 44px; color: var(--accent-ink); font-weight: 500; }
+
+/* Escritorio: tablas del buscador */
+.bs-esc.buscador-stock { gap: 0; }
+.bs-esc .buscador.grande { width: 100%; margin: 0; }
+.bs-esc .buscador .icono { top: 18px; }
+.bs-esc .buscador.grande .entrada { border: 1.5px solid var(--accent); border-radius: 12px; height: 56px; }
+.bs-esc .buscador.grande .entrada:focus { border-color: var(--accent); }
+.bs-cuenta { margin: 14px 0 8px; font-size: 12px; line-height: 16px; color: var(--ink-2); }
+.bs-esc .bs-sin-sec { margin-top: 28px; }
+.bs-tabla { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-top: 4px; }
+.bs-fila { display: grid; align-items: center; column-gap: 16px; padding: 0 20px; min-height: 58px; border-top: 1px solid var(--line); font-size: 13px; line-height: 18px; }
+.bs-fila:first-child { border-top: 0; }
+.bs-fila > strong { font-size: 14px; line-height: 20px; }
+.bs-res { grid-template-columns: 112px minmax(0, 2fr) minmax(0, 1fr) 84px 56px 92px 176px 140px; }
+.bs-sin { grid-template-columns: 148px minmax(0, 1fr) 150px 100px 152px; }
+.bs-fila .btn { height: 36px; padding: 0 12px; border-radius: 8px; font-size: 13px; font-weight: 500; justify-self: end; }
+.bs-fila .btn .icono { width: 14px; height: 14px; }
+.bs-cab { min-height: 44px; font-size: 11px; line-height: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); background: var(--surface); }
+.bs-fila .dato { font: 500 13px/18px var(--f-dato); }
+.bs-fila .dato.ok { color: var(--ok); font-weight: 700; }
+.bs-fila .dato.mal { color: var(--danger); font-weight: 700; }
+.bs-fila.editando { background: var(--accent-soft); grid-template-rows: 58px auto; padding-bottom: 14px; }
+.bs-fila.editando > :nth-child(-n+8) { align-self: center; }
+.bs-edicion { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; font-size: 13px; color: var(--ink-2); }
+.bs-edicion > span:first-child { flex: none; }
+.bs-edicion .editor-ubi { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1; }
+.bs-edicion .campo-ubicacion { order: 1; width: 380px; height: 40px; border-radius: 8px; }
+.bs-edicion .acciones-ubi { order: 2; width: auto; flex-direction: row-reverse; gap: 10px; }
+.bs-edicion .acciones-ubi .btn { flex: none; justify-self: auto; padding: 0 18px; }
+.bs-edicion .ayuda { order: 3; font-size: 12px; line-height: 16px; }
+.bs-edicion .alerta { order: 4; flex-basis: 100%; margin: 0; }
+.bs-mas { padding: 14px 20px; border-top: 1px solid var(--line); }
+.bs-mas .bi-ver { background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; }
