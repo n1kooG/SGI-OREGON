@@ -3,6 +3,7 @@ import { api, mensajeError } from '../api.js';
 import { Alerta, Badge, Boton, Campo, Modal, Tabla, useAviso } from '../componentes/ui.jsx';
 import ImportarEtiquetas from './ImportarEtiquetas.jsx';
 import PedidoDetalle from './PedidoDetalle.jsx';
+import ReprogramarEntrega from './ReprogramarEntrega.jsx';
 import { IcoDescargar, IcoPdf, IcoSubir, descargar } from './etiquetaComun.jsx';
 import './admin.css';
 
@@ -12,7 +13,7 @@ export const ESTADOS = {
 };
 export const EstadoBadge = ({ e }) => <Badge tono={ESTADOS[e]?.[1]}>{ESTADOS[e]?.[0] ?? e}</Badge>;
 // La causal es texto libre del chofer («Causal — detalle»): en la tabla va resumida (solo la causal, tope de 28 caracteres).
-const causalResumida = (m = '') => { const t = m.split(/[.:;\n]| — /)[0].trim(); return t.length > 28 ? `${t.slice(0, 27)}…` : t; };
+export const causalResumida = (m = '') => { const t = m.split(/[.:;\n]| — /)[0].trim(); return t.length > 28 ? `${t.slice(0, 27)}…` : t; };
 export const fechaCorta = (f) => new Date(f).toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' }).replaceAll('-', '/');
 
 function AsignarChofer({ pedido, onClose, onHecho }) {
@@ -72,26 +73,29 @@ export default function Pedidos() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [asignando, setAsignando] = useState(null);
+  const [reprogramando, setReprogramando] = useState(null);
   const [detalle, setDetalle] = useState(null); // { id, ruta }
   const [importando, setImportando] = useState(false);
   const canales = useRef(new Set()); // el canal es texto libre: se arma la lista con los vistos
+  const comunas = useRef(new Set()); // sugerencias de comuna del modal Reprogramar
 
   const cargar = useCallback(async () => {
     setError('');
     try {
       const q = new URLSearchParams({ ...(canal && { canal }), ...(estado && { estado }) });
       const { data } = await api(`/pedidos?${q}`);
-      data.forEach((p) => canales.current.add(p.canal_origen));
+      data.forEach((p) => { canales.current.add(p.canal_origen); if (p.comuna) comunas.current.add(p.comuna); });
       setFilas(data);
     } catch (e) { setError(mensajeError(e)); } finally { setCargando(false); }
   }, [canal, estado]);
   useEffect(() => { cargar(); }, [cargar]);
   const cerrar = useCallback(() => setAsignando(null), []);
+  const cerrarReprogramar = useCallback(() => setReprogramando(null), []);
   const cerrarDetalle = useCallback(() => setDetalle(null), []);
   const cerrarImportar = useCallback(() => setImportando(false), []);
-  // Un rechazo reingresado vuelve a EN_CAMION: «Reprogramar» reutiliza el modal de asignación.
+  // Un rechazo reingresado vuelve a EN_CAMION: «Reprogramar» abre su propio modal; «Asignar chofer» es solo para pedidos nuevos.
   const accion = (p) => {
-    if (p.estado_orden === 'EN_CAMION') return <Boton variante={p.reingresado ? 'primario' : ''} onClick={() => setAsignando(p)}>{p.reingresado ? 'Reprogramar' : 'Asignar chofer'}</Boton>;
+    if (p.estado_orden === 'EN_CAMION') return p.reingresado ? <Boton variante="primario" onClick={() => setReprogramando(p)}>Reprogramar</Boton> : <Boton onClick={() => setAsignando(p)}>Asignar chofer</Boton>;
     if (p.estado_orden === 'EN_RUTA') return <Boton className="enlace" onClick={() => setDetalle({ id: p.id_orden, ruta: true })}>Ver ruta</Boton>;
     if (p.estado_orden === 'ENTREGADO') return <Boton className="enlace" onClick={() => setDetalle({ id: p.id_orden })}>Ver detalle</Boton>;
     if (p.estado_orden === 'RECHAZADO') return <span className="celda-sec">Esperando reingreso en bodega</span>;
@@ -137,6 +141,7 @@ export default function Pedidos() {
       </Tabla></div>
       {detalle && <PedidoDetalle id={detalle.id} enfocarDespacho={detalle.ruta} onClose={cerrarDetalle} onCambio={cargar} />}
       {importando && <ImportarEtiquetas pedidos={filas} onClose={cerrarImportar} onCambio={cargar} />}
+      {reprogramando && <ReprogramarEntrega pedido={reprogramando} comunas={[...comunas.current]} onClose={cerrarReprogramar} onHecho={() => { cerrarReprogramar(); cargar(); }} />}
       {asignando && <AsignarChofer pedido={asignando} onClose={cerrar} onHecho={() => { cerrar(); cargar(); }} />}
     </>
   );
