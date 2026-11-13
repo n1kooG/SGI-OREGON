@@ -2,6 +2,7 @@ import { AppError } from '../errors.js';
 import { conTransaccion } from '../db.js';
 import { auditar } from '../audit.js';
 import * as repo from '../repositories/usuarios.js';
+import { pendientesDeChofer } from '../repositories/despachos.js';
 
 const invalido = (m) => new AppError(400, m, 'SOLICITUD_INVALIDA');
 const noExiste = () => new AppError(404, 'Usuario no encontrado', 'NO_ENCONTRADO');
@@ -52,6 +53,16 @@ async function modificar(req, id, accion, validar, aplicar) {
   });
 }
 
+// Regla: un chofer con entregas PENDIENTE no puede darse de baja ni cambiar de rol; antes hay que cerrar esos despachos
+// (el chofer) o, si no puede, reactivarlo. Se informa cuáles pedidos quedarían sin dueño. Es la opción más simple y segura:
+// no hay reasignación de despachos abiertos, y la BD ya impide asignar a un chofer inactivo.
+async function exigirSinDespachosPendientes(u, c) {
+  if (u.rol !== 'CHOFER') return;
+  const { total, ordenes } = await pendientesDeChofer(c, u.id_usuario);
+  if (!total) return;
+  throw Object.assign(new AppError(409, `El chofer tiene ${total} despacho(s) pendiente(s): ciérralos antes de darlo de baja o cambiarle el rol`, 'CHOFER_CON_DESPACHOS'), { detalle: { total, ordenes } });
+}
+
 const ULTIMO = () => new AppError(409, 'No se puede dejar el sistema sin administradores activos', 'ULTIMO_ADMINISTRADOR');
 
 export const cambiarRol = (req, id, rol) =>
@@ -61,6 +72,7 @@ export const cambiarRol = (req, id, rol) =>
       const nuevo = await repo.idRol(rol.trim(), c);
       if (!nuevo) throw invalido('Rol inexistente');
       if (rol.trim() === u.rol) return null;
+      await exigirSinDespachosPendientes(u, c);
       // Si el usuario hoy es administrador activo y el nuevo rol no administra, no puede ser el último.
       const { rows: [{ admin }] } = await c.query(`SELECT permisos ? 'usuarios:administrar' AS admin FROM rol WHERE id_rol = $1`, [nuevo]);
       if (u.activo && u.es_admin && !admin && admins <= 1) throw ULTIMO();
@@ -70,10 +82,11 @@ export const cambiarRol = (req, id, rol) =>
 
 export const darDeBaja = (req, id) =>
   modificar(req, id, 'USUARIO_BAJA',
-    (u, admins) => {
+    async (u, admins, c) => {
       if (u.id_usuario === req.usuario.id_usuario) throw new AppError(409, 'No puedes darte de baja a ti mismo', 'AUTO_BAJA');
       if (!u.activo) return null;
       if (u.es_admin && admins <= 1) throw ULTIMO();
+      await exigirSinDespachosPendientes(u, c);
       return true;
     },
     (_n, c) => repo.actualizarActivo(id, false, c));

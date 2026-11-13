@@ -293,8 +293,9 @@ CREATE UNIQUE INDEX ux_despacho_orden_abierto ON despacho (id_orden) WHERE estad
 -- Regla: solo un usuario activo con rol CHOFER puede ser asignado a un despacho
 CREATE OR REPLACE FUNCTION fn_despacho_solo_chofer() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
+  -- FOR SHARE: una baja o cambio de rol concurrente del chofer (que bloquea su fila) se serializa con esta asignación.
   IF NOT EXISTS (SELECT 1 FROM usuario u JOIN rol r ON r.id_rol = u.id_rol
-                  WHERE u.id_usuario = NEW.id_usuario_chofer AND u.activo AND r.nombre_rol = 'CHOFER') THEN
+                  WHERE u.id_usuario = NEW.id_usuario_chofer AND u.activo AND r.nombre_rol = 'CHOFER' FOR SHARE OF u) THEN
     RAISE EXCEPTION 'El usuario % no es un chofer activo', NEW.id_usuario_chofer
           USING ERRCODE = 'check_violation';
   END IF;

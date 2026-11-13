@@ -137,18 +137,18 @@ test('cambiar rol, baja y reactivación quedan auditados con valores antes y des
   assert.equal((await auditorias('USUARIO_REACTIVADO', id)).length, 1);
 });
 
-test('la baja invalida de inmediato el token vigente y el login', async () => {
-  const id = await idDe('chofer@tiendaoregon.cl');
-  const sesion = (await login('chofer@tiendaoregon.cl')).body;
+test('la baja invalida de inmediato el token vigente y el login (Bodega: el chofer de ejemplo tiene despachos pendientes y no se puede dar de baja)', async () => {
+  const id = await idDe('bodega@tiendaoregon.cl');
+  const sesion = (await login('bodega@tiendaoregon.cl')).body;
   assert.equal((await http('GET', '/api/auth/me', sesion.token)).status, 200);
   assert.equal((await http('POST', `/api/usuarios/${id}/baja`, admin.token)).status, 200);
   try {
     assert.equal((await http('GET', '/api/auth/me', sesion.token)).status, 401);
-    assert.equal((await login('chofer@tiendaoregon.cl')).status, 401);
+    assert.equal((await login('bodega@tiendaoregon.cl')).status, 401);
   } finally {
     await http('POST', `/api/usuarios/${id}/reactivar`, admin.token);
   }
-  assert.equal((await login('chofer@tiendaoregon.cl')).status, 200);
+  assert.equal((await login('bodega@tiendaoregon.cl')).status, 200);
 });
 
 test('no se puede dar de baja a sí mismo ni dejar el sistema sin administradores', async () => {

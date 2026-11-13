@@ -8,7 +8,8 @@ export async function buscarParaLogin(email, password, db = { query }, bloquear 
     `SELECT u.id_usuario, u.nombre_completo, u.email, u.activo, u.intentos_fallidos, u.bloqueado_hasta,
             r.nombre_rol AS rol, r.permisos,
             (u.password_hash = crypt($2, u.password_hash)) AS clave_ok,
-            (u.bloqueado_hasta IS NOT NULL AND u.bloqueado_hasta > now()) AS bloqueada
+            (u.bloqueado_hasta IS NOT NULL AND u.bloqueado_hasta > now()) AS bloqueada,
+            floor(extract(epoch FROM u.clave_cambiada_en))::bigint AS clave_cambiada_seg
        FROM usuario u JOIN rol r ON r.id_rol = u.id_rol
       WHERE lower(u.email) = lower($1)${bloquear ? ' FOR UPDATE OF u' : ''}`,
     [email, password],
@@ -57,7 +58,7 @@ export async function estadoClave(id, password, db) {
 // Nueva clave con bcrypt de costo 12 (igual que el alta); reinicia los intentos fallidos y el bloqueo.
 export const actualizarClave = (id, password, db) =>
   db.query(
-    `UPDATE usuario SET password_hash = crypt($2, gen_salt('bf', 12)), intentos_fallidos = 0, bloqueado_hasta = NULL, clave_cambiada_en = now() WHERE id_usuario = $1`,
+    `UPDATE usuario SET password_hash = crypt($2, gen_salt('bf', 12)), intentos_fallidos = 0, bloqueado_hasta = NULL, clave_cambiada_en = clock_timestamp() WHERE id_usuario = $1`,
     [id, password],
   );
 

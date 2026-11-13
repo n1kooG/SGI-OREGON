@@ -27,8 +27,8 @@ export const autenticar = ah(async (req, res, next) => {
   const usuario = await buscarActivoPorId(sub);
   if (!usuario) return res.status(401).json({ error: 'Sesión inválida', codigo: 'SESION_INVALIDA' });
   // Un token emitido antes del último cambio de clave no sirve, aunque el usuario haya vuelto a iniciar sesión.
-  // shortcut: `iat` tiene resolución de 1 s; un token emitido en el mismo segundo que el cambio no se distingue del nuevo.
-  if (usuario.clave_cambiada_seg !== null && iat < Number(usuario.clave_cambiada_seg)) {
+  // `<=`: el login emite siempre un `iat` posterior al segundo del cambio, así que no hay ventana de ambigüedad.
+  if (usuario.clave_cambiada_seg !== null && iat <= Number(usuario.clave_cambiada_seg)) {
     return res.status(401).json({ error: 'Sesión expirada: la contraseña cambió', codigo: 'SESION_EXPIRADA' });
   }
   await registrarActividad(sub);

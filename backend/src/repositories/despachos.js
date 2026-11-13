@@ -6,6 +6,15 @@ export const insertar = async (c, idOrden, idChofer, idAsigna, { fecha = null, n
     `INSERT INTO despacho (id_orden, id_usuario_chofer, id_usuario_asigna, fecha_programada, nota_admin) VALUES ($1, $2, $3, COALESCE($4::date, fn_hoy()), $5) RETURNING id_despacho`,
     [idOrden, idChofer, idAsigna, fecha, nota])).rows[0].id_despacho;
 
+// Despachos PENDIENTE de un chofer (los pedidos que quedarían sin quien los cierre si se le da de baja); la lista se acota a 20.
+export async function pendientesDeChofer(c, idChofer) {
+  const { rows } = await c.query(
+    `SELECT o.id_orden, o.codigo_externo, count(*) OVER ()::int AS total
+       FROM despacho d JOIN orden_venta o ON o.id_orden = d.id_orden
+      WHERE d.id_usuario_chofer = $1 AND d.estado_entrega = 'PENDIENTE' ORDER BY d.id_despacho LIMIT 20`, [idChofer]);
+  return { total: rows[0]?.total ?? 0, ordenes: rows.map(({ id_orden, codigo_externo }) => ({ id_orden, codigo_externo })) };
+}
+
 export const hoy = async (c) => (await c.query(`SELECT fn_hoy()::text AS hoy`)).rows[0].hoy;
 
 // Último despacho del pedido, bloqueado: decide si es reprogramable.

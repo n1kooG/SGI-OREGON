@@ -37,7 +37,10 @@ export async function login(req, email, password) {
   if (r.simular) await repo.simularHash(password);
   if (r.fallo) throw credencialesInvalidas();
   const { u } = r;
-  const token = jwt.sign({ sub: u.id_usuario }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
+  // `iat` nunca cae en el mismo segundo del último cambio de clave (o antes): así autenticar puede rechazar `iat <= cambio`
+  // sin ambigüedad y un login hecho justo tras el cambio sigue siendo válido.
+  const iat = Math.max(Math.floor(Date.now() / 1000), Number(u.clave_cambiada_seg ?? 0) + 1);
+  const token = jwt.sign({ sub: u.id_usuario, iat }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
   await registrarActividad(u.id_usuario);
   return { token, usuario: { id: u.id_usuario, nombre: u.nombre_completo, email: u.email, rol: u.rol, permisos: u.permisos } };
 }
