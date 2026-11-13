@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import ExcelJS from 'exceljs';
 import { AppError } from './errors.js';
 import { C, LOGO, MARCA } from './pdf/estilo.js';
+import { verificarXlsx } from './xlsxSeguro.js';
 
 export const COLUMNAS = ['RUT CLIENTE', 'NOMBRE CLIENTE', 'SKU', 'NOMBRE PRODUCTO', 'CANTIDAD', 'PRECIO', 'MARCA'];
 export const MAX_FILAS = 20000; // protege memoria; el objetivo de PR-02 son 5.000 líneas
@@ -22,6 +23,7 @@ function valor(v) {
 // Devuelve [{ fila, rut, nombre, sku, producto, cantidad, precio, marca }] con los valores tal como vienen (sin validar su contenido).
 export async function leerPlanilla(buffer) {
   if (buffer.length < 4 || buffer.subarray(0, 2).toString() !== 'PK') throw invalido('El archivo no es un .xlsx válido');
+  verificarXlsx(buffer, MAX_FILAS); // antes de cargar: tope de tamaño descomprimido, hojas, filas y columnas (zip bomb)
   const wb = new ExcelJS.Workbook();
   try { await wb.xlsx.load(buffer); } catch { throw invalido('El archivo no es un .xlsx válido'); }
   const hoja = wb.worksheets[0];
