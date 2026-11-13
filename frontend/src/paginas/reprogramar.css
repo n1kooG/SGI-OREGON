@@ -67,3 +67,23 @@
   .modal-rep .modal-pie { flex-wrap: wrap; }
   .rep-ayuda { flex-basis: 100%; }
 }
+
+/* Detalle del pedido: historial de intentos. */
+.hist-intentos { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.hist-intento { position: relative; display: flex; gap: 12px; }
+.hist-intento:not(:last-child)::before { content: ''; position: absolute; left: 13px; top: 30px; bottom: -14px; width: 1px; background: var(--line-strong); }
+.hist-nodo { flex: none; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg); color: var(--ink-3); border: 1px solid var(--line-strong); }
+.hist-nodo .icono { width: 14px; height: 14px; }
+.hist-intento.mal .hist-nodo { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-bg); }
+.hist-intento.vigente .hist-nodo { background: var(--accent-ink); color: var(--on-dark); border-color: var(--accent-ink); }
+.hist-tarjeta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; }
+.hist-intento.vigente .hist-tarjeta { border: 1.5px solid var(--accent-ink); }
+.hist-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hist-causal { padding: 8px 10px; border-radius: 8px; background: var(--danger-bg); color: var(--danger); }
+.hist-causal b { display: block; font-size: 14px; }
+.hist-causal p { margin: 4px 0 0; font-size: 12px; }
+.hist-causal .etiqueta, .hist-nota .etiqueta { display: block; margin: 0 0 4px; font-size: 10px; }
+.hist-nota { padding: 8px 10px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); }
+.hist-nota p { margin: 0; font-size: 13px; }
+.hist-pie { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-3); }
+.hist-pie .icono { width: 14px; height: 14px; }
