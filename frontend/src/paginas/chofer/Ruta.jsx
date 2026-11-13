@@ -1,10 +1,23 @@
-import { Link } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import { Alerta } from '../../componentes/ui.jsx';
 import { Ico } from './iconos.jsx';
 import { direccion, hora, mapaUrl, telUrl, unidades, useCausales, useRuta } from './datos.js';
 import { Estado, Orden, TONO } from './comunes.jsx';
+import Detalle from './Detalle.jsx';
+import Entrega from './Entrega.jsx';
+import Rechazo from './Rechazo.jsx';
 
+// Una sola ruta para lista, detalle, entrega y rechazo: así, en pantallas anchas, abrir y cerrar un diálogo no recarga la lista.
 export default function Ruta() {
+  const { id } = useParams();
+  const { pathname } = useLocation();
+  if (!id) return <RutaMovil />;
+  if (pathname.endsWith('/entrega')) return <Entrega />;
+  if (pathname.endsWith('/rechazo')) return <Rechazo />;
+  return <Detalle />;
+}
+
+function RutaMovil() {
   const { paradas, error, actualizada, cargando, cargar } = useRuta();
   const causal = useCausales(paradas);
   const cerradas = paradas?.filter((d) => d.estado_entrega !== 'PENDIENTE') ?? [];
