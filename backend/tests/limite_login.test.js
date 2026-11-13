@@ -58,10 +58,10 @@ test('IPv6: se cuenta por /64 y ::ffff:a.b.c.d equivale a la IPv4', () => {
 });
 
 test('el bloqueo vence solo: el administrador entra al terminar la ventana', async () => {
-  config.loginMaxPorIp = 2; config.loginMaxPorCorreo = 0; config.loginVentanaSeg = 1;
+  config.loginMaxPorIp = 2; config.loginMaxPorCorreo = 0; config.loginVentanaSeg = 3;
   await login('x@x.cl', 'mala'); await login('x@x.cl', 'mala');
   assert.equal((await login('admin@tiendaoregon.cl', PASS)).status, 429);
-  await new Promise((r) => setTimeout(r, 1100));
+  await new Promise((r) => setTimeout(r, 3100));
   assert.equal((await login('admin@tiendaoregon.cl', PASS)).status, 200);
 });
 
