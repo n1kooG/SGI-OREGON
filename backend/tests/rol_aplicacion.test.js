@@ -58,8 +58,18 @@ test('el flujo normal funciona: login, bitácora, catálogo y cambio de clave', 
     `WITH a AS (INSERT INTO audit_log (id_usuario, tabla_afectada, accion, ip_origen) VALUES (NULL, 'usuario', 'PRUEBA_ROL', '127.0.0.1') RETURNING 1),
           p AS (INSERT INTO producto (sku, modelo, nombre, marca, costo_adquisicion_neto) VALUES ('ZZ-ROL', 'm', 'n', 'x', 1000) RETURNING sku),
           i AS (INSERT INTO inventario (sku) SELECT sku FROM p RETURNING sku),
-          u AS (UPDATE usuario SET password_hash = crypt('otra-clave-larga-2', gen_salt('bf', 12)), intentos_fallidos = 0, bloqueado_hasta = NULL
+          u AS (UPDATE usuario SET password_hash = crypt('otra-clave-larga-2', gen_salt('bf', 12)), intentos_fallidos = 0, bloqueado_hasta = NULL, clave_cambiada_en = clock_timestamp()
                  WHERE lower(email) = 'admin@tiendaoregon.cl' RETURNING 1)
      SELECT (SELECT count(*) FROM a) AS a, (SELECT count(*) FROM i) AS i, (SELECT count(*) FROM u) AS u`);
   assert.deepEqual(r.rows[0], { a: '1', i: '1', u: '1' });
+});
+
+test('la asignación de un despacho (trigger con FOR SHARE sobre usuario) funciona con el rol de aplicación', opts, async () => {
+  const r = await intentar(
+    `WITH l AS (INSERT INTO lote_importacion (id_usuario, nombre_archivo, url_archivo_s3, total_ordenes, total_lineas)
+                SELECT id_usuario, 'rol.xlsx', 'x', 1, 0 FROM usuario WHERE lower(email) = 'admin@tiendaoregon.cl' RETURNING id_lote),
+          o AS (INSERT INTO orden_venta (id_lote, codigo_externo, canal_origen, nombre_cliente) SELECT id_lote, 'ROL-1', 'Mayorista', 'c' FROM l RETURNING id_orden)
+     INSERT INTO despacho (id_orden, id_usuario_chofer) SELECT id_orden, (SELECT id_usuario FROM usuario WHERE lower(email) = 'chofer@tiendaoregon.cl') FROM o RETURNING 1`);
+  assert.equal(r.rowCount, 1);
+  await assert.rejects(() => intentar(`UPDATE usuario SET clave_cambiada_en = NULL, email = 'x@x.cl'`), { code: '42501' }); // sigue sin poder tocar otras columnas
 });

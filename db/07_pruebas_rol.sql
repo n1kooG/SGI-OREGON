@@ -96,7 +96,7 @@ SELECT pg_temp.espera_ok('OK-04', 'login: contador de intentos y último acceso'
 SELECT pg_temp.espera_ok('OK-05', 'usuarios: alta y cambio de clave, rol y estado',
   $q$WITH n AS (INSERT INTO usuario (rut, nombre_completo, email, password_hash, id_rol)
                 VALUES ('44.444.444-4', 'Prueba', 'prueba.rol@x.cl', crypt('una-clave-larga-1', gen_salt('bf', 12)), 1) RETURNING id_usuario)
-     UPDATE usuario SET password_hash = crypt('otra-clave-larga-2', gen_salt('bf', 12)), id_rol = 2, activo = false FROM n WHERE usuario.id_usuario = n.id_usuario$q$);
+     UPDATE usuario SET password_hash = crypt('otra-clave-larga-2', gen_salt('bf', 12)), clave_cambiada_en = clock_timestamp(), id_rol = 2, activo = false FROM n WHERE usuario.id_usuario = n.id_usuario$q$);
 SELECT pg_temp.espera_ok('OK-06', 'catálogo: producto, inventario y precios (alta y cambio)',
   $q$WITH p AS (INSERT INTO producto (sku, modelo, nombre, marca, costo_adquisicion_neto) VALUES ('ZZ-ROL','m','n','x',1000) RETURNING sku),
           i AS (INSERT INTO inventario (sku) SELECT sku FROM p RETURNING sku),
