@@ -9,6 +9,7 @@ import { Logo } from '../../componentes/ui.jsx';
 import MiCuenta from '../../componentes/MiCuenta.jsx';
 import NavChofer, { LateralChofer } from '../../componentes/NavChofer.jsx';
 import { Ico } from './iconos.jsx';
+import { diaMes } from './datos.js';
 
 // Cabecera móvil: el logo con el título lleva al Inicio; «Cuenta» y «Salir» son botones aparte.
 function CabChofer({ abrirCuenta }) {
@@ -52,3 +53,19 @@ export const Aviso = ({ children }) => children ? <div className="ch-alerta" rol
 export const BarraAcciones = ({ children }) => <div className="ch-acciones">{children}</div>;
 
 export const TONO = { ENTREGADO: ['ok', 'Entregado'], RECHAZADO: ['mal', 'Rechazado'], PENDIENTE: ['aviso', 'Pendiente'] };
+
+export const Reprogramada = ({ fecha }) => <span className="ch-badge repro"><Ico n="calendario" t={14} />Reprogramada · {diaMes(fecha)}</span>;
+export const NotaAdmin = ({ children }) => <div className="ch-nota-admin"><Ico n="nota" t={18} /><div><strong>Nota del administrador</strong><p>{children}</p></div></div>;
+// Las paradas reprogramadas a días futuros se ven con su nota, sin acciones: el backend no deja cerrarlas antes de su fecha.
+export const Futuras = ({ lista, titulo = 'Próximos días' }) => lista.length > 0 && (
+  <section className="ch-futuras">
+    <div className="ch-fila"><h2>{titulo}</h2><span className="ch-contador">{lista.length}</span></div>
+    {lista.map((d) => (
+      <article key={d.id_despacho}>
+        <div className="ch-fila"><h3>{d.nombre_cliente}</h3><Reprogramada fecha={d.fecha_programada} /></div>
+        <p className="ch-sec">{[d.direccion_despacho || 'Sin dirección registrada', d.comuna, `#${d.codigo_externo}`].filter(Boolean).join(' · ')}</p>
+        {d.nota_admin && <p className="ch-nota-linea"><Ico n="nota" t={14} />Nota: {d.nota_admin}</p>}
+      </article>
+    ))}
+  </section>
+);
