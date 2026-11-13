@@ -152,14 +152,79 @@ viajan como texto `AAAA-MM-DD`.
 | `PATCH /api/despachos/:id` | `entregas:registrar` | Cerrar una parada con `fecha_programada` futura responde 409 `FUERA_DE_FECHA` («La parada está programada para el DD-MM-AAAA: solo se puede cerrar desde ese día») |
 | `GET /api/inventario/sin-ubicacion?limite=20&pagina=1&q=` | `inventario:consultar` o `inventario:leer` (BODEGA, ADMIN) | `limite` 1–100, `pagina` ≥1 (400 `VALIDACION` si no), `q` opcional por SKU o nombre (sin distinguir mayúsculas, comodines literales, máx. 40 caracteres) → `{ total, pagina, limite, items: [{ sku, nombre, modelo, marca, stock_fisico }] }`. Productos `ACTIVO` con `ubicacion_bodega` NULL o vacía, por stock físico descendente y SKU; sin costos ni precios. `total` coincide con `sin_ubicacion` de `GET /api/inventario/resumen` (misma definición en el código) cuando no hay `q`. La ubicación se asigna con `PUT /api/inventario/:sku/ubicacion` |
 
-## Producción
+## Producción y seguridad
 
-Con `NODE_ENV=production` la API no arranca si `JWT_SECRET` tiene menos de 32 caracteres o es el valor de ejemplo.
-Genera uno con `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
+Con `NODE_ENV=production` la API no arranca si `JWT_SECRET` tiene menos de 32 caracteres o es el valor de ejemplo, ni si
+`CORS_ORIGIN` falta o contiene `*` (en producción el origen del frontend debe ser explícito; el valor por defecto es solo para
+desarrollo). Genera el secreto con `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
+
+Migración de esta etapa (idempotente): `psql -d sgi_oregon -f db/12_seguridad.sql` y, a continuación, volver a ejecutar
+`db/07_rol_aplicacion.sql` para que el rol de la aplicación pueda actualizar la columna nueva. Agrega `usuario.clave_cambiada_en` y
+hace que el trigger de asignación de despachos lea al chofer con `FOR SHARE`. Las bases nuevas lo traen en `db/01_modelo_datos.sql`.
+
+### Variables de entorno de seguridad
+
+| Variable | Por defecto | Efecto |
+|---|---|---|
+| `DB_SSL` | `false` | `true` activa TLS hacia PostgreSQL **y siempre valida el certificado** (`rejectUnauthorized: true`). Sin `true`, conexión sin TLS (desarrollo local). |
+| `DB_SSL_CA` | vacío | Ruta a un `.pem` con la CA que firma el certificado del servidor. Para RDS, el paquete global de AWS: `curl -o /etc/ssl/rds/global-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem`, y `DB_SSL=true DB_SSL_CA=/etc/ssl/rds/global-bundle.pem`. Si el archivo no existe o no es PEM, la API (y los scripts) no arrancan: nunca se degrada a «sin verificar». No pongas `sslmode=` en `DATABASE_URL` (anularía estas opciones). Sin `DB_SSL_CA` se usa el almacén de CA del sistema (no incluye RDS). |
+| `TRUST_PROXY` | vacío (sin proxy) | Nº de proxies propios delante de la API (con un ALB de Elastic Beanstalk: `1`), o lista de IP/CIDR de confianza (`loopback, 10.0.0.0/8`). Con él, `req.ip` es la IP real del cliente (bitácora y límite de intentos). **Vacío = sin proxy: `X-Forwarded-For` se ignora** y no se puede falsificar la IP. `true` se rechaza al arrancar (confiaría en cualquier cabecera). |
+| `LOGIN_VENTANA_SEGUNDOS` | `900` | Ventana fija (15 min) del límite de intentos de login. |
+| `LOGIN_MAX_POR_IP` | `100` | Intentos de login por IP y ventana (cuentan al llegar; un login correcto **no** los devuelve). `0` desactiva este límite. IPv6 se cuenta por /64; `::ffff:a.b.c.d` como IPv4. |
+| `LOGIN_MAX_POR_CORREO` | `20` | Intentos por correo (normalizado a minúsculas) y ventana; un login correcto reinicia el contador de ese correo. `0` lo desactiva. |
+| `MAX_INTENTOS` / `BLOQUEO_MINUTOS` | `5` / `15` | Bloqueo de la cuenta (ya existente); el contador parte de cero cuando el bloqueo vence. |
+
+**Límite de intentos.** Se aplica antes de tocar la base (no agota el pool con bcrypt). Al superarlo: `429` con `Retry-After`
+(segundos hasta que cierre la ventana) y el mismo cuerpo `{ error, codigo: "DEMASIADOS_INTENTOS" }` exista o no el correo (no
+permite enumerar usuarios). El contador es de ventana fija y vence solo: nadie, tampoco el administrador, queda bloqueado de forma
+permanente. Usa Redis si responde y, si no, memoria por proceso (con varias instancias sin Redis el tope real se multiplica por el
+nº de instancias). Correo > 254 o clave > 256 caracteres: `400`.
+
+### Revocación de sesiones
+
+Cambiar la clave (`PUT /api/auth/clave`) o restablecerla (`scripts/clave-usuario.mjs`) fija `usuario.clave_cambiada_en`; la API
+rechaza (`401 SESION_EXPIRADA`) todo JWT cuyo `iat` sea anterior o igual a ese instante, aunque el usuario vuelva a iniciar sesión
+(antes, un login nuevo reavivaba los tokens viejos). El login emite siempre un `iat` posterior al segundo del cambio. No hay cierre de
+sesión individual por `jti`/logout (queda pendiente, ver abajo).
+
+### Límites de archivos y cuerpos
+
+| Entrada | Límites |
+|---|---|
+| JSON | 100 kb (`413`) |
+| `.xlsx` de ventas | 10 MB subido; antes de cargarlo se revisa el ZIP: ≤ 40 MB descomprimidos (suma real, no la declarada), ≤ 200 partes, ≤ 10 hojas, ≤ 20.000 filas de datos (`MAX_FILAS`), ≤ 50 columnas, sin cifrado, sin rutas ambiguas, sin comentarios/CDATA en las hojas (`413`/`400` `ARCHIVO_INVALIDO`) |
+| PDF de etiquetas | ≤ 100 archivos; válidos hasta 2 MB (3 MB por archivo en la subida); solo las 5 primeras páginas; cada lectura corre en un `worker_thread` con 8 s de tiempo, 256 MB de heap y un vigilante de RSS (+600 MB), 3 lectores a la vez en todo el proceso y 120 s de presupuesto por lote (lo no leído se informa `INVALIDO`) |
+| Firma / foto de entrega | firma PNG ≤ 1 MB, foto JPG/PNG ≤ 5 MB, ambas por firma de archivo; claves `firmas/<id>.png`, `evidencias/<id>.<ext>` |
+| Multipart | máx. de campos y partes acotado por ruta |
+
+La descarga de una etiqueta se sirve siempre como `attachment`, `application/pdf`, `X-Content-Type-Options: nosniff` y
+`Content-Security-Policy: default-src 'none'; sandbox`; el nombre de archivo sale de `codigo_externo` saneado a `[\w.-]`.
+
+### Cambios de contrato de esta etapa
+
+- `GET /api/pedidos` acepta `?pagina=` (≥ 1) y `?limite=` (1–500, por defecto 100); el cuerpo sigue siendo un arreglo y el total
+  va en `X-Total-Count`. Orden estable: Administrador, más recientes primero (`fecha_orden DESC, id_orden DESC`); Bodega, más antiguos
+  primero (`fecha_orden ASC, id_orden ASC`). Valores fuera de rango: `400`. Las pantallas de Administrador y Bodega piden `limite=500`.
+- Bodega (sin `pedidos:leer`) solo lista los 4 estados de su flujo (y `por_reingresar=1`); `?estado=EN_RUTA|ENTREGADO|RECHAZADO` da
+  `403`, y el detalle de un pedido ya en ruta o entregado da `404`. En el listado recibe `chofer_asignado` (booleano) en lugar de
+  `id_usuario_chofer` y `nombre_chofer`.
+- `POST /api/usuarios/:id/baja` y `PATCH /api/usuarios/:id/rol` sobre un chofer con despachos `PENDIENTE` responden
+  `409 CHOFER_CON_DESPACHOS` con `detalle: { total, ordenes: [{ id_orden, codigo_externo }] }` (hasta 20). Regla: no hay reasignación
+  de despachos abiertos; el chofer los cierra (entrega o rechazo) o se le mantiene activo. La BD ya impide asignar a un chofer inactivo.
+- Errores de PostgreSQL por datos fuera de rango o mal formados (`22003`, `22P02`, `22021`…) responden `400`, no `500`.
+
+### Decisiones y riesgos aceptados
+
+- **react-router-dom 6.30.6** (última de la serie 6): `npm audit` reporta 2 moderadas (redirección abierta con `\` en `<Link>`/`navigate`,
+  deserialización de errores en hidratación SSR) cuya corrección está solo en la 7.x (cambio mayor, no se hizo). No son explotables hoy:
+  todos los destinos de `Navigate`/`navigate` son rutas fijas de la aplicación y no hay renderizado en el servidor.
+- **uuid** (vía `exceljs`): se fija `uuid@11.1.1` con `overrides` en `package.json`; `exceljs` solo usa `v4()` (la falla afectaba a v3/v5/v6 con
+  buffer). `npm audit` del backend queda en cero.
+- La IP del login no se devuelve al autenticarse: una oficina con muchos usuarios tras una misma IP cuenta cada intento (100 por 15 min por defecto).
+- Una subida de etiquetas de 100 PDF puede ocupar hasta ~300 MB de memoria mientras dura la solicitud (multer en memoria); solo la usa el administrador.
 
 ## Hallazgos de la auditoría pendientes
 
-No se abordaron en este trabajo: límite de memoria al leer `.xlsx` (bomba de descompresión), paginación del listado de
-pedidos, reasignación de despachos al dar de baja a un chofer, límite de
-peticiones en el login, revocación individual de tokens (`jti`/logout; el cambio de clave revoca las sesiones por
-usuario) y los hallazgos Bajo/Informativos restantes.
+Quedan sin abordar: revocación individual de tokens (`jti`/logout y renovación del JWT), el aviso de truncamiento de la exportación de bitácora
+(tope de 10.000 filas), reimportación detectada por nombre de archivo y los demás Bajo/Informativos
+(hallazgos 12, 13, 15, 16, 19, 22 y 24–26 de la auditoría).
