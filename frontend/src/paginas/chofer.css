@@ -185,7 +185,7 @@ textarea.ch-entrada { height: 96px; padding: 14px 16px; resize: none; line-heigh
 
 /* Marco del chofer. En móvil: cabecera arriba y navegación abajo. Desde 1024 px: barra lateral fija y solo el contenido hace scroll. */
 .ch-lateral { display: none; }
-.ch-cab { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.ch-cab { display: flex; align-items: center; gap: 6px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
 .ch-principal { min-width: 0; }
 @media (min-width: 1024px) {
   html, body { overscroll-behavior: none; }
@@ -221,10 +221,10 @@ textarea.ch-entrada { height: 96px; padding: 14px 16px; resize: none; line-heigh
 }
 
 /* Cabecera móvil */
-.ch-cab-marca { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; color: var(--ink); text-decoration: none; }
+.ch-cab-marca { display: flex; align-items: center; gap: 8px; margin-right: 2px; flex: 1; min-width: 0; color: var(--ink); text-decoration: none; }
 .ch-cab-marca .logo { width: 36px; height: 36px; border-radius: 9px; }
 .ch-cab-marca span { display: flex; flex-direction: column; min-width: 0; }
-.ch-cab-marca strong { font: 600 16px/20px var(--f-ui); white-space: nowrap; }
+.ch-cab-marca strong { font: 600 15px/20px var(--f-ui); white-space: nowrap; }
 .ch-cab-marca small { font: 400 14px/18px var(--f-ui); color: var(--ink-3); }
-.ch-cab-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 48px; padding: 0 14px; border: 1.5px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: 600 15px/normal var(--f-ui); cursor: pointer; white-space: nowrap; }
+.ch-cab-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 44px; padding: 0 12px; border: 1.5px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: 600 14px/normal var(--f-ui); cursor: pointer; white-space: nowrap; }
 @media (max-width: 380px) { .ch-cab-btn { padding: 0 10px; } .ch-cab-marca small { display: none; } }
