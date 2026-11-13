@@ -54,6 +54,13 @@ function AsignarChofer({ pedido, onClose, onHecho }) {
   );
 }
 
+// Un pedido reprogramado en curso lleva la insignia con su fecha y, debajo, su estado operativo; al cerrarse vuelve al estado normal.
+function EstadoOperativo({ p }) {
+  if (p.estado_entrega === 'RECHAZADO') return <Badge tono="mal">Rechazado{p.motivo_rechazo && ` · ${causalResumida(p.motivo_rechazo)}`}</Badge>;
+  if (!p.reprogramado || !p.fecha_programada || p.estado_orden === 'ENTREGADO') return <EstadoBadge e={p.estado_orden} />;
+  return <><Badge tono="info">Reprogramado · {p.fecha_programada.slice(5).split('-').reverse().join('-')}</Badge><div className="celda-sec">{ESTADOS[p.estado_orden]?.[0]}</div></>;
+}
+
 function CeldaEtiqueta({ p }) {
   const aviso = useAviso();
   return (
@@ -133,7 +140,7 @@ export default function Pedidos() {
             <td>{p.nombre_cliente}<div className="celda-sec">{p.comuna ?? 'Sin comuna'}</div></td>
             <td style={{ whiteSpace: 'nowrap' }}>{p.canal_origen}</td>
             <td>{p.unidades} un.</td>
-            <td>{p.estado_entrega === 'RECHAZADO' ? <Badge tono="mal">Rechazado{p.motivo_rechazo && ` · ${causalResumida(p.motivo_rechazo)}`}</Badge> : <EstadoBadge e={p.estado_orden} />}{p.nombre_chofer && <div className="celda-sec">{p.nombre_chofer}</div>}</td>
+            <td><EstadoOperativo p={p} />{p.nombre_chofer && <div className="celda-sec">{p.nombre_chofer}</div>}</td>
             <td><CeldaEtiqueta p={p} /></td>
             <td className="derecha">{accion(p)}</td>
           </tr>
