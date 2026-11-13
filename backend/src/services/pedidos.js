@@ -36,10 +36,12 @@ async function existente(id) {
 
 export async function detalle(req, id) {
   const o = await existente(id);
-  const items = await repo.items(id);
+  const [items, intentos] = await Promise.all([repo.items(id), repo.intentos(id)]);
   // El precio de venta es del Administrador (precios:leer); Bodega solo recibe lo que necesita para recolectar.
   const base = tiene(req, 'pedidos:leer') ? o : (({ rut_cliente, geolocalizacion, nombre_chofer, fecha_cierre, ...resto }) => resto)(o); // RUT, chofer y ubicación del cierre: solo administración
-  return { ...base, items: tiene(req, 'precios:leer') ? items : items.map(({ precio_unitario, subtotal, ...resto }) => resto) };
+  // Los nombres de las personas (chofer y quien asignó) son solo de administración.
+  const hist = tiene(req, 'pedidos:leer') ? intentos : intentos.map(({ chofer, asignado_por, ...resto }) => resto);
+  return { ...base, intentos: hist, items: tiene(req, 'precios:leer') ? items : items.map(({ precio_unitario, subtotal, ...resto }) => resto) };
 }
 
 export async function cambiarEstado(req, id, estado) {
@@ -75,10 +77,56 @@ export async function asignarChofer(req, id, idChofer) {
     return await conTransaccion(async (c) => {
       const antes = await repo.bloquear(c, id);
       if (!antes) throw new AppError(404, 'Pedido no encontrado', 'NO_ENCONTRADO');
-      const idDespacho = await despachos.insertar(c, id, idChofer); // trg_despacho_solo_chofer exige un CHOFER activo
+      const idDespacho = await despachos.insertar(c, id, idChofer, req.usuario.id_usuario); // trg_despacho_solo_chofer exige un CHOFER activo
       await repo.fijarEstado(c, id, 'EN_RUTA'); // trg_orden_transicion exige EN_CAMION
       await auditar(req, { idUsuario: req.usuario.id_usuario, tabla: 'despacho', accion: 'ASIGNACION_CHOFER', antes: { id_orden: id, estado_orden: antes }, despues: { id_orden: id, id_despacho: idDespacho, id_usuario_chofer: idChofer, estado_orden: 'EN_RUTA' } }, c);
       return { id_despacho: idDespacho, id_orden: id, id_usuario_chofer: idChofer, estado_orden: 'EN_RUTA' };
+    });
+  } catch (e) { return dePg(e); }
+}
+
+const LARGOS = { direccion_despacho: 200, comuna: 60, telefono_contacto: 20 }; // = largos de columna en orden_venta
+const FECHA = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+// Reprograma la entrega de un rechazo ya reingresado: datos de entrega opcionales, despacho nuevo con fecha y nota, pedido a EN_RUTA y auditoría, en una transacción.
+// «Hoy» es la fecha civil de America/Santiago (fn_hoy() en la base): la fecha de entrega no puede ser anterior.
+export async function reprogramar(req, id, body = {}) {
+  const { id_chofer: idChofer, fecha_entrega: fecha, nota } = body;
+  if (!Number.isInteger(idChofer) || idChofer <= 0) throw bad('id_chofer debe ser un entero');
+  const m = typeof fecha === 'string' && FECHA.exec(fecha);
+  if (!m || new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toISOString().slice(0, 10) !== fecha) throw bad('fecha_entrega debe ser una fecha válida con formato AAAA-MM-DD');
+  if (nota !== undefined && nota !== null && typeof nota !== 'string') throw bad('nota debe ser texto');
+  const notaTxt = (nota ?? '').trim() || null;
+  if (notaTxt && notaTxt.length > 300) throw bad('nota admite máximo 300 caracteres');
+  const nuevos = {};
+  for (const [k, max] of Object.entries(LARGOS)) {
+    if (body[k] === undefined || body[k] === null) continue;
+    const v = typeof body[k] === 'string' ? body[k].trim() : null;
+    if (!v) throw bad(`${k} debe ser un texto no vacío`);
+    if (v.length > max) throw bad(`${k} admite máximo ${max} caracteres`);
+    if (k === 'telefono_contacto' && !/^\+?[0-9][0-9 -]*$/.test(v)) throw bad('telefono_contacto admite solo +, dígitos, espacios y guiones');
+    nuevos[k] = v;
+  }
+  try {
+    return await conTransaccion(async (c) => {
+      const estado = await repo.bloquear(c, id);
+      if (!estado) throw new AppError(404, 'Pedido no encontrado', 'NO_ENCONTRADO');
+      const ultimo = await despachos.ultimoDeOrden(c, id);
+      if (estado !== 'EN_CAMION' || ultimo?.estado_entrega !== 'RECHAZADO' || !ultimo.reingresado_en) {
+        throw bad('Solo se reprograma un pedido rechazado y reingresado a bodega (EN_CAMION)', 409, 'NO_REPROGRAMABLE');
+      }
+      if (fecha < (await despachos.hoy(c))) throw bad('fecha_entrega no puede ser anterior a hoy', 400, 'FECHA_PASADA');
+      const actual = await repo.entregaActual(c, id);
+      const cambios = Object.fromEntries(Object.entries(nuevos).filter(([k, v]) => actual[k] !== v));
+      await repo.actualizarEntrega(c, id, cambios);
+      const idDespacho = await despachos.insertar(c, id, idChofer, req.usuario.id_usuario, { fecha, nota: notaTxt }); // trg_despacho_solo_chofer exige un CHOFER activo
+      await repo.fijarEstado(c, id, 'EN_RUTA');
+      await auditar(req, {
+        idUsuario: req.usuario.id_usuario, tabla: 'despacho', accion: 'REPROGRAMACION',
+        antes: { id_orden: id, estado_orden: 'EN_CAMION', id_despacho: ultimo.id_despacho, id_usuario_chofer: ultimo.id_usuario_chofer, fecha_programada: ultimo.fecha_programada, ...Object.fromEntries(Object.keys(cambios).map((k) => [k, actual[k]])) },
+        despues: { id_orden: id, estado_orden: 'EN_RUTA', id_despacho: idDespacho, id_usuario_chofer: idChofer, fecha_programada: fecha, nota_largo: notaTxt?.length ?? 0, ...cambios }, // la nota completa no va a la bitácora: solo su largo
+      }, c);
+      return { id_despacho: idDespacho, id_orden: id, id_usuario_chofer: idChofer, estado_orden: 'EN_RUTA', fecha_programada: fecha, nota_admin: notaTxt, ...cambios };
     });
   } catch (e) { return dePg(e); }
 }

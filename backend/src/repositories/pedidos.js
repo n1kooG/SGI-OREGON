@@ -3,9 +3,16 @@ import { query } from '../db.js';
 // Un pedido reprogramado tiene varios despachos: se toma siempre el último (el vigente o el más reciente).
 const ULTIMO_DESPACHO = `LEFT JOIN LATERAL (SELECT * FROM despacho x WHERE x.id_orden = o.id_orden ORDER BY x.id_despacho DESC LIMIT 1) ds ON true`;
 
+// Datos del intento vigente: N° de despachos del pedido, fecha programada, nota del administrador y cuándo se rechazó.
+const INTENTO = `(SELECT count(*)::int FROM despacho x WHERE x.id_orden = o.id_orden) AS intento,
+            (SELECT count(*) > 1 FROM despacho x WHERE x.id_orden = o.id_orden) AS reprogramado,
+            ds.fecha_programada::text AS fecha_programada, ds.nota_admin,
+            CASE WHEN ds.estado_entrega = 'RECHAZADO' THEN ds.fecha_cierre END AS fecha_rechazo`;
+
 export async function listar(estados, canal, porReingresar = false) {
   const { rows } = await query(
-    `SELECT o.id_orden, o.codigo_externo, o.canal_origen, o.fecha_orden, o.nombre_cliente, o.comuna, o.estado_orden,
+    `SELECT o.id_orden, o.codigo_externo, o.canal_origen, o.fecha_orden, o.nombre_cliente, o.direccion_despacho, o.comuna, o.estado_orden,
+            ${INTENTO},
             (SELECT COALESCE(SUM(d.cantidad_vendida), 0)::int FROM detalle_venta d WHERE d.id_orden = o.id_orden) AS unidades,
             (o.url_etiqueta IS NOT NULL) AS tiene_etiqueta, o.etiqueta_nombre_archivo, o.etiqueta_importada_en,
             ds.id_usuario_chofer, u.nombre_completo AS nombre_chofer, ds.estado_entrega,
@@ -26,6 +33,7 @@ export async function obtener(id, c = { query }) {
     `SELECT o.id_orden, o.codigo_externo, o.canal_origen, o.fecha_orden, o.nombre_cliente, o.direccion_despacho, o.comuna,
             o.telefono_contacto, o.estado_orden, o.numero_documento_sii, o.rut_cliente,
             (o.url_etiqueta IS NOT NULL) AS tiene_etiqueta, o.etiqueta_nombre_archivo, o.etiqueta_importada_en,
+            ${INTENTO},
             ds.id_despacho, ds.id_usuario_chofer, ch.nombre_completo AS nombre_chofer, ds.fecha_asignacion, ds.fecha_cierre,
             (ds.url_evidencia_s3 IS NOT NULL) AS tiene_evidencia, ds.estado_entrega,
             (SELECT a.geolocalizacion FROM audit_log a WHERE a.tabla_afectada = 'despacho' AND a.accion = 'ENTREGA'
@@ -36,12 +44,33 @@ export async function obtener(id, c = { query }) {
   return rows[0] ?? null;
 }
 
+// Historial de intentos de entrega del pedido, del primero al último.
+export async function intentos(id) {
+  const { rows } = await query(
+    `SELECT (row_number() OVER (ORDER BY ds.id_despacho))::int AS intento, ds.id_despacho, ch.nombre_completo AS chofer,
+            ds.fecha_asignacion, ds.fecha_programada::text AS fecha_programada, ds.estado_entrega, ds.motivo_rechazo, ds.reingresado_en,
+            ds.nota_admin, asg.nombre_completo AS asignado_por
+       FROM despacho ds JOIN usuario ch ON ch.id_usuario = ds.id_usuario_chofer LEFT JOIN usuario asg ON asg.id_usuario = ds.id_usuario_asigna
+      WHERE ds.id_orden = $1 ORDER BY ds.id_despacho`, [id]);
+  return rows;
+}
+
 export async function items(id) {
   const { rows } = await query(
     `SELECT d.sku, p.nombre, p.modelo, i.ubicacion_bodega, d.cantidad_vendida AS cantidad, d.precio_unitario, d.subtotal
        FROM detalle_venta d JOIN producto p ON p.sku = d.sku LEFT JOIN inventario i ON i.sku = d.sku
       WHERE d.id_orden = $1 ORDER BY i.ubicacion_bodega NULLS LAST, d.sku`, [id]);
   return rows;
+}
+
+// Datos de entrega editables al reprogramar. `campos` solo trae columnas fijas del servicio (nunca nombres del cliente).
+export async function actualizarEntrega(c, id, campos) {
+  const cols = Object.keys(campos);
+  if (!cols.length) return;
+  await c.query(`UPDATE orden_venta SET ${cols.map((k, i) => `${k} = $${i + 2}`).join(', ')} WHERE id_orden = $1`, [id, ...cols.map((k) => campos[k])]);
+}
+export async function entregaActual(c, id) {
+  return (await c.query(`SELECT direccion_despacho, comuna, telefono_contacto FROM orden_venta WHERE id_orden = $1`, [id])).rows[0];
 }
 
 // Bloquea la orden durante la transacción: dos cambios de estado simultáneos se serializan y el "antes" auditado es el real.

@@ -63,5 +63,6 @@ router.put('/:id(\\d+)/etiqueta', autenticar, etiquetas, conPdf('archivo', false
 router.delete('/:id(\\d+)/etiqueta', autenticar, etiquetas, ah(async (req, res) => res.json(await etq.quitar(req, id(req)))));
 router.patch('/:id(\\d+)/documento', autenticar, requierePermiso('pedidos:documentar'), ah(async (req, res) => res.json(await svc.documentar(req, id(req), req.body?.numero_documento))));
 router.post('/:id(\\d+)/asignar-chofer', autenticar, requierePermiso('pedidos:asignar_chofer'), ah(async (req, res) => res.json(await svc.asignarChofer(req, id(req), req.body?.id_chofer))));
+router.post('/:id(\\d+)/reprogramar', autenticar, requierePermiso('pedidos:asignar_chofer'), ah(async (req, res) => res.json(await svc.reprogramar(req, id(req), req.body ?? {}))));
 
 export default router;
