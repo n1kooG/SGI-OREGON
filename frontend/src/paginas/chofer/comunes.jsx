@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import '@fontsource/poppins/latin-600.css';
 import '@fontsource/inter/latin-700.css';
@@ -69,3 +69,40 @@ export const Futuras = ({ lista, titulo = 'Próximos días' }) => lista.length >
     ))}
   </section>
 );
+
+// Diálogo centrado de las pantallas anchas (entrega y rechazo). Escape y la X lo cierran; no se cierra al hacer clic fuera
+// para no perder una firma a medio trazar.
+export function Dialogo({ titulo, subtitulo, ancho, onClose, onSubmit, pie, children }) {
+  const ref = useRef(null);
+  const cerrar = useRef(onClose);
+  cerrar.current = onClose;
+  const tid = useId();
+  useEffect(() => {
+    const previo = document.activeElement;
+    const enfocables = () => [...ref.current.querySelectorAll('button, input:not([readonly]), textarea, [href]')].filter((e) => !e.disabled);
+    ref.current.focus();
+    const tecla = (e) => {
+      if (e.key === 'Escape') cerrar.current();
+      if (e.key !== 'Tab') return;
+      const f = enfocables();
+      if (!f.length) return;
+      if (e.shiftKey && (document.activeElement === f[0] || document.activeElement === ref.current)) { e.preventDefault(); f.at(-1).focus(); }
+      else if (!e.shiftKey && document.activeElement === f.at(-1)) { e.preventDefault(); f[0].focus(); }
+    };
+    document.addEventListener('keydown', tecla);
+    return () => { document.removeEventListener('keydown', tecla); previo?.focus?.(); };
+  }, []);
+  const Marco = onSubmit ? 'form' : 'div';
+  return (
+    <div className="ch-velo">
+      <Marco ref={ref} className="ch-dialogo" style={{ maxWidth: ancho }} role="dialog" aria-modal="true" aria-labelledby={tid} tabIndex={-1} onSubmit={onSubmit} noValidate={onSubmit ? true : undefined}>
+        <div className="ch-dialogo-cab">
+          <div><h2 id={tid}>{titulo}</h2>{subtitulo && <p>{subtitulo}</p>}</div>
+          <button type="button" className="ch-cuadro cerrar" aria-label="Cerrar" onClick={onClose}><Ico n="x" t={20} /></button>
+        </div>
+        <div className="ch-dialogo-cuerpo">{children}</div>
+        {pie && <div className="ch-dialogo-pie">{pie}</div>}
+      </Marco>
+    </div>
+  );
+}

@@ -152,7 +152,7 @@ textarea.ch-entrada { height: 96px; padding: 14px 16px; resize: none; line-heigh
 .ch-lienzo canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
 .ch-ayuda-firma { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--ink-3); pointer-events: none; }
 .ch-ayuda-firma p { font: 500 17px/normal var(--f-ui); }
-.ch-linea-firma { position: absolute; left: 28px; right: 28px; top: 168px; height: 1.5px; background: var(--line-strong); pointer-events: none; }
+.ch-linea-firma { position: absolute; left: 28px; right: 28px; top: 76%; height: 1.5px; background: var(--line-strong); pointer-events: none; }
 .ch-causales { gap: 8px; }
 .ch-causales legend { margin-bottom: 8px; float: left; width: 100%; }
 .ch-causales legend + label { clear: both; }
@@ -382,3 +382,33 @@ textarea.ch-entrada { height: 96px; padding: 14px 16px; resize: none; line-heigh
 .ch-dir strong, .ch-dir.peq strong, .ch-dir.grande strong { font-family: var(--f-dato); font-weight: 400; }
 .ch-dir.peq strong { font-size: 14px; }
 .ch-dir.grande strong { font-size: 16px; }
+
+/* Diálogos de entrega y rechazo en pantallas anchas */
+.ch .ch-btn.ch-limpiar { width: 120px; }
+.ch-velo { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(16, 32, 31, .55); }
+.ch-dialogo { display: flex; flex-direction: column; width: 100%; max-height: calc(100dvh - 32px); background: var(--surface); border-radius: 20px; box-shadow: 0 24px 60px rgba(16, 32, 31, .3); color: var(--ink); outline: none; }
+.ch-dialogo-cab { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 24px 24px 12px; }
+.ch-dialogo-cab h2 { font: 500 22px/30px var(--f-titulo); margin: 0; }
+.ch-dialogo-cab p { font: 400 13px/18px var(--f-ui); color: var(--ink-3); margin: 2px 0 0; }
+.ch .ch-cuadro.cerrar, .ch-dialogo .ch-cuadro.cerrar { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex: none; padding: 0; border: 1.5px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.ch-dialogo-cuerpo { display: flex; flex-direction: column; gap: 14px; padding: 4px 24px 8px; overflow-y: auto; }
+.ch-dialogo-pie { display: flex; gap: 12px; padding: 14px 24px 24px; }
+.ch-dialogo-pie .ch-btn { height: 48px; font-size: 15px; }
+.ch-dialogo-pie .ch-btn:first-child { flex: none; padding: 0 24px; }
+.ch-dialogo-pie .ch-btn.grande { flex: 1; width: auto; font-size: 15px; }
+.ch-dialogo .ch-btn { height: 44px; font-size: 14px; }
+.ch-dialogo .ch-btn.ch-limpiar { width: auto; height: 40px; padding: 0 16px; font-size: 13px; }
+.ch-dialogo .ch-etiqueta { font-size: 13px; }
+.ch-dialogo .ch-entrada { height: 44px; font-size: 14px; }
+.ch-dialogo textarea.ch-entrada { height: 84px; padding: 12px 14px; }
+.ch-dialogo .ch-lienzo { height: auto; aspect-ratio: 720 / 260; background: var(--bg); border-width: 1.5px; }
+.ch-dialogo .ch-linea-firma { left: 24px; right: 24px; background: var(--ink-3); }
+.ch-dialogo .ch-causales { gap: 6px; }
+.ch-dialogo .ch-causales label { height: 40px; padding: 0 14px; gap: 12px; font-size: 14px; }
+.ch-dialogo .ch-causales label i { width: 20px; height: 20px; }
+.ch-dialogo .ch-causales label.sel i { background: radial-gradient(circle, var(--on-dark) 0 4px, var(--danger) 4.5px); }
+.ch-dialogo .ch-nota { padding: 12px 14px; }
+.ch-dialogo .ch-nota strong { font-size: 13px; }
+.ch-dialogo .ch-nota p { font-size: 12px; line-height: 16px; }
+.ch-dialogo .ch-ayuda-firma p { font-size: 14px; }
+.ch-dialogo .ch-alerta { font-size: 13px; }
