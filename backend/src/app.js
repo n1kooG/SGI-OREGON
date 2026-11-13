@@ -18,6 +18,7 @@ import { manejadorErrores, noEncontrado } from './middleware/errores.js';
 export function crearApp() {
   const app = express();
   app.disable('x-powered-by');
+  app.set('trust proxy', config.trustProxy); // sin proxy (false) X-Forwarded-For se ignora y no se puede falsificar la IP
   app.use(helmet());
   app.use(cors({ origin: config.corsOrigin, exposedHeaders: ['X-Total-Count', 'Content-Disposition', 'X-Cache'] }));
   app.use(express.json({ limit: '100kb' }));

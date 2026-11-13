@@ -1,11 +1,11 @@
 import pg from 'pg';
 import { config } from './config.js';
+import { opcionesSsl } from './ssl.js';
 
-// shortcut: con DB_SSL=true no se verifica la cadena del certificado (RDS usa una CA propia); cargar el bundle de RDS si se exige verificación.
 export const pool = new pg.Pool({
   connectionString: config.databaseUrl,
   max: 10,
-  ssl: config.dbSsl ? { rejectUnauthorized: false } : false,
+  ssl: opcionesSsl(),
 });
 
 export const query = (text, params) => pool.query(text, params);

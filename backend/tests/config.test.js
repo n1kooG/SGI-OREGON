@@ -21,9 +21,25 @@ test('producción: rechaza un secreto corto (menos de 32 caracteres)', () => {
 });
 
 test('producción: acepta un secreto largo y distinto del ejemplo', () => {
-  assert.equal(cargar({ NODE_ENV: 'production', JWT_SECRET: FUERTE }).status, 0);
+  assert.equal(cargar({ NODE_ENV: 'production', JWT_SECRET: FUERTE, CORS_ORIGIN: 'https://app.tiendaoregon.cl' }).status, 0);
 });
 
 test('desarrollo: el secreto de ejemplo sigue permitido', () => {
   assert.equal(cargar({ JWT_SECRET: 'cambia-esto-por-un-secreto-largo-y-aleatorio' }).status, 0);
+});
+
+test('producción: exige CORS_ORIGIN explícito y sin comodines', () => {
+  const base = { NODE_ENV: 'production', JWT_SECRET: FUERTE };
+  assert.match(cargar(base).stderr, /CORS_ORIGIN/);
+  assert.match(cargar({ ...base, CORS_ORIGIN: '*' }).stderr, /CORS_ORIGIN/);
+  assert.equal(cargar({ ...base, CORS_ORIGIN: 'https://app.tiendaoregon.cl' }).status, 0);
+});
+
+test('TRUST_PROXY: acepta número de saltos o lista; «true» se rechaza (permitiría falsificar la IP)', () => {
+  const base = { JWT_SECRET: FUERTE };
+  assert.equal(cargar({ ...base, TRUST_PROXY: '1' }).status, 0);
+  assert.equal(cargar({ ...base, TRUST_PROXY: 'loopback, 10.0.0.0/8' }).status, 0);
+  const r = cargar({ ...base, TRUST_PROXY: 'true' });
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /TRUST_PROXY/);
 });

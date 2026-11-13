@@ -42,6 +42,22 @@ export async function redisDel(...claves) {
   try { await client.del(claves); return true; } catch { return false; }
 }
 
+// Contador con ventana fija (rate limiting): INCR y, si la clave es nueva, EXPIRE. Devuelve { n, ttl } o undefined si Redis no responde.
+export async function redisContar(clave, ventanaSegundos) {
+  if (!client) return undefined;
+  try {
+    const n = await client.incr(clave);
+    let ttl = await client.ttl(clave);
+    if (ttl < 0) { await client.expire(clave, ventanaSegundos); ttl = ventanaSegundos; }
+    return { n, ttl };
+  } catch { return undefined; }
+}
+
+export async function redisDecr(clave) {
+  if (!client) return false;
+  try { if (Number(await client.get(clave)) > 0) await client.decr(clave); return true; } catch { return false; }
+}
+
 export async function conCache(clave, ttlSegundos, calcular) {
   const hit = await redisGet(clave);
   if (hit) return { data: JSON.parse(hit), cache: 'HIT' };

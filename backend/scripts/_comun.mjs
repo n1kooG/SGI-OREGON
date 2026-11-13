@@ -1,12 +1,12 @@
 // Utilidades de los scripts de administración. Se ejecutan con: node --env-file=.env scripts/<script>.mjs
 import pg from 'pg';
+import { opcionesSsl } from '../src/ssl.js';
 
 // Los scripts usan el rol propietario (DATABASE_URL_MIGRACION); si no está definido, DATABASE_URL.
 export async function conectar() {
   const connectionString = process.env.DATABASE_URL_MIGRACION || process.env.DATABASE_URL;
   if (!connectionString) fallar('Define DATABASE_URL_MIGRACION (o DATABASE_URL)');
-  // shortcut: con DB_SSL=true no se verifica el certificado (igual que src/db.js).
-  const client = new pg.Client({ connectionString, ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false });
+  const client = new pg.Client({ connectionString, ssl: opcionesSsl() });
   await client.connect();
   return client;
 }

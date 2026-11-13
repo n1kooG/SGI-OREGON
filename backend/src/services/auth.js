@@ -19,7 +19,7 @@ export async function login(req, email, password) {
   const r = await conTransaccion(async (c) => {
     const u = await repo.buscarParaLogin(email, password, c, true);
     if (!u) {
-      await auditar(req, { tabla: 'usuario', accion: 'LOGIN_FALLIDO', despues: { email: email.toLowerCase() } }, c);
+      await auditar(req, { tabla: 'usuario', accion: 'LOGIN_FALLIDO', despues: { email: email.toLowerCase().slice(0, 120) } }, c);
       return { fallo: true, simular: true };
     }
     const fallo = (accion, despues) => auditar(req, { idUsuario: u.id_usuario, tabla: 'usuario', accion, despues }, c).then(() => ({ fallo: true }));

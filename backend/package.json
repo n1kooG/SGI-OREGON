@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "node --watch --env-file=.env src/server.js",
     "start": "node --env-file=.env src/server.js",
-    "test": "node --env-file=.env --test --test-concurrency=1 tests/*.test.js"
+    "test": "node --env-file=.env --import ./tests/_entorno.mjs --test --test-concurrency=1 tests/*.test.js"
   },
   "engines": {
     "node": ">=20"
