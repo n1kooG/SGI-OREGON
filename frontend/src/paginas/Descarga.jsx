@@ -8,7 +8,7 @@ const diasDesde = (f) => {
   const dia = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   return Math.round((dia(new Date()) - dia(new Date(f))) / 864e5);
 };
-function Antiguedad({ fecha }) {
+export function Antiguedad({ fecha }) {
   const d = diasDesde(fecha);
   return <Badge tono={d <= 0 ? 'ok' : d <= 3 ? 'aviso' : 'mal'}>{d <= 0 ? 'Hoy' : `Hace ${d} ${d === 1 ? 'día' : 'días'}`}</Badge>;
 }
