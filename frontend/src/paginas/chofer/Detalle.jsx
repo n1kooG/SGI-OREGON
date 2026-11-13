@@ -2,7 +2,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { Alerta } from '../../componentes/ui.jsx';
 import { Ico } from './iconos.jsx';
 import { direccion, mapaUrl, telUrl, unidades, useParada } from './datos.js';
-import { BarraAcciones, Estado, TONO, Volver } from './comunes.jsx';
+import { BarraAcciones, Estado, NotaAdmin, Reprogramada, TONO, Volver } from './comunes.jsx';
 
 export default function Detalle() {
   const { id } = useParams();
@@ -17,7 +17,7 @@ export default function Detalle() {
     <>
       <Volver a="/chofer/ruta">{n ? `Parada ${n} de ${total}` : 'Volver a la ruta'}</Volver>
       <div className="ch-cont ch-detalle">
-        <div className="ch-cliente-det"><Estado tono={tono}>{texto}</Estado><h1>{d.nombre_cliente}</h1></div>
+        <div className="ch-cliente-det"><span className="ch-etiquetas"><Estado tono={tono}>{texto}</Estado>{d.reprogramada && <Reprogramada fecha={d.fecha_programada} />}</span><h1>{d.nombre_cliente}</h1></div>
         <section className="ch-docs">
           <div><span className="ch-rotulo">N° de orden</span><strong>#{d.codigo_externo}</strong></div>
           <div><span className="ch-rotulo">Boleta</span><strong>{d.numero_documento_sii ? `N° ${d.numero_documento_sii}` : '—'}</strong></div>
@@ -26,6 +26,7 @@ export default function Detalle() {
           <div className="ch-dir grande"><Ico n="pin" t={26} /><div><strong>{direccion(d)}</strong>{d.comuna && <span>{d.comuna}</span>}</div></div>
           <a className="ch-btn" href={mapaUrl(d)} target="_blank" rel="noopener noreferrer"><Ico n="navegar" />Abrir mapa</a>
         </section>
+        {d.nota_admin && <NotaAdmin>{d.nota_admin}</NotaAdmin>}
         <section className="ch-bloque fila-tel">
           <div><span className="ch-rotulo">Teléfono</span><strong className="ch-mono">{d.telefono_contacto || 'Sin teléfono'}</strong></div>
           {tel ? <a className="ch-btn sm" href={tel}><Ico n="tel" />Llamar</a> : <span className="ch-btn sm" aria-disabled="true"><Ico n="tel" />Llamar</span>}

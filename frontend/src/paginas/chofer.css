@@ -296,3 +296,89 @@ textarea.ch-entrada { height: 96px; padding: 14px 16px; resize: none; line-heigh
   .ch-cierre-jornada .ch-btn { height: 44px; padding: 0 18px; font-size: 15px; }
 }
 @media (min-width: 1280px) { .ch-cont { padding: 32px 40px; } }
+
+/* Ruta: tarjetas móviles de próximos días */
+.ch-tarjeta.futura { gap: 8px; }
+.ch-tarjeta.futura .ch-fila { align-items: flex-start; }
+.ch-candado { display: flex; align-items: center; gap: 6px; font: 400 13px/18px var(--f-ui); color: var(--ink-3); }
+
+/* Ruta en pantallas anchas: maestro-detalle */
+@media (min-width: 1024px) {
+  .ch-ruta-ancha { min-height: 100%; }
+  .ch-ruta-ancha .ch-encabezado .ch-btn { padding: 0 20px; height: 48px; font-size: 15px; }
+  .ch-maestro { height: calc(100dvh - 164px); min-height: 480px; display: grid; grid-template-columns: minmax(0, .43fr) minmax(0, .57fr); gap: 20px; align-items: stretch; }
+  .ch-lista, .ch-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+  .ch-lista, .ch-panel { overflow-y: auto; overscroll-behavior: contain; }
+  .ch-lista ul { list-style: none; margin: 0; padding: 0; }
+  .ch-grupo { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; margin: 0; padding: 10px 16px; border: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--bg); color: var(--ink-3); font: 600 12px/16px var(--f-ui); text-transform: uppercase; text-align: left; }
+  .ch-lista > .ch-grupo:first-child { border-top: 0; }
+  button.ch-grupo { cursor: pointer; }
+  .ch-grupo .ch-chips { display: none; margin-left: auto; gap: 6px; }
+  .ch-grupo .ch-chips b { padding: 3px 10px; border-radius: 999px; font: 600 12px/16px var(--f-ui); text-transform: none; }
+  .ch-chips .ok { background: var(--ok-bg); color: var(--ok); }
+  .ch-chips .mal { background: var(--danger-bg); color: var(--danger); }
+  .ch-grupo .ch-ico { display: none; transition: transform .15s; }
+  .ch-lista li, .ch-fila-futura { border-bottom: 1px solid var(--line); }
+  .ch-lista ul:last-child li:last-child, .ch-lista > :last-child { border-bottom: 0; }
+  .ch-fila-cerrada, .ch-fila-pendiente { display: flex; align-items: center; gap: 12px; padding: 10px 16px; color: inherit; text-decoration: none; }
+  .ch-fila-cerrada > span:nth-child(2), .ch-fila-pendiente > span:nth-child(2) { flex: 1; min-width: 0; }
+  .ch-lista li strong { display: block; font: 600 14px/20px var(--f-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ch-lista li small { display: block; font: 400 12px/16px var(--f-ui); color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ch-lista li small b { font: 400 12px/16px var(--f-dato); color: var(--ink-2); margin-right: 4px; }
+  .ch-ic { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; flex: none; border-radius: 50%; }
+  .ch-ic.ok { background: var(--ok-bg); color: var(--ok); }
+  .ch-ic.mal { background: var(--danger-bg); color: var(--danger); }
+  .ch-fila-pendiente { position: relative; padding-top: 12px; padding-bottom: 12px; }
+  .ch-fila-pendiente:hover { background: var(--bg); }
+  .ch-fila-pendiente.sel { background: var(--accent-soft); }
+  .ch-fila-pendiente.sel::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+  .ch-fila-pendiente .ch-num { background: var(--surface); }
+  .ch-fila-pendiente.sel .ch-num { border: 2px solid var(--accent-ink); color: var(--accent-ink); }
+  .ch-fila-pendiente em { font: 400 12px/normal var(--f-dato); font-style: normal; color: var(--ink-2); max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ch-fila-futura { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; }
+  .ch-fila-futura .ch-fila { align-items: flex-start; }
+  .ch-fila-futura strong { font: 600 14px/20px var(--f-ui); }
+  .ch-fila-futura > p { font: 400 12px/16px var(--f-ui); color: var(--ink-2); }
+  .ch-fila-futura .ch-nota-linea { padding: 0; background: none; font-size: 12px; line-height: 16px; }
+  .ch-fila-futura .ch-nota-linea .ch-ico { margin-top: 1px; }
+  .ch-lista .ch-badge { font-size: 12px; padding: 3px 9px; }
+
+  .ch-panel { display: flex; flex-direction: column; gap: 12px; padding: 20px 24px 24px; }
+  .ch-panel-cab { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .ch-panel h2 { font: 500 24px/32px var(--f-titulo); margin-bottom: 4px; }
+  .ch-caja { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; background: var(--bg); border-radius: 12px; min-width: 0; }
+  .ch-caja .ch-rotulo { font-size: 11px; }
+  .ch-dir-linea { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .ch-dir-linea .ch-ico { color: var(--accent-ink); }
+  .ch-dir-linea strong { font: 400 17px/24px var(--f-dato); }
+  .ch-dir-linea span { font: 400 13px/18px var(--f-ui); color: var(--ink-2); }
+  .ch-caja.fila-tel { flex-direction: row; align-items: center; justify-content: space-between; padding: 12px 12px 12px 16px; }
+  .ch-caja.fila-tel > div { display: flex; flex-direction: column; gap: 6px; }
+  .ch-caja.fila-tel .ch-btn { width: 112px; height: 44px; font-size: 15px; flex: none; }
+  .ch-caja .ch-mono { font: 400 16px/22px var(--f-dato); overflow-wrap: anywhere; }
+  .ch-productos-ancho { display: flex; flex-direction: column; margin-top: 4px; }
+  .ch-productos-ancho .ch-rotulo { font-size: 11px; margin-bottom: 4px; }
+  .ch-productos-ancho > div { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+  .ch-productos-ancho > div span { flex: 1; font: 500 14px/20px var(--f-ui); }
+  .ch-productos-ancho em { font: 400 12px/normal var(--f-dato); font-style: normal; color: var(--ink-2); }
+  .ch-productos-ancho strong { font: 500 14px/normal var(--f-dato); min-width: 28px; text-align: right; }
+  .ch-acciones-panel { margin-top: auto; padding-top: 12px; }
+  .ch-acciones-panel .ch-btn { height: 48px; font-size: 15px; }
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .ch-maestro { grid-template-columns: minmax(0, .42fr) minmax(0, .58fr); }
+  .ch-calle { display: none; }
+  .ch-grupo .ch-chips { display: flex; }
+  .ch-grupo .ch-ico { display: block; }
+  .ch-grupo[aria-expanded='true'] .ch-ico { transform: rotate(180deg); }
+  .ch-cerradas:not(.abierto) { display: none; }
+  .ch-lista li strong { font-size: 15px; }
+  .ch-lista li small { font-size: 13px; }
+  .ch-fila-pendiente { padding: 14px 16px; }
+}
+@media (min-width: 1280px) { .ch-grupo[aria-expanded] { pointer-events: none; } }
+
+/* Las direcciones van en la fuente de datos, como en los diseños */
+.ch-dir strong, .ch-dir.peq strong, .ch-dir.grande strong { font-family: var(--f-dato); font-weight: 400; }
+.ch-dir.peq strong { font-size: 14px; }
+.ch-dir.grande strong { font-size: 16px; }

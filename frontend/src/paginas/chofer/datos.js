@@ -66,16 +66,22 @@ export function useRuta(omitir = false) {
   return { ...e, cargar };
 }
 
+// Detalle de una parada (productos, teléfono, documento y nota del administrador).
+export function useDetalle(id) {
+  const [e, setE] = useState({ id: null, parada: null, error: '' });
+  useEffect(() => {
+    let vivo = true;
+    api(`/despachos/${id}`).then(({ data }) => vivo && setE({ id, parada: data, error: '' })).catch((err) => vivo && setE({ id, parada: null, error: mensajeError(err) }));
+    return () => { vivo = false; };
+  }, [id]);
+  return e.id === id ? e : { parada: null, error: '' }; // al cambiar de parada no se muestra la anterior
+}
+
 // Una parada con su posición en la ruta (la posición solo existe mientras sigue en la hoja de hoy).
 export function useParada(id, rutaExterna) {
   const propia = useRuta(!!rutaExterna);
   const ruta = rutaExterna ?? propia;
-  const [parada, setParada] = useState(null);
-  const [error, setError] = useState('');
-  useEffect(() => {
-    setParada(null); setError('');
-    api(`/despachos/${id}`).then(({ data }) => setParada(data)).catch((e) => setError(mensajeError(e)));
-  }, [id]);
+  const { parada, error } = useDetalle(id);
   const i = ruta.paradas?.findIndex((d) => String(d.id_despacho) === String(id)) ?? -1;
   return { parada, error, n: i >= 0 ? i + 1 : null, total: ruta.paradas?.length ?? null };
 }
