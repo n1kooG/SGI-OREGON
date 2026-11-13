@@ -1,0 +1,17 @@
+/* Bodega: escritorio (≥ 1024 px) y ajustes móviles. Se carga desde Layouts.jsx, después de operacion.css. */
+
+/* Barra lateral fija y solo el contenido con scroll */
+.oficina.bodega-esc { height: 100dvh; min-height: 0; overflow: hidden; overscroll-behavior: none; }
+.bodega-esc .sidebar { position: static; height: 100dvh; }
+.bodega-esc .contenido { height: 100dvh; overflow-y: auto; overscroll-behavior: none; padding: 32px 40px 40px; }
+.bodega-esc .pie-usuario strong { font-size: 13px; line-height: 18px; }
+.bodega-esc .pie-usuario .rol { margin-bottom: 10px; font-size: 13px; line-height: 18px; }
+.bodega-esc .pie-usuario .btn-cuenta { width: 100%; padding: 9px 12px; margin-bottom: 8px; border-radius: 8px; background: var(--nav-2); color: var(--on-dark); font-size: 13px; line-height: 18px; }
+.bodega-esc .pie-usuario .btn-cuenta .icono, .bodega-esc .pie-usuario button .icono { width: 16px; height: 16px; }
+.bodega-esc .pie-usuario .btn-cuenta:hover { background: #1d625d; }
+
+/* Tablet vertical: el diseño móvil, centrado y con un ancho cómodo */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .movil.bodega { max-width: 640px; margin: 0 auto; }
+  .movil.bodega .nav-inferior { left: 50%; right: auto; width: 640px; margin-left: -320px; }
+}
