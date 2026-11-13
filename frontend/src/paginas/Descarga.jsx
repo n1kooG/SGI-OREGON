@@ -2,13 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, mensajeError } from '../api.js';
 import { Alerta, Badge, Boton, Campo, Icono, Tabla, useAviso } from '../componentes/ui.jsx';
 import { fechaCorta } from './Pedidos.jsx';
+import { useEscritorio } from '../componentes/useEscritorio.js';
 
 // Días calendario desde la recepción: define el color del aviso de antigüedad.
 const diasDesde = (f) => {
   const dia = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   return Math.round((dia(new Date()) - dia(new Date(f))) / 864e5);
 };
-function Antiguedad({ fecha }) {
+export function Antiguedad({ fecha }) {
   const d = diasDesde(fecha);
   return <Badge tono={d <= 0 ? 'ok' : d <= 3 ? 'aviso' : 'mal'}>{d <= 0 ? 'Hoy' : `Hace ${d} ${d === 1 ? 'día' : 'días'}`}</Badge>;
 }
@@ -52,7 +53,7 @@ function Lista({ onElegir, onManual }) {
   );
 }
 
-function Conteo({ factura: f, onVolver, onListo }) {
+function Conteo({ factura: f, onVolver, onListo, esc }) {
   const aviso = useAviso();
   const [lineas, setLineas] = useState(() => f.detalle.map((d) => ({ sku: d.sku, esperada: d.cantidad, contada: d.cantidad, nombre: '', ubi: '', ubi0: '' })));
   const [rut, setRut] = useState('');
@@ -89,6 +90,48 @@ function Conteo({ factura: f, onVolver, onListo }) {
     } finally { setOcupado(false); }
   }
 
+  if (esc) {
+    const resumen = conforme ? `Total contado: ${contadas} de ${f.unidades} unidades.` : `La diferencia (${sobran - faltan > 0 ? '+' : '−'}${Math.abs(sobran - faltan)} ${Math.abs(sobran - faltan) === 1 ? 'unidad' : 'unidades'}) quedará registrada para revisión de la jefatura.`;
+    return (
+      <div className="de-der">
+        <section className="de-cab">
+          <div className="fila-sb"><div className="de-titulo"><span className="chip-sku">FAC-{f.numero_factura}</span><h2>{f.nombre_proveedor}</h2></div><Antiguedad fecha={f.fecha_recepcion} /></div>
+          <span className="tenue">Recibida: {fechaCorta(f.fecha_recepcion)} · {f.detalle.length} {f.detalle.length === 1 ? 'producto' : 'productos'} · {f.unidades} unidades esperadas</span>
+        </section>
+        <div className={`estado-conteo ${conforme ? 'ok' : 'mal'}`} role="status">
+          <Icono n={conforme ? 'check' : 'alerta'} />
+          <div>
+            <strong>{conforme ? 'Conforme' : 'Hay una diferencia con la factura'}</strong>
+            <span>{conforme ? `Las ${f.unidades} unidades coinciden con la factura.` : `Se contaron ${contadas} de ${f.unidades} unidades: ${[faltan && (faltan === 1 ? 'falta 1 unidad' : `faltan ${faltan} unidades`), sobran && (sobran === 1 ? 'sobra 1 unidad' : `sobran ${sobran} unidades`)].filter(Boolean).join(' y ')}. Revise el conteo o confirme con la diferencia.`}</span>
+          </div>
+        </div>
+        <div className="de-tabla">
+          <div className="de-fila de-cabt"><span>SKU</span><span>Producto</span><span>Esperadas</span><span>Contadas</span><span>Ubicación (opcional)</span></div>
+          {lineas.map((l, i) => {
+            const dif = l.contada - l.esperada;
+            return (
+              <div className={`de-fila ${dif < 0 ? 'falta' : dif > 0 ? 'sobra' : ''}`} key={l.sku}>
+                <span><span className="chip-sku">{l.sku}</span></span>
+                <span className="de-prod">{l.nombre && <strong>{l.nombre}</strong>}<Badge tono={dif === 0 ? 'ok' : dif < 0 ? 'mal' : 'info'}>{dif === 0 ? 'Conforme' : dif < 0 ? `${dif === -1 ? 'Falta' : 'Faltan'} ${-dif}` : `${dif === 1 ? 'Sobra' : 'Sobran'} ${dif}`}</Badge></span>
+                <b className="dato">{l.esperada}</b>
+                <div className="stepper">
+                  <button type="button" className="menos" aria-label={`Restar una unidad de ${l.sku}`} disabled={l.contada === 0} onClick={() => cuenta(i, l.contada - 1)}><Icono n="menos" /></button>
+                  <input type="number" inputMode="numeric" min="0" step="1" aria-label={`Contadas de ${l.sku}`} value={l.contada} onChange={(e) => cuenta(i, e.target.valueAsNumber)} />
+                  <button type="button" className="mas" aria-label={`Sumar una unidad de ${l.sku}`} onClick={() => cuenta(i, l.contada + 1)}><Icono n="plus" /></button>
+                </div>
+                <span className="con-icono"><Icono n="pin" /><input className="entrada" aria-label={`Ubicación de ${l.sku}`} maxLength={40} value={l.ubi} onChange={(e) => poner(i, 'ubi', e.target.value)} placeholder="Pasillo y estante" /></span>
+              </div>
+            );
+          })}
+        </div>
+        {pedirRut && <Campo etiqueta="RUT del proveedor" ayuda="Esta factura existe para más de un proveedor." value={rut} onChange={(e) => setRut(e.target.value)} required />}
+        <div className="de-pie">
+          <div><span className={conforme ? '' : 'mal'}>{resumen}</span><Alerta>{error}</Alerta></div>
+          <Boton variante="primario" disabled={ocupado} onClick={confirmar}><Icono n="check" />{ocupado ? 'Confirmando…' : 'Confirmar descarga'}</Boton>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="movil-pagina descarga conteo">
       <Atras onClick={onVolver} />
@@ -212,11 +255,57 @@ function Manual({ onVolver }) {
   );
 }
 
+// Escritorio: facturas a la izquierda, conteo de la elegida a la derecha.
+function DescargaEscritorio({ onManual }) {
+  const [filas, setFilas] = useState(null);
+  const [sel, setSel] = useState(null);
+  const [error, setError] = useState('');
+  const cargar = useCallback(async () => {
+    setError('');
+    try { setFilas((await api('/compras/descargas/pendientes')).data); } catch (e) { setError(mensajeError(e)); }
+  }, []);
+  useEffect(() => { cargar(); }, [cargar]);
+  const actual = filas?.find((f) => f.id_recepcion === sel) ?? filas?.[0];
+  return (
+    <div className="de-esc descarga">
+      <header className="bd-cab"><div><h1>Descargas pendientes</h1><span className="tenue">Elija una factura y cuente las unidades de cada SKU antes de confirmar.</span></div></header>
+      {error && <><Alerta>{error}</Alerta><Boton onClick={cargar}>Reintentar</Boton></>}
+      {!filas && !error && <p className="tenue">Cargando…</p>}
+      {filas?.length === 0 && (
+        <div className="sin-nada">
+          <span className="sello-ok"><Icono n="camion" /></span>
+          <h2>Sin descargas pendientes</h2>
+          <p>Cuando llegue un camión, la factura aparecerá aquí para que cuente la mercadería.</p>
+        </div>
+      )}
+      {filas?.length > 0 && (
+        <div className="de-cols">
+          <aside className="de-lista">
+            <div className="fila-sb de-lista-cab"><h2>Facturas por contar</h2><Badge tono="ink">{filas.length}</Badge></div>
+            {filas.map((f) => (
+              <button type="button" key={f.id_recepcion} className={`de-factura ${f === actual ? 'activa' : ''}`} aria-pressed={f === actual} onClick={() => setSel(f.id_recepcion)}>
+                <span className="fila-sb"><span className="chip-sku">FAC-{f.numero_factura}</span><Antiguedad fecha={f.fecha_recepcion} /></span>
+                <strong>{f.nombre_proveedor}</strong>
+                <span className="tenue">{f.detalle.length} {f.detalle.length === 1 ? 'producto' : 'productos'} · {unidades(f.unidades)}</span>
+              </button>
+            ))}
+            <Boton className="enlace" onClick={onManual}>¿Llegó un camión sin factura registrada? Descarga manual</Boton>
+          </aside>
+          <Conteo key={actual.id_recepcion} factura={actual} esc onVolver={() => {}} onListo={() => { setSel(null); cargar(); }} />
+        </div>
+      )}
+      {(filas?.length === 0 || error) && <Boton className="enlace" onClick={onManual}>¿Llegó un camión sin factura registrada? Descarga manual</Boton>}
+    </div>
+  );
+}
+
 export default function Descarga() {
+  const esc = useEscritorio();
   const [vista, setVista] = useState({ tipo: 'lista' });
   const volver = () => setVista({ tipo: 'lista' });
   useEffect(() => { window.scrollTo(0, 0); }, [vista]);
   if (vista.tipo === 'conteo') return <Conteo factura={vista.factura} onVolver={volver} onListo={volver} />;
   if (vista.tipo === 'manual') return <Manual onVolver={volver} />;
+  if (esc) return <DescargaEscritorio onManual={() => setVista({ tipo: 'manual' })} />;
   return <Lista onElegir={(factura) => setVista({ tipo: 'conteo', factura })} onManual={() => setVista({ tipo: 'manual' })} />;
 }
