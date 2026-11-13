@@ -265,11 +265,14 @@ export default function Dashboard() {
                       ))}
                     </tbody>
                   </table>
-                  {!inmo.length && <div className="espacio-vacio" />}
+                  {!inmo.length && (
+                    <div className="espacio-vacio">
+                      {sinVentas
+                        ? <Vacio titulo="Aún no se puede medir" texto="Sin movimientos en el período no hay días sin movimiento que calcular. Se actualiza apenas haya ventas o compras." />
+                        : <Vacio titulo="Sin inventario inmovilizado" texto="Ningún producto lleva más de 60 días sin movimiento." />}
+                    </div>
+                  )}
                 </div>
-                {!inmo.length && (sinVentas
-                  ? <Vacio titulo="Aún no se puede medir" texto="Sin movimientos en el período no hay días sin movimiento que calcular. Se actualiza apenas haya ventas o compras." />
-                  : <Vacio titulo="Sin inventario inmovilizado" texto="Ningún producto lleva más de 60 días sin movimiento." />)}
               </div>
               {inmo.length > 0 && (
                 <div className="pie-inmo">

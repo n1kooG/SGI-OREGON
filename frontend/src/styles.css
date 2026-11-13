@@ -35,6 +35,8 @@
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
+/* Sin rebote en los bordes: la barra lateral no se arrastra con el scroll de la página */
+html, body { overscroll-behavior: none; }
 body { margin: 0; background: var(--bg); color: var(--texto); font: 400 14px/20px var(--f-ui); -webkit-font-smoothing: antialiased; }
 h1, h2, h3 { font-family: var(--f-titulo); font-weight: 500; color: var(--ink); margin: 0; }
 h1 { font-size: 30px; line-height: 36px; letter-spacing: -1px; }
@@ -133,8 +135,9 @@ td.dato { white-space: nowrap; }
 .precio-fila .margen { padding-bottom: 12px; color: var(--ok); }
 
 /* Layout de oficina */
-.oficina { display: grid; grid-template-columns: 240px 1fr; min-height: 100%; }
-.sidebar { background: var(--nav); color: var(--nav-text); display: flex; flex-direction: column; padding: 18px 12px; position: sticky; top: 0; height: 100vh; }
+/* La ventana no hace scroll: la barra lateral queda fija y solo el contenido se desplaza */
+.oficina { display: grid; grid-template-columns: 240px 1fr; height: 100dvh; overflow: hidden; }
+.sidebar { background: var(--nav); color: var(--nav-text); display: flex; flex-direction: column; padding: 18px 12px; height: 100dvh; overflow-y: auto; overscroll-behavior: none; }
 .marca { display: flex; align-items: center; gap: 12px; padding: 0 6px 24px; text-decoration: none; color: var(--on-dark); }
 .marca strong { display: block; font-weight: 600; font-size: 15px; line-height: 20px; }
 .marca small { color: var(--nav-text); font-size: 13px; }
@@ -150,7 +153,7 @@ td.dato { white-space: nowrap; }
 .pie-usuario .rol { display: block; margin-bottom: 12px; }
 .pie-usuario button { display: flex; align-items: center; gap: 8px; background: none; border: 0; padding: 4px 0; color: var(--nav-text); cursor: pointer; font-weight: 500; }
 .pie-usuario button:hover { color: var(--on-dark); }
-.contenido { padding: 40px; min-width: 0; }
+.contenido { padding: 40px; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: none; }
 .cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
 .cabecera p { color: var(--ink-3); margin-top: 8px; }
 .barra-herr { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -187,13 +190,13 @@ td.dato { white-space: nowrap; }
 .bienvenida p.tenue { font-size: 15px; line-height: 22px; }
 
 @media (max-width: 899px) {
-  .oficina { display: block; }
-  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; z-index: 40; transform: translateX(-100%); transition: transform .2s; }
+  .oficina { display: flex; flex-direction: column; }
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: auto; width: 260px; z-index: 40; transform: translateX(-100%); transition: transform .2s; }
   .sidebar.abierto { transform: none; }
   .sidebar.abierto + .velo-nav { display: block; position: fixed; inset: 0; background: rgba(16, 32, 31, .45); z-index: 30; }
-  .topbar-movil { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; }
+  .topbar-movil { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line); flex: none; }
   .topbar-movil strong { font-weight: 600; flex: 1; }
-  .contenido { padding: 24px 16px; }
+  .contenido { padding: 24px 16px; flex: 1; }
   h1 { font-size: 24px; line-height: 30px; letter-spacing: -.5px; }
   .grid2 { grid-template-columns: 1fr; }
   .modal-cab, .modal-cuerpo, .modal-pie, .modal.lado .modal-cab, .modal.lado .modal-pie { padding-left: 20px; padding-right: 20px; }
