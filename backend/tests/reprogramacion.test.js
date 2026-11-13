@@ -83,7 +83,8 @@ test('reprogramar: pedidos e intentos (listado y detalle) y la ruta del chofer c
   assert.equal((await reprog(id, { id_chofer: t.idChofer, fecha_entrega: f, nota: 'Entregar en conserjería' })).status, 200);
   const [d1, d2] = await despachos(id);
 
-  for (const tok of [t.admin, t.bodega]) {
+  assert.equal((await t.http('GET', '/api/pedidos?estado=EN_RUTA', t.bodega)).status, 403); // Bodega no lista pedidos ya en ruta
+  for (const tok of [t.admin]) {
     const fila = (await t.http('GET', '/api/pedidos?estado=EN_RUTA', tok)).body.find((x) => x.id_orden === id);
     assert.equal(fila.intento, 2);
     assert.equal(fila.reprogramado, true);
@@ -107,10 +108,7 @@ test('reprogramar: pedidos e intentos (listado y detalle) y la ruta del chofer c
   assert.equal(adm.intentos[1].asignado_por, 'Jefatura Administrativa');
   assert.equal(adm.intentos[1].nota_admin, 'Entregar en conserjería');
   assert.equal(adm.intentos[1].fecha_programada, f);
-  const bod = (await t.http('GET', `/api/pedidos/${id}`, t.bodega)).body;
-  assert.equal(bod.intentos.length, 2);
-  assert.ok(bod.intentos.every((i) => !('chofer' in i) && !('asignado_por' in i)));
-  assert.doesNotMatch(JSON.stringify(bod), /costo|margen|precio|subtotal/i);
+  assert.equal((await t.http('GET', `/api/pedidos/${id}`, t.bodega)).status, 404); // ya en ruta: Bodega no ve el detalle del pedido
 
   // Ruta del chofer: arreglo, con la parada futura marcada y sin paradas de otro chofer.
   const ruta = await t.http('GET', '/api/despachos/mi-ruta', t.chofer);

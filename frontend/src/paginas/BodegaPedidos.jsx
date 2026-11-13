@@ -183,13 +183,13 @@ const REFRESCO_MS = 60_000;
 const hora = (d) => d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
 
 function EnCamion({ p }) {
-  const asignado = p.nombre_chofer && p.estado_entrega !== 'RECHAZADO'; // un chofer de un intento rechazado ya no cuenta
+  const asignado = p.chofer_asignado && p.estado_entrega !== 'RECHAZADO'; // un chofer de un intento rechazado ya no cuenta
   return (
     <article className="tarjeta-pedido">
       <div className="fila-sb"><span className="chip-sku">#{p.codigo_externo}</span><Badge tono={asignado ? 'ok' : undefined}>{asignado ? 'Chofer asignado' : 'Sin chofer'}</Badge></div>
       <strong>Cliente: {p.nombre_cliente}</strong>
       {(p.direccion_despacho ?? p.comuna) && <span className="dato-fecha"><Icono n="pin" />{p.direccion_despacho ?? p.comuna}</span>}
-      <span className="chofer-fila"><Icono n="persona" />Chofer: {asignado ? p.nombre_chofer : 'sin asignar aún'}</span>
+      <span className="chofer-fila"><Icono n="persona" />Chofer: {asignado ? 'asignado' : 'sin asignar aún'}</span>
     </article>
   );
 }
@@ -201,10 +201,11 @@ export default function BodegaPedidos() {
   const [cuando, setCuando] = useState(null);
   const [cargando, setCargando] = useState(false);
   const [abierta, setAbierta] = useState(null);
+  // La API pagina (100 por defecto, 500 como tope, los más antiguos primero); esta vista pide el tope. Los contadores salen de /pedidos/resumen, que cuenta todo.
   const cargar = useCallback(async () => {
     setCargando(true);
     try {
-      const [l, r] = await Promise.all([api('/pedidos'), api('/pedidos/resumen')]);
+      const [l, r] = await Promise.all([api('/pedidos?limite=500'), api('/pedidos/resumen')]);
       setFilas(l.data); setRes(r.data); setCuando(new Date()); setError('');
     } catch (e) { setError(mensajeError(e)); setFilas((f) => f ?? []); } finally { setCargando(false); }
   }, []);

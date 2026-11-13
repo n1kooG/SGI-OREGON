@@ -38,8 +38,8 @@ export async function listar(req, { estado, canal, por_reingresar, pagina, limit
   if (!admin && estado && !BODEGA.includes(estado) && !porReingresar) throw new AppError(403, 'No tienes permiso para consultar pedidos en ese estado', 'ACCESO_DENEGADO');
   const estados = porReingresar ? ['RECHAZADO'] : estado ? [estado] : admin ? null : BODEGA;
   const { filas, total } = await repo.listar(estados, canal ? String(canal) : null, porReingresar, { limite: limite_, offset: (pagina_ - 1) * limite_, fifo: !admin });
-  // Los choferes (nombre e id) son información de administración: Bodega no los necesita para preparar ni reingresar.
-  return { filas: admin ? filas : filas.map(({ id_usuario_chofer, nombre_chofer, ...resto }) => resto), total };
+  // El nombre y el id del chofer son información de administración (como en el detalle): Bodega solo sabe si ya hay chofer asignado.
+  return { filas: admin ? filas : filas.map(({ id_usuario_chofer, nombre_chofer, ...resto }) => ({ ...resto, chofer_asignado: id_usuario_chofer !== null })), total };
 }
 
 export const resumen = () => repo.resumen();
@@ -52,6 +52,8 @@ async function existente(id) {
 
 export async function detalle(req, id) {
   const o = await existente(id);
+  // Bodega solo ve pedidos de su flujo (preparación, camión y rechazos por reingresar), no los ya en ruta o entregados: ahí hay datos de clientes y entregas.
+  if (!tiene(req, 'pedidos:leer') && ![...BODEGA, 'RECHAZADO'].includes(o.estado_orden)) throw new AppError(404, 'Pedido no encontrado', 'NO_ENCONTRADO');
   const [items, intentos] = await Promise.all([repo.items(id), repo.intentos(id)]);
   // El precio de venta es del Administrador (precios:leer); Bodega solo recibe lo que necesita para recolectar.
   const base = tiene(req, 'pedidos:leer') ? o : (({ rut_cliente, geolocalizacion, nombre_chofer, fecha_cierre, ...resto }) => resto)(o); // RUT, chofer y ubicación del cierre: solo administración

@@ -51,15 +51,30 @@ function datosDe(buf, e, maxSalida) {
 
 const colNum = (letras) => [...letras].reduce((n, c) => n * 26 + c.charCodeAt(0) - 64, 0);
 
-// Mide el contenido real de una hoja (no lo que declara <dimension>): mayor número de fila, nº de filas y mayor columna.
-function medir(xml) {
-  let filas = 0, mayorFila = 0, columnas = 0;
-  for (const m of xml.matchAll(/<row\b[^>]*>/g)) {
-    filas++;
-    const r = /\sr="(\d+)"/.exec(m[0]);
-    if (r) mayorFila = Math.max(mayorFila, Number(r[1]));
+// Mide el contenido real de una hoja (no lo que declara <dimension>): mayor número de fila, nº de filas y mayor columna (por la
+// referencia de la celda o por su posición). Recorrido lineal con indexOf: cada etiqueta se acota a TAG_MAX para que una hoja
+// hostil no provoque retrocesos de expresiones regulares.
+const TAG_MAX = 2048;
+const ATTR_R = /\sr\s*=\s*["']([A-Za-z]*)(\d*)["']/;
+function medir(xml, maxFilas) {
+  let filas = 0, mayorFila = 0, columnas = 0, enFila = 0, pos = 0;
+  while ((pos = xml.indexOf('<', pos)) >= 0) {
+    const fin = xml.indexOf('>', pos);
+    if (fin < 0 || fin - pos > TAG_MAX) throw NO_VALIDO();
+    const etiqueta = xml.slice(pos, fin);
+    pos = fin;
+    const esFila = /^<row(?=[\s/]|$)/.test(etiqueta), esCelda = /^<c(?=[\s/]|$)/.test(etiqueta);
+    if (esFila) {
+      filas++; enFila = 0;
+      const r = ATTR_R.exec(etiqueta);
+      if (r?.[2]) mayorFila = Math.max(mayorFila, Number(r[2]));
+      if (Math.max(filas, mayorFila) - 1 > maxFilas) return { filas: Math.max(filas, mayorFila), columnas }; // ya excede: no hace falta seguir
+    } else if (esCelda) {
+      enFila++;
+      const r = ATTR_R.exec(etiqueta);
+      columnas = Math.max(columnas, enFila, r?.[1] ? colNum(r[1].toUpperCase()) : 0);
+    }
   }
-  for (const m of xml.matchAll(/<c\b[^>]*?\sr="([A-Za-z]+)\d+"/g)) columnas = Math.max(columnas, colNum(m[1].toUpperCase()));
   return { filas: Math.max(filas, mayorFila), columnas };
 }
 
@@ -70,7 +85,7 @@ export function verificarXlsx(buffer, maxFilas) {
   const vistos = new Set();
   let declarado = 0, real = 0, hojas = 0;
   for (const e of lista) {
-    if (e.cifrado || (e.metodo !== 0 && e.metodo !== 8)) throw NO_VALIDO();
+    if (e.cifrado || (e.metodo !== 0 && e.metodo !== 8) || (e.metodo === 0 && e.comprimido !== e.tamano)) throw NO_VALIDO();
     if (e.nombre.startsWith('/') || e.nombre.includes('\\') || e.nombre.split('/').includes('..') || vistos.has(e.nombre.toLowerCase())) throw NO_VALIDO(); // rutas ambiguas: otro lector podría interpretarlas distinto
     vistos.add(e.nombre.toLowerCase());
     declarado += e.tamano;
@@ -80,9 +95,10 @@ export function verificarXlsx(buffer, maxFilas) {
     if (e.nombre.endsWith('/')) continue; // directorio
     const datos = datosDe(buffer, e, LIMITES.descomprimido - real);
     real += datos.length;
+    if (real > LIMITES.descomprimido) throw rechazo(`El archivo descomprimido supera ${LIMITES.descomprimido / 1024 / 1024} MB`, 413);
     if (!/(^|\/)worksheets\/[^/]*\.xml$/i.test(e.nombre)) continue; // mismo criterio laxo que ExcelJS: cualquier .xml bajo «worksheets/»
     if (++hojas > LIMITES.hojas) throw rechazo(`El libro tiene demasiadas hojas (máximo ${LIMITES.hojas})`);
-    const { filas, columnas } = medir(datos.toString('utf8'));
+    const { filas, columnas } = medir(datos.toString('utf8'), maxFilas);
     if (filas - 1 > maxFilas) throw rechazo(`La planilla supera ${maxFilas} filas`);
     if (columnas > LIMITES.columnas) throw rechazo(`La planilla supera ${LIMITES.columnas} columnas`);
   }

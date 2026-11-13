@@ -77,6 +77,7 @@ export default function Pedidos() {
   const [canal, setCanal] = useState('');
   const [estado, setEstado] = useState('');
   const [filas, setFilas] = useState([]);
+  const [total, setTotal] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [asignando, setAsignando] = useState(null);
@@ -89,10 +90,11 @@ export default function Pedidos() {
   const cargar = useCallback(async () => {
     setError('');
     try {
-      const q = new URLSearchParams({ ...(canal && { canal }), ...(estado && { estado }) });
-      const { data } = await api(`/pedidos?${q}`);
+      // La API pagina (100 por defecto); se pide el tope de 500 más recientes y el contador muestra el total real.
+      const q = new URLSearchParams({ limite: '500', ...(canal && { canal }), ...(estado && { estado }) });
+      const { data, total } = await api(`/pedidos?${q}`);
       data.forEach((p) => { canales.current.add(p.canal_origen); if (p.comuna) comunas.current.add(p.comuna); });
-      setFilas(data);
+      setFilas(data); setTotal(total);
     } catch (e) { setError(mensajeError(e)); } finally { setCargando(false); }
   }, [canal, estado]);
   useEffect(() => { cargar(); }, [cargar]);
@@ -126,7 +128,7 @@ export default function Pedidos() {
           <option value="">Todos los estados</option>
           {Object.entries(ESTADOS).map(([k, [t]]) => <option key={k} value={k}>{t}</option>)}
         </Campo>
-        <span className="tenue contador-pedidos">{filas.length} {filas.length === 1 ? 'pedido' : 'pedidos'} · {new Date().toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+        <span className="tenue contador-pedidos">{total > filas.length ? `${filas.length} de ${total}` : filas.length} {total === 1 ? 'pedido' : 'pedidos'} · {new Date().toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
         <Boton variante="primario" onClick={() => setImportando(true)}><IcoSubir />Importar etiquetas</Boton>
       </div>
       <Alerta>{error}</Alerta>

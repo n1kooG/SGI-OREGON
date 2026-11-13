@@ -91,3 +91,19 @@ test('el tope se aplica a lo realmente descomprimido sumando todas las partes, n
   const muchas = construirXlsx([hojaXml({ filas: 1 })], { extra: { 'xl/relleno.bin': 'z'.repeat(LIMITES.descomprimido + 1024) }, mentirTamano: true, mentirTodo: true });
   await rechaza(muchas, 413);
 });
+
+test('el recorrido de la hoja es lineal: etiquetas gigantes o sin cerrar se rechazan al instante', async () => {
+  const hostil = (x) => construirXlsx([[`<?xml version="1.0"?><worksheet><sheetData>`, x, `</sheetData></worksheet>`]]);
+  const t0 = Date.now();
+  await rechaza(hostil(`<row ${'a="b" '.repeat(100_000)}>`), 400, /no es un .xlsx/); // etiqueta de cientos de KB
+  await rechaza(hostil(`<row r="1"><c ${'r='.repeat(200_000)}`), 400, /no es un .xlsx/); // sin cerrar
+  await rechaza(hostil(`<c r="B2" ${' '.repeat(50_000_000)}`), 413); // 50 MB de relleno: lo frena el tope, no el recorrido
+  assert.ok(Date.now() - t0 < 3000);
+});
+
+test('referencias de fila y columna con comillas simples, espacios o sin r= se miden igual', async () => {
+  const hoja = (x) => construirXlsx([[`<worksheet><sheetData>`, x, `</sheetData></worksheet>`]]);
+  await rechaza(hoja(`<row  r = '${MAX_FILAS + 5}'><c r='A${MAX_FILAS + 5}'><v>1</v></c></row>`), 400, /filas/);
+  await rechaza(hoja(`<row>${'<c><v>1</v></c>'.repeat(LIMITES.columnas + 1)}</row>`), 400, /columnas/); // celdas sin r=: cuenta su posición
+  await rechaza(hoja(`<row r="1"><c r='ZZ1'><v>1</v></c></row>`), 400, /columnas/);
+});
