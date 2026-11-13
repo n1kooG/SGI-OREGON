@@ -114,3 +114,11 @@ test('un «>» dentro de un atributo no oculta filas ni columnas (el recorrido r
   await rechaza(hoja(`<row r="1"><c a='>' r="ZZ1"><v>1</v></c></row>`), 400, /columnas/);
   await rechaza(hoja(`<row r="1"><c a="<" r="A1"/></row>`), 400, /no es un .xlsx/); // '<' sin cerrar la etiqueta: XML mal formado
 });
+
+test('comentarios, CDATA, DOCTYPE e instrucciones de proceso dentro de la hoja se rechazan (podrían esconder filas ante otro lector)', async () => {
+  const hoja = (x) => construirXlsx([[`<?xml version="1.0"?><worksheet><sheetData>`, x, `</sheetData></worksheet>`]]);
+  await rechaza(hoja(`<!-- <row r="1"> --><row r="1"/>`), 400, /no es un .xlsx/);
+  await rechaza(hoja(`<![CDATA[ <row r="1"> ]]><row r="1"/>`), 400, /no es un .xlsx/);
+  await rechaza(hoja(`<?php x ?><row r="1"/>`), 400, /no es un .xlsx/);
+  assert.equal((await leerPlanilla(construirXlsx([hojaXml({ filas: 2 })]))).length, 2); // el prólogo inicial sí es válido
+});

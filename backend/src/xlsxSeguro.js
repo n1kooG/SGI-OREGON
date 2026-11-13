@@ -67,6 +67,9 @@ function medir(xml, maxFilas) {
     }
     if (fin >= xml.length || xml[fin] !== '>') throw NO_VALIDO();
     const etiqueta = xml.slice(pos, fin);
+    // Comentarios, CDATA, DOCTYPE e instrucciones de proceso (salvo el prólogo inicial) no existen en una hoja real y podrían
+    // esconder o simular filas ante un lector distinto: se rechazan.
+    if (etiqueta.startsWith('<!') || (etiqueta.startsWith('<?') && pos > 3)) throw NO_VALIDO();
     pos = fin;
     const esFila = /^<row(?=[\s/]|$)/.test(etiqueta), esCelda = /^<c(?=[\s/]|$)/.test(etiqueta);
     if (esFila) {

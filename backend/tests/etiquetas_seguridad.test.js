@@ -15,7 +15,7 @@ process.env.STORAGE_ENABLED = 'false';
 const { iniciar, crearPedido, limpiar } = await import('./_aux.js');
 const { pool, query } = await import('../src/db.js');
 const { cerrarCache } = await import('../src/cache.js');
-const { ejecutarAislado } = await import('../src/pdf/sandbox.js');
+const { ejecutarAislado, LIMITES_TAREA } = await import('../src/pdf/sandbox.js');
 const { leerNumeroOrden, extraerNumeroOrden } = await import('../src/pdf/leerOrden.js');
 const { sanearNombre } = await import('../src/services/etiquetas.js');
 
@@ -55,11 +55,22 @@ test('un lector que cicla para siempre se corta por tiempo y el bucle de eventos
   assert.ok(atraso < 200, `el hilo principal se atrasó ${atraso} ms`);
 });
 
-test('un lector que consume memoria sin límite muere en su worker y el proceso sigue vivo', async () => {
-  const w = worker('memoria.mjs', 'const a = []; while (true) a.push(Buffer.alloc(1024 * 1024, 1).toString("latin1") + Math.random());');
-  const e = await ejecutarAislado(w, {}, { tiempoMs: 20_000, memoriaMb: 48 }).catch((x) => x);
-  assert.ok(['MEMORIA', 'FALLO'].includes(e.code), e.code);
+test('un lector que se come la memoria fuera del heap (buffers) se corta por el vigilante de RSS y el proceso sigue vivo', async () => {
+  // El propio worker se detiene a los 400 MB: si el vigilante fallara, la prueba lo detectaría sin tumbar la máquina.
+  const w = worker('memoria.mjs', `import { parentPort } from 'node:worker_threads'; const a = []; while (a.length < 400) a.push(Buffer.alloc(1024 * 1024, 1)); parentPort.postMessage({ numero: 'sin-limite' });`);
+  const previo = { ...LIMITES_TAREA };
+  Object.assign(LIMITES_TAREA, { rssMb: 120, vigilanciaMs: 10 });
+  try {
+    const e = await ejecutarAislado(w, {}, { tiempoMs: 20_000 }).then((r) => r, (x) => x);
+    assert.equal(e.code, 'MEMORIA', JSON.stringify(e.message ?? e));
+  } finally { Object.assign(LIMITES_TAREA, previo); }
   assert.equal((await t.http('GET', '/api/auth/me', t.admin)).status, 200);
+});
+
+test('presupuesto de tiempo compartido: vencido el presupuesto no se lanza ningún lector', async () => {
+  const w = worker('nunca.mjs', 'throw new Error("no debía ejecutarse")');
+  const e = await ejecutarAislado(w, {}, { hasta: Date.now() - 1 }).catch((x) => x);
+  assert.equal(e.code, 'PRESUPUESTO');
 });
 
 test('la concurrencia de lectores está acotada (3): 9 tareas de 250 ms tardan al menos 3 tandas', async () => {
@@ -114,7 +125,8 @@ test('las expresiones del N° de orden no tienen retroceso cuadrático sobre esp
 test('nombres de archivo: sin ruta, sin control ni marcas bidireccionales, a lo más 200 caracteres', () => {
   assert.equal(sanearNombre('../../etc/passwd'), 'passwd');
   assert.equal(sanearNombre('C:\\x\\y\\z.pdf'), 'z.pdf');
-  assert.equal(sanearNombre('a\u202egnp.pdf'), 'agnp.pdf');
+  const comoMulter = (x) => Buffer.from(x, 'utf8').toString('latin1'); // multer entrega los nombres decodificados como latin1
+  assert.equal(sanearNombre(comoMulter('a\u202egnp.pdf')), 'agnp.pdf');
   assert.equal(sanearNombre('a\r\nb\u0000.pdf'), 'ab.pdf');
   assert.equal(sanearNombre('x'.repeat(500)).length, 200);
   assert.equal(sanearNombre('   '), 'etiqueta.pdf');

@@ -51,8 +51,10 @@ export async function importar(req, archivos = []) {
   if (!archivos.length) throw new AppError(400, 'Adjunta al menos un PDF (campo archivos)', 'ARCHIVO_INVALIDO');
   const limite = Date.now() + PRESUPUESTO_LOTE_MS;
   const lecturas = archivos.map((f) => (motivoInvalido(f.buffer) ? null : (async () => {
-    if (Date.now() > limite) return { fallo: 'Se agotó el tiempo de procesamiento del lote; vuelve a subir este archivo' };
-    try { return { numero: await leerNumeroOrden(f.buffer) }; } catch (e) { return { fallo: e.code === 'TIEMPO_AGOTADO' ? 'El PDF tardó demasiado en leerse' : 'No se pudo leer el PDF' }; }
+    try { return { numero: await leerNumeroOrden(f.buffer, { hasta: limite }) }; } catch (e) {
+      const motivo = { PRESUPUESTO: 'Se agotó el tiempo de procesamiento del lote; vuelve a subir este archivo', TIEMPO_AGOTADO: 'El PDF tardó demasiado en leerse', MEMORIA: 'El PDF requiere demasiada memoria para leerse' };
+      return { fallo: motivo[e.code] ?? 'No se pudo leer el PDF' };
+    }
   })()));
   const resultados = [];
   for (const [i, f] of archivos.entries()) {
