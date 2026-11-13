@@ -128,6 +128,30 @@ Almacenamiento: con S3 activo el PDF queda en `etiquetas/<id_orden>.pdf` (clave 
 por git) como `<id_orden>.pdf`. El nombre del archivo subido solo se guarda como texto (sin rutas); nunca forma parte de una ruta.
 Para reconocer otro marketplace se agrega un patrón a `PATRONES_ORDEN` en `src/pdf/leerOrden.js`.
 
+## Reprogramar entrega, ruta con paradas programadas y productos sin ubicación
+
+Migración para bases existentes (idempotente): `psql -d sgi_oregon -f db/11_reprogramacion.sql`. Agrega la función `fn_hoy()` y, en
+`despacho`, `fecha_programada` (DATE, desde cuándo el chofer ve y puede cerrar la parada; los despachos previos toman su
+`fecha_asignacion`), `nota_admin` (≤300) e `id_usuario_asigna` (quién asignó o reprogramó; NULL en los despachos anteriores).
+Las bases nuevas lo traen en `db/01_modelo_datos.sql`.
+
+**Zona horaria.** «Hoy» es la fecha civil de **`America/Santiago`**, calculada en la base con `fn_hoy()`
+(`(now() AT TIME ZONE 'America/Santiago')::date`); no depende de la zona de la sesión ni de la hora del servidor Node. Rige para
+validar `fecha_entrega`, para `fecha_programada` por defecto, para el corte «cerradas hoy» y para `FUERA_DE_FECHA`. Las fechas
+viajan como texto `AAAA-MM-DD`.
+
+| Método y ruta | Permiso | Cuerpo → respuesta |
+|---|---|---|
+| `POST /api/pedidos/:id/reprogramar` | `pedidos:asignar_chofer` (ADMIN) | `{ id_chofer, fecha_entrega: "AAAA-MM-DD", nota?, direccion_despacho?, comuna?, telefono_contacto? }` → `{ id_despacho, id_orden, id_usuario_chofer, estado_orden: "EN_RUTA", fecha_programada, nota_admin, ...solo los datos de entrega que cambiaron }`. Una transacción: actualiza los datos de entrega enviados, crea el despacho nuevo (`fecha_programada`, `nota_admin`, `id_usuario_asigna`), pasa el pedido a `EN_RUTA` y audita `REPROGRAMACION` (antes/después de los campos cambiados, más `nota_largo`; la nota completa no se guarda). Límites: `nota` ≤300, `direccion_despacho` ≤200, `comuna` ≤60 (largo real de la columna), `telefono_contacto` ≤20 con solo `+` inicial, dígitos, espacios y guiones; un campo enviado no puede ir vacío. Errores: 400 `VALIDACION` (campos) o `FECHA_PASADA` (anterior a hoy); 401/403; 404; 409 `NO_REPROGRAMABLE` (el pedido no está `EN_CAMION` con su último despacho `RECHAZADO` y reingresado), 409 `TRANSICION_INVALIDA` (el usuario no es un chofer activo; no queda nada a medias) |
+| `POST /api/pedidos/:id/asignar-chofer` | `pedidos:asignar_chofer` | Sin cambios de contrato. Ahora fija `fecha_programada` = hoy e `id_usuario_asigna` |
+| `GET /api/pedidos` y `GET /api/pedidos/:id` | `pedidos:leer` o `pedidos:preparar` | Cada pedido suma `intento` (N° de despachos), `reprogramado` (`intento > 1`), `fecha_programada` y `nota_admin` del último despacho (NULL si no hay), `fecha_rechazo` (cierre del último despacho si está rechazado, si no NULL) y, en el listado, `direccion_despacho` (ya estaba en el detalle) |
+| `GET /api/pedidos/:id` | ídem | Además `intentos: [{ intento, id_despacho, chofer, fecha_asignacion, fecha_programada, estado_entrega, motivo_rechazo, reingresado_en, nota_admin, asignado_por }]` de menor a mayor. `chofer` y `asignado_por` (nombres) solo con `pedidos:leer` (ADMIN); Bodega recibe el resto sin ellos |
+| `GET /api/despachos/mi-ruta` | `ruta:leer` (CHOFER) | Sigue siendo un **arreglo**: pendientes de hoy o vencidas (`fecha_programada` ≤ hoy), las cerradas hoy y también las pendientes con fecha futura, con `futura: true` y al final de las pendientes. Cada parada suma `fecha_programada`, `nota_admin`, `futura`, `intento` y `reprogramada` (`intento > 1`) |
+| `GET /api/despachos/mi-ruta/resumen` | `ruta:leer` | `pendientes` cuenta solo las de hoy o vencidas (las futuras no); `entregadas` y `rechazadas` = cerradas hoy |
+| `GET /api/despachos/:id` y `GET /api/despachos/historial` | `ruta:leer` | Incluyen `fecha_programada`, `nota_admin`, `futura`, `intento` y `reprogramada` |
+| `PATCH /api/despachos/:id` | `entregas:registrar` | Cerrar una parada con `fecha_programada` futura responde 409 `FUERA_DE_FECHA` («La parada está programada para el DD-MM-AAAA: solo se puede cerrar desde ese día») |
+| `GET /api/inventario/sin-ubicacion?limite=20&pagina=1&q=` | `inventario:consultar` o `inventario:leer` (BODEGA, ADMIN) | `limite` 1–100, `pagina` ≥1 (400 `VALIDACION` si no), `q` opcional por SKU o nombre (sin distinguir mayúsculas, comodines literales, máx. 40 caracteres) → `{ total, pagina, limite, items: [{ sku, nombre, modelo, marca, stock_fisico }] }`. Productos `ACTIVO` con `ubicacion_bodega` NULL o vacía, por stock físico descendente y SKU; sin costos ni precios. `total` coincide con `sin_ubicacion` de `GET /api/inventario/resumen` (misma definición en el código) cuando no hay `q`. La ubicación se asigna con `PUT /api/inventario/:sku/ubicacion` |
+
 ## Producción
 
 Con `NODE_ENV=production` la API no arranca si `JWT_SECRET` tiene menos de 32 caracteres o es el valor de ejemplo.
