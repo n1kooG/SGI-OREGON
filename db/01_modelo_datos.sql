@@ -256,6 +256,9 @@ CREATE TABLE detalle_venta (
 );
 CREATE INDEX ix_detventa_sku ON detalle_venta (sku);                        -- reportes de rotación (HU10)
 
+-- «Hoy» del negocio: fecha civil en America/Santiago, no la del servidor ni la de la sesión (que suele ser UTC).
+CREATE OR REPLACE FUNCTION fn_hoy() RETURNS DATE LANGUAGE sql STABLE AS $$ SELECT (now() AT TIME ZONE 'America/Santiago')::date $$;
+
 CREATE TABLE despacho (
   id_despacho        INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   id_orden           INTEGER      NOT NULL                                  -- orden 1 : 0..n despachos (reprogramación tras un rechazo)
@@ -263,6 +266,9 @@ CREATE TABLE despacho (
   id_usuario_chofer  INTEGER      NOT NULL REFERENCES usuario (id_usuario)
                      ON UPDATE RESTRICT ON DELETE RESTRICT,
   fecha_asignacion   DATE         NOT NULL DEFAULT CURRENT_DATE,
+  fecha_programada   DATE         NOT NULL DEFAULT fn_hoy(),                -- desde este día el chofer ve y puede cerrar la parada
+  nota_admin         VARCHAR(300),                                          -- indicación del administrador al (re)programar
+  id_usuario_asigna  INTEGER REFERENCES usuario (id_usuario) ON UPDATE RESTRICT ON DELETE RESTRICT,
   estado_entrega     VARCHAR(10)  NOT NULL DEFAULT 'PENDIENTE'
                      CHECK (estado_entrega IN ('PENDIENTE', 'ENTREGADO', 'RECHAZADO')),
   motivo_rechazo     VARCHAR(300),

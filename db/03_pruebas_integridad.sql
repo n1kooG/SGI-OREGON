@@ -177,6 +177,16 @@ SELECT pg_temp.espera_error('ETQ-01', 'Etiqueta: clave sin nombre ni fecha es re
 SELECT pg_temp.espera_valor('ETQ-02', 'Etiqueta: pedidos:etiquetas solo para ADMINISTRADOR', 'ADMINISTRADOR',
   $q$SELECT string_agg(nombre_rol, ',') FROM rol WHERE permisos ? 'pedidos:etiquetas'$q$);
 
+-- ---- Reprogramación (fecha programada, nota y quién asignó) --------------------------------
+SELECT pg_temp.espera_valor('REP-01', 'Reprogramar: fn_hoy() es la fecha civil de America/Santiago', 'true',
+  $q$SELECT (fn_hoy() = (now() AT TIME ZONE 'America/Santiago')::date)::text$q$);
+SELECT pg_temp.espera_valor('REP-02', 'Reprogramar: todo despacho tiene fecha_programada (por defecto, hoy)', '0',
+  $q$SELECT count(*)::text FROM despacho WHERE fecha_programada IS NULL$q$);
+SELECT pg_temp.espera_error('REP-03', 'Reprogramar: la nota del administrador admite máximo 300 caracteres', '22001',
+  $q$UPDATE despacho SET nota_admin = repeat('x', 301) WHERE id_orden = (SELECT id_orden FROM orden_venta WHERE codigo_externo='ORD-1024')$q$);
+SELECT pg_temp.espera_error('REP-04', 'Reprogramar: quien asigna debe ser un usuario existente', '23503',
+  $q$UPDATE despacho SET id_usuario_asigna = 999999 WHERE id_orden = (SELECT id_orden FROM orden_venta WHERE codigo_externo='ORD-1024')$q$);
+
 \o
 \echo
 \echo '==================== RESULTADO DE PRUEBAS DE INTEGRIDAD ===================='
