@@ -15,7 +15,7 @@ const db = await conectar();
 try {
   await db.query('BEGIN');
   const { rows: [u] } = await db.query(
-    `UPDATE usuario SET password_hash = crypt($2, gen_salt('bf', 12)), intentos_fallidos = 0, bloqueado_hasta = NULL
+    `UPDATE usuario SET password_hash = crypt($2, gen_salt('bf', 12)), intentos_fallidos = 0, bloqueado_hasta = NULL, clave_cambiada_en = now()
       WHERE lower(email) = lower($1) RETURNING id_usuario`,
     [email, clave],
   );

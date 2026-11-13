@@ -57,14 +57,15 @@ export async function estadoClave(id, password, db) {
 // Nueva clave con bcrypt de costo 12 (igual que el alta); reinicia los intentos fallidos y el bloqueo.
 export const actualizarClave = (id, password, db) =>
   db.query(
-    `UPDATE usuario SET password_hash = crypt($2, gen_salt('bf', 12)), intentos_fallidos = 0, bloqueado_hasta = NULL WHERE id_usuario = $1`,
+    `UPDATE usuario SET password_hash = crypt($2, gen_salt('bf', 12)), intentos_fallidos = 0, bloqueado_hasta = NULL, clave_cambiada_en = now() WHERE id_usuario = $1`,
     [id, password],
   );
 
 // El rol y los permisos se leen de la BD en cada petición (M10).
 export async function buscarActivoPorId(id) {
   const { rows } = await query(
-    `SELECT u.id_usuario, u.nombre_completo, u.email, r.nombre_rol AS rol, r.permisos
+    `SELECT u.id_usuario, u.nombre_completo, u.email, r.nombre_rol AS rol, r.permisos,
+            floor(extract(epoch FROM u.clave_cambiada_en))::bigint AS clave_cambiada_seg
        FROM usuario u JOIN rol r ON r.id_rol = u.id_rol
       WHERE u.id_usuario = $1 AND u.activo`,
     [id],

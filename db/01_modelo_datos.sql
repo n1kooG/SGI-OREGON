@@ -51,6 +51,7 @@ CREATE TABLE usuario (
   intentos_fallidos  SMALLINT     NOT NULL DEFAULT 0 CHECK (intentos_fallidos >= 0),  -- bloqueo por intentos fallidos (plan de seguridad)
   bloqueado_hasta    TIMESTAMPTZ,                                                     -- NULL = cuenta sin bloqueo
   ultimo_acceso      TIMESTAMPTZ,                                                     -- último inicio de sesión exitoso
+  clave_cambiada_en  TIMESTAMPTZ,                                                     -- cambio/restablecimiento de clave: los JWT anteriores (iat) dejan de servir
   fecha_creacion     TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 CREATE UNIQUE INDEX ux_usuario_email_lower ON usuario (lower(email));  -- login sin distinguir mayúsculas

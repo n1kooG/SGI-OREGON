@@ -13,9 +13,9 @@ export const autenticar = ah(async (req, res, next) => {
   const h = req.headers.authorization ?? '';
   const token = h.startsWith('Bearer ') ? h.slice(7) : null;
   if (!token) return res.status(401).json({ error: 'No autenticado', codigo: 'NO_AUTENTICADO' });
-  let sub;
+  let sub, iat;
   try {
-    ({ sub } = jwt.verify(token, config.jwtSecret));
+    ({ sub, iat } = jwt.verify(token, config.jwtSecret, { algorithms: ['HS256'] }));
   } catch (e) {
     const expirado = e.name === 'TokenExpiredError';
     return res.status(401).json({ error: expirado ? 'Sesión expirada' : 'Sesión inválida', codigo: expirado ? 'SESION_EXPIRADA' : 'SESION_INVALIDA' });
@@ -26,6 +26,11 @@ export const autenticar = ah(async (req, res, next) => {
   }
   const usuario = await buscarActivoPorId(sub);
   if (!usuario) return res.status(401).json({ error: 'Sesión inválida', codigo: 'SESION_INVALIDA' });
+  // Un token emitido antes del último cambio de clave no sirve, aunque el usuario haya vuelto a iniciar sesión.
+  // shortcut: `iat` tiene resolución de 1 s; un token emitido en el mismo segundo que el cambio no se distingue del nuevo.
+  if (usuario.clave_cambiada_seg !== null && iat < Number(usuario.clave_cambiada_seg)) {
+    return res.status(401).json({ error: 'Sesión expirada: la contraseña cambió', codigo: 'SESION_EXPIRADA' });
+  }
   await registrarActividad(sub);
   req.usuario = usuario;
   filtrarCostos(req, res);

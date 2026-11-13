@@ -75,7 +75,7 @@ SELECT format('GRANT SELECT, INSERT ON audit_log, detalle_recepcion, detalle_ven
 SELECT format('GRANT SELECT, INSERT, UPDATE ON producto, inventario, lista_precio, recepcion_compra,
                                                lote_importacion, orden_venta, despacho TO %I', :'app_role') \gexec
 SELECT format('GRANT SELECT, INSERT ON usuario TO %I', :'app_role') \gexec
-SELECT format('GRANT UPDATE (id_rol, activo, password_hash, intentos_fallidos, bloqueado_hasta, ultimo_acceso) ON usuario TO %I', :'app_role') \gexec
+SELECT format('GRANT UPDATE (id_rol, activo, password_hash, intentos_fallidos, bloqueado_hasta, ultimo_acceso, clave_cambiada_en) ON usuario TO %I', :'app_role') \gexec
 
 -- Las funciones de validación y pgcrypto/pg_trgm siguen ejecutables por PUBLIC (crypt, gen_salt, fn_rut_valido).
 -- Lo que la aplicación no puede hacer, y por qué: ALTER/DROP/CREATE TRIGGER, DISABLE TRIGGER, DROP o ALTER TABLE

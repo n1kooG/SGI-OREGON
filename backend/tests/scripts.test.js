@@ -83,6 +83,7 @@ t('clave-usuario: restablece la clave por stdin o variable, reinicia el bloqueo 
   assert.equal(r.status, 0, r.stderr);
   const [u] = await q(`SELECT intentos_fallidos, bloqueado_hasta, password_hash = crypt($1, password_hash) AS ok, password_hash = crypt($2, password_hash) AS vieja FROM usuario`, [nueva, CLAVE]);
   assert.deepEqual(u, { intentos_fallidos: 0, bloqueado_hasta: null, ok: true, vieja: false });
+  assert.ok((await q(`SELECT clave_cambiada_en FROM usuario`))[0].clave_cambiada_en); // revoca los tokens anteriores
   const [a] = await q(`SELECT * FROM audit_log WHERE accion = 'CLAVE_RESTABLECIDA'`);
   assert.ok(a && !JSON.stringify(a).includes(nueva));
   const porEnv = correr('clave-usuario.mjs', ['jefatura@tienda.cl'], { CLAVE_NUEVA: CLAVE });
