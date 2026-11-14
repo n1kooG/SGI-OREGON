@@ -178,7 +178,7 @@ function FilaEsc({ p, abierta, onAbrir, onCambio }) {
 }
 
 const POR_PREPARAR = ['PENDIENTE_PREPARACION', 'ARMADO', 'ETIQUETADO'];
-const CONTADORES = [['pendiente_preparacion', 'Sin recolectar', 'aviso'], ['armado', 'Armado', 'info'], ['etiquetado', 'Etiquetado', 'info'], ['en_camion_esperando_chofer', 'Listo para despacho', 'ok']];
+const CONTADORES = [['pendiente_preparacion', 'Sin recolectar', 'aviso'], ['armado', 'Armado', 'info'], ['etiquetado', 'Etiquetado', 'info'], ['en_camion_esperando_chofer', 'En camión', 'ok']];
 const REFRESCO_MS = 60_000;
 const hora = (d) => d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
 
@@ -238,7 +238,7 @@ export default function BodegaPedidos() {
             {!todas && porPreparar.length > visibles.length && <button type="button" className="bi-ver" onClick={() => setTodas(true)}>Ver los {porPreparar.length - visibles.length} restantes</button>}
           </section>
           <section>
-            <div className="fila-sb"><h2>Listo para despacho, esperando chofer</h2><Badge tono="ink">{enCamion.length}</Badge></div>
+            <div className="fila-sb"><h2>En camión, esperando chofer</h2><Badge tono="ink">{enCamion.length}</Badge></div>
             {enCamion.map((p) => <EnCamion key={p.id_orden} p={p} />)}
           </section>
         </div>
@@ -267,7 +267,7 @@ export default function BodegaPedidos() {
       )}
       {enCamion.length > 0 && (
         <section>
-          <div className="fila-sb"><h2>Listo para despacho, esperando chofer</h2><Badge tono="ink">{enCamion.length}</Badge></div>
+          <div className="fila-sb"><h2>En camión, esperando chofer</h2><Badge tono="ink">{enCamion.length}</Badge></div>
           {enCamion.map((p) => <EnCamion key={p.id_orden} p={p} />)}
         </section>
       )}
