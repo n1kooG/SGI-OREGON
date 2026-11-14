@@ -58,8 +58,9 @@ test('Resumen de inventario: sin_ubicacion y stock_critico coinciden con la base
 });
 
 test('Resumen de inventario: quitar la ubicación de un SKU sube sin_ubicacion en 1', async () => {
+  const { rows: [p] } = await query(`SELECT sku, ubicacion_bodega FROM inventario JOIN producto USING (sku) WHERE estado = 'ACTIVO' LIMIT 1`);
+  await query(`UPDATE inventario SET ubicacion_bodega = 'Pasillo 1, Rack A, Piso 1' WHERE sku = $1`, [p.sku]);
   const antes = (await t.http('GET', '/api/inventario/resumen', t.bodega)).body.sin_ubicacion;
-  const { rows: [p] } = await query(`SELECT sku, ubicacion_bodega FROM inventario WHERE ubicacion_bodega IS NOT NULL LIMIT 1`);
   await query(`UPDATE inventario SET ubicacion_bodega = NULL WHERE sku = $1`, [p.sku]);
   try { assert.equal((await t.http('GET', '/api/inventario/resumen', t.bodega)).body.sin_ubicacion, antes + 1); }
   finally { await query(`UPDATE inventario SET ubicacion_bodega = $2 WHERE sku = $1`, [p.sku, p.ubicacion_bodega]); }

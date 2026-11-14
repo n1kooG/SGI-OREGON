@@ -9,7 +9,7 @@ INSERT INTO rol (nombre_rol, descripcion, permisos) VALUES
  ('ADMINISTRADOR', 'Jefatura Administrativa y Comercial: acceso total, incluye costos y márgenes',
   '["catalogo:leer","catalogo:escribir","costos:leer","precios:leer","precios:escribir",
     "compras:recepcionar","pedidos:importar","pedidos:leer","pedidos:asignar_chofer","pedidos:documentar","pedidos:etiquetas",
-    "inventario:leer","inventario:ubicar","entregas:reingresar","alertas:leer","reportes:leer","auditoria:leer","usuarios:administrar"]'),
+    "inventario:leer","inventario:ubicar","bodega:configurar","entregas:reingresar","alertas:leer","reportes:leer","auditoria:leer","usuarios:administrar"]'),
  ('BODEGA', 'Operario de bodega: consulta de stock, preparación de pedidos y descarga de camión; sin costos ni márgenes',
   '["inventario:consultar","inventario:ubicar","pedidos:preparar","compras:confirmar_descarga","entregas:reingresar"]'),
  ('CHOFER', 'Chofer de reparto: hoja de ruta y cierre de entregas; sin costos ni márgenes',

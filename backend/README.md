@@ -226,3 +226,21 @@ La descarga de una etiqueta se sirve siempre como `attachment`, `application/pdf
 Quedan sin abordar: revocación individual de tokens (`jti`/logout y renovación del JWT), el aviso de truncamiento de la exportación de bitácora
 (tope de 10.000 filas), reimportación detectada por nombre de archivo y los demás Bajo/Informativos
 (hallazgos 12, 13, 15, 16, 19, 22 y 24–26 de la auditoría).
+
+## Estructura de la bodega
+
+La ubicación de un SKU es `Pasillo 1, Rack B, Piso 2` y debe existir en la estructura configurada (pasillos → racks con letra → pisos);
+un SKU tiene una sola ubicación (se guarda el pallet). Migración para bases existentes (idempotente): `psql -d sgi_oregon -f db/13_bodega_estructura.sql`
+y volver a ejecutar `db/07_rol_aplicacion.sql`. Carga la estructura inicial (2 pasillos, racks A y B en el 1 y C en el 2, de 2 pisos) y
+descarta las ubicaciones de texto libre anteriores. Las bases nuevas la traen en `db/01_modelo_datos.sql`.
+
+| Método | Ruta | Quién | |
+|---|---|---|---|
+| GET | `/api/bodega` | Administrador, Bodega | Pasillos, racks y ubicaciones con cuántos productos hay en cada una |
+| POST | `/api/bodega/pasillos` | Administrador | `{numero?}`; sin número toma el siguiente |
+| DELETE | `/api/bodega/pasillos/:n` | Administrador | 409 si hay productos ubicados |
+| POST | `/api/bodega/pasillos/:n/racks` | Administrador | `{pisos, letra?}`; sin letra toma la siguiente libre de la bodega |
+| PUT | `/api/bodega/pasillos/:n/racks/:letra` | Administrador | `{pisos}`; 409 si quita pisos con productos |
+| DELETE | `/api/bodega/pasillos/:n/racks/:letra` | Administrador | 409 si hay productos ubicados |
+
+`PUT /api/inventario/:sku/ubicacion`, el alta de producto y la descarga de camión rechazan (400) una ubicación que no exista.

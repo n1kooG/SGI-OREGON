@@ -27,9 +27,12 @@ INSERT INTO producto (sku, modelo, nombre, marca, costo_adquisicion_neto, stock_
  ('GM-566-29',    '566 29 ACC',       'Cortapelo Gama 566 29 ACC',        'GAMA',         20582, 0),
  ('GM-GCXMASTER', 'GCXMASTER',        'Cortapelo Gama GCXMaster',         'GAMA',         17641, 0);
 
+INSERT INTO bodega_pasillo (numero) VALUES (1), (2);
+INSERT INTO bodega_rack (numero_pasillo, letra, pisos) VALUES (1, 'A', 2), (1, 'B', 2), (2, 'C', 2);
+
 INSERT INTO inventario (sku, stock_fisico, ubicacion_bodega) VALUES
- ('TH-4500', 24, 'Pasillo A - Estante 2'),
- ('UT-FORNO', 4, 'Pasillo B - Estante 1'),
+ ('TH-4500', 24, 'Pasillo 1, Rack A, Piso 2'),
+ ('UT-FORNO', 4, 'Pasillo 1, Rack B, Piso 1'),
  ('GM-ELEGANCE', 0, NULL), ('GM-KERATION', 0, NULL), ('GM-COCONUT', 0, NULL),
  ('GM-INNOVA', 0, NULL),   ('GM-566-29', 0, NULL),   ('GM-GCXMASTER', 0, NULL);
 

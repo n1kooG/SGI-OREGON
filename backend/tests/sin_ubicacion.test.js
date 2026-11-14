@@ -39,7 +39,7 @@ test('sin-ubicacion: coincide con la cifra sin_ubicacion del resumen, y asignar 
   const res = async () => (await t.http('GET', '/api/inventario/resumen', t.bodega)).body.sin_ubicacion;
   const n = await total();
   assert.equal(n, await res());
-  assert.equal((await t.http('PUT', `/api/inventario/${M}-A/ubicacion`, t.bodega, { ubicacion_bodega: 'Pasillo 9' })).status, 200);
+  assert.equal((await t.http('PUT', `/api/inventario/${M}-A/ubicacion`, t.bodega, { ubicacion_bodega: 'Pasillo 1, Rack A, Piso 1' })).status, 200);
   assert.equal(await total(), n - 1);
   assert.equal(await res(), n - 1);
   assert.equal((await lista(`?q=${M}-A`)).body.total, 0);

@@ -3,6 +3,7 @@ import { conTransaccion } from '../db.js';
 import { auditar } from '../audit.js';
 import { AppError } from '../errors.js';
 import { validarUbicacion } from './inventario.js';
+import { exigirUbicacionValida } from './bodega.js';
 
 export const CANALES = ['WEB', 'MARKETPLACE', 'MAYORISTA'];
 const bad = (msg) => new AppError(400, msg, 'VALIDACION');
@@ -60,6 +61,7 @@ export async function crear(req, body = {}) {
   const ubicacion = validarUbicacion(body.ubicacion_bodega);
   try {
     await conTransaccion(async (db) => {
+      if (ubicacion) await exigirUbicacionValida(db, ubicacion);
       const nuevo = await repo.crear(db, p, ubicacion);
       await auditar(req, { idUsuario: req.usuario.id_usuario, tabla: 'producto', accion: 'CREAR', despues: { ...nuevo, ...(ubicacion && { ubicacion_bodega: ubicacion }) } }, db);
     });

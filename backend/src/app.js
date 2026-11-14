@@ -5,6 +5,7 @@ import { config } from './config.js';
 import authRouter from './routes/auth.js';
 import productosRouter from './routes/productos.js';
 import inventarioRouter from './routes/inventario.js';
+import bodegaRouter from './routes/bodega.js';
 import dashboardRouter from './routes/dashboard.js';
 import comprasRouter from './routes/compras.js';
 import pedidosRouter from './routes/pedidos.js';
@@ -27,6 +28,7 @@ export function crearApp() {
   app.use('/api/auth', authRouter);
   app.use('/api/productos', productosRouter);
   app.use('/api/inventario', inventarioRouter);
+  app.use('/api/bodega', bodegaRouter);
   app.use('/api/dashboard', dashboardRouter);
   app.use('/api/compras', comprasRouter);
   app.use('/api/pedidos', pedidosRouter);

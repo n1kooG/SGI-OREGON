@@ -28,22 +28,22 @@ after(async () => {
 });
 
 test('ubicar: Admin la fija recortada, responde sin costos y queda en la bitácora con antes/después', async () => {
-  const r = await poner(ctx.admin, SKU, '  Pasillo A - Estante 2  ');
+  const r = await poner(ctx.admin, SKU, '  Pasillo 1, Rack A, Piso 2  ');
   assert.equal(r.status, 200, JSON.stringify(r.body));
-  assert.deepEqual(r.body, { sku: SKU, ubicacion_bodega: 'Pasillo A - Estante 2' });
-  assert.equal(await ubicacion(SKU), 'Pasillo A - Estante 2');
+  assert.deepEqual(r.body, { sku: SKU, ubicacion_bodega: 'Pasillo 1, Rack A, Piso 2' });
+  assert.equal(await ubicacion(SKU), 'Pasillo 1, Rack A, Piso 2');
   const [a] = await bitacora(SKU);
   assert.equal(a.tabla_afectada, 'inventario');
   assert.equal(a.valores_anteriores.ubicacion_bodega, orig[SKU].u);
-  assert.equal(a.valores_nuevos.ubicacion_bodega, 'Pasillo A - Estante 2');
+  assert.equal(a.valores_nuevos.ubicacion_bodega, 'Pasillo 1, Rack A, Piso 2');
 });
 
 test('ubicar: sin cambio no escribe ni audita; vacío o solo espacios la quita (NULL)', async () => {
   const n = (await bitacora(SKU)).length;
-  assert.equal((await poner(ctx.admin, SKU, 'Pasillo A - Estante 2')).status, 200);
+  assert.equal((await poner(ctx.admin, SKU, 'Pasillo 1, Rack A, Piso 2')).status, 200);
   assert.equal((await bitacora(SKU)).length, n);
   for (const v of ['', '   ', null]) {
-    await poner(ctx.admin, SKU, 'X-1');
+    await poner(ctx.admin, SKU, 'Pasillo 1, Rack B, Piso 1');
     const r = await poner(ctx.admin, SKU, v);
     assert.equal(r.status, 200);
     assert.equal(r.body.ubicacion_bodega, null);
@@ -52,28 +52,31 @@ test('ubicar: sin cambio no escribe ni audita; vacío o solo espacios la quita (
 });
 
 test('ubicar: valida longitud, tipo y cuerpo; SKU inexistente = 404', async () => {
+  assert.equal((await poner(ctx.admin, SKU, 'Pasillo 1, Rack B, Piso 1')).status, 200);
   assert.equal((await poner(ctx.admin, SKU, 'x'.repeat(41))).status, 400);
-  assert.equal((await poner(ctx.admin, SKU, 'x'.repeat(40))).status, 200);
   assert.equal((await poner(ctx.admin, SKU, 123)).status, 400);
   assert.equal((await ctx.http('PUT', `/api/inventario/${SKU}/ubicacion`, ctx.admin, {})).status, 400);
   assert.equal((await poner(ctx.admin, 'NO-EXISTE-XYZ', 'A-1')).status, 404);
-  assert.equal(await ubicacion(SKU), 'x'.repeat(40)); // los rechazos no modifican nada
+  assert.equal(await ubicacion(SKU), 'Pasillo 1, Rack B, Piso 1'); // los rechazos no modifican nada
 });
 
-test('ubicar: no es inyectable (va parametrizado)', async () => {
-  const raro = `A'; DROP TABLE inventario;--`;
-  assert.equal((await poner(ctx.admin, SKU, raro)).status, 200);
-  assert.equal(await ubicacion(SKU), raro);
+test('ubicar: solo acepta ubicaciones que existen en la estructura de la bodega', async () => {
+  const antes = await ubicacion(SKU);
+  for (const v of ['Pasillo A - Estante 2', 'Pasillo 1, Rack B, Piso 3', 'Pasillo 1, Rack C, Piso 1', 'Pasillo 9, Rack A, Piso 1', 'Pasillo 1, Rack B, Piso 0',
+    'Pasillo 01, Rack B, Piso 1', `A'; DROP TABLE inventario;--`]) {
+    assert.equal((await poner(ctx.admin, SKU, v)).status, 400, v);
+  }
+  assert.equal(await ubicacion(SKU), antes);
 });
 
 test('ubicar: Bodega puede; Chofer y sin sesión no', async () => {
-  const r = await poner(ctx.bodega, SKU, 'Pasillo B');
+  const r = await poner(ctx.bodega, SKU, 'Pasillo 2, Rack C, Piso 1');
   assert.equal(r.status, 200);
   assert.deepEqual(Object.keys(r.body).sort(), ['sku', 'ubicacion_bodega']);
   assert.equal((await bitacora(SKU))[0].id_usuario, ctx.idBodega);
   assert.equal((await poner(ctx.chofer, SKU, 'Pasillo C')).status, 403);
   assert.equal((await poner(null, SKU, 'Pasillo C')).status, 401);
-  assert.equal(await ubicacion(SKU), 'Pasillo B');
+  assert.equal(await ubicacion(SKU), 'Pasillo 2, Rack C, Piso 1');
 });
 
 test('permisos: ADMINISTRADOR y BODEGA tienen inventario:ubicar; CHOFER no', async () => {
@@ -83,11 +86,11 @@ test('permisos: ADMINISTRADOR y BODEGA tienen inventario:ubicar; CHOFER no', asy
 });
 
 test('crear producto: el inventario nace con stock 0 y la ubicación opcional', async () => {
-  const cuerpo = { sku: NUEVO, modelo: 'M', nombre: 'Producto ubicado', marca: 'T', costo_adquisicion_neto: 1000, ubicacion_bodega: ' Pasillo D - Estante 1 ' };
+  const cuerpo = { sku: NUEVO, modelo: 'M', nombre: 'Producto ubicado', marca: 'T', costo_adquisicion_neto: 1000, ubicacion_bodega: ' Pasillo 2, Rack C, Piso 2 ' };
   assert.equal((await ctx.http('POST', '/api/productos', ctx.admin, { ...cuerpo, ubicacion_bodega: 'x'.repeat(41) })).status, 400);
   const r = await ctx.http('POST', '/api/productos', ctx.admin, cuerpo);
   assert.equal(r.status, 201, JSON.stringify(r.body));
-  assert.equal(r.body.ubicacion_bodega, 'Pasillo D - Estante 1');
+  assert.equal(r.body.ubicacion_bodega, 'Pasillo 2, Rack C, Piso 2');
   assert.equal(Number(r.body.stock_fisico), 0);
 });
 
@@ -107,12 +110,12 @@ test('descarga: sin ubicación no toca nada; con ubicación la guarda y audita',
   assert.equal(await ubicacion(SKU), 'Previa');
   assert.equal((await bitacora(SKU)).length, n);
 
-  const con = await descarga([{ sku: SKU, cantidad: 1, ubicacion: ' Pasillo E - Estante 3 ' }, { sku: SKU2, cantidad: 1 }]);
+  const con = await descarga([{ sku: SKU, cantidad: 1, ubicacion: ' Pasillo 1, Rack A, Piso 1 ' }, { sku: SKU2, cantidad: 1 }]);
   assert.equal(con.status, 200, JSON.stringify(con.body));
   assert.equal(con.body.estado_documento, 'CONFORME');
-  assert.equal(await ubicacion(SKU), 'Pasillo E - Estante 3');
+  assert.equal(await ubicacion(SKU), 'Pasillo 1, Rack A, Piso 1');
   assert.equal(await ubicacion(SKU2), 'Previa');
-  assert.equal((await bitacora(SKU))[0].valores_nuevos.ubicacion_bodega, 'Pasillo E - Estante 3');
+  assert.equal((await bitacora(SKU))[0].valores_nuevos.ubicacion_bodega, 'Pasillo 1, Rack A, Piso 1');
 });
 
 test('descarga: una ubicación inválida revierte toda la confirmación', async () => {
@@ -120,5 +123,5 @@ test('descarga: una ubicación inválida revierte toda la confirmación', async 
   const r = await descarga([{ sku: SKU, cantidad: 1, ubicacion: 'x'.repeat(41) }]);
   assert.equal(r.status, 400);
   assert.equal((await query(`SELECT count(*)::int n FROM audit_log WHERE accion = 'DESCARGA_CONFIRMADA' AND valores_nuevos->>'factura' = $1`, [FACTURA])).rows[0].n, antes);
-  assert.equal(await ubicacion(SKU), 'Pasillo E - Estante 3');
+  assert.equal(await ubicacion(SKU), 'Pasillo 1, Rack A, Piso 1');
 });

@@ -29,11 +29,14 @@ test('T24: Bodega ve pedidos por canal y solo los 4 estados de bodega; sin preci
 
 test('T25: detalle con checklist de ítems y ubicación; Bodega no recibe precios, el Administrador sí', async () => {
   const id = await nuevo({ lineas: [['TH-4500', 2], ['UT-FORNO', 1]] });
+  const previa = (await query(`SELECT ubicacion_bodega u FROM inventario WHERE sku = 'TH-4500'`)).rows[0].u;
+  await query(`UPDATE inventario SET ubicacion_bodega = 'Pasillo 1, Rack A, Piso 2' WHERE sku = 'TH-4500'`);
+  after(() => query(`UPDATE inventario SET ubicacion_bodega = $1 WHERE sku = 'TH-4500'`, [previa]));
   const b = await t.http('GET', `/api/pedidos/${id}`, t.bodega);
   assert.equal(b.status, 200);
   assert.equal(b.body.items.length, 2);
   assert.deepEqual(Object.keys(b.body.items[0]).sort(), ['cantidad', 'modelo', 'nombre', 'sku', 'ubicacion_bodega']);
-  assert.equal(b.body.items.find((i) => i.sku === 'TH-4500').ubicacion_bodega, 'Pasillo A - Estante 2');
+  assert.equal(b.body.items.find((i) => i.sku === 'TH-4500').ubicacion_bodega, 'Pasillo 1, Rack A, Piso 2');
   const a = await t.http('GET', `/api/pedidos/${id}`, t.admin);
   assert.equal(Number(a.body.items[0].precio_unitario), 5000);
   assert.equal((await t.http('GET', '/api/pedidos/999999999', t.bodega)).status, 404);

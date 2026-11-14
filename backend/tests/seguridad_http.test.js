@@ -35,6 +35,8 @@ const MATRIZ = [
   ['PATCH', `/api/despachos/${NOEXISTE}`, ['chofer'], { estado: 'ENTREGADO' }],
   ['POST', `/api/despachos/${NOEXISTE}/reingresar`, ['admin', 'bodega']],
   ['GET', '/api/inventario/sin-ubicacion', ['admin', 'bodega']],
+  ['GET', '/api/bodega', ['admin', 'bodega']],
+  ['DELETE', '/api/bodega/pasillos/99', ['admin']],
   ['GET', '/api/inventario/resumen', ['admin', 'bodega']],
   ['PUT', '/api/inventario/ZZ-NO-EXISTE/ubicacion', ['admin', 'bodega'], { ubicacion_bodega: 'A1' }],
   ['GET', '/api/compras/recepciones', ['admin']],

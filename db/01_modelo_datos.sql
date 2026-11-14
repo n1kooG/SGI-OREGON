@@ -80,8 +80,19 @@ CREATE TABLE inventario (
                    REFERENCES producto (sku) ON UPDATE RESTRICT ON DELETE RESTRICT,
   stock_fisico     INTEGER     NOT NULL DEFAULT 0 CHECK (stock_fisico >= 0), -- nunca negativo (PU-05)
   stock_reservado  INTEGER     NOT NULL DEFAULT 0 CHECK (stock_reservado >= 0),
-  ubicacion_bodega VARCHAR(40),                                             -- "Pasillo A - Estante 2"
+  ubicacion_bodega VARCHAR(40),                                             -- "Pasillo 1, Rack B, Piso 2" (ver bodega_rack)
   CONSTRAINT ck_reservado_menor_fisico CHECK (stock_reservado <= stock_fisico)
+);
+
+-- Estructura de la bodega (la ubicación de un SKU debe existir aquí; la valida la API). Ver db/13_bodega_estructura.sql.
+CREATE TABLE bodega_pasillo (
+  numero SMALLINT PRIMARY KEY CHECK (numero BETWEEN 1 AND 99)
+);
+CREATE TABLE bodega_rack (
+  numero_pasillo SMALLINT NOT NULL REFERENCES bodega_pasillo (numero) ON UPDATE RESTRICT ON DELETE RESTRICT,
+  letra          CHAR(1)  NOT NULL CHECK (letra ~ '^[A-Z]$'),
+  pisos          SMALLINT NOT NULL CHECK (pisos BETWEEN 1 AND 10),
+  PRIMARY KEY (numero_pasillo, letra)
 );
 
 CREATE TABLE lista_precio (

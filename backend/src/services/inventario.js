@@ -2,6 +2,7 @@ import * as repo from '../repositories/inventario.js';
 import { conTransaccion } from '../db.js';
 import { auditar } from '../audit.js';
 import { AppError } from '../errors.js';
+import { exigirUbicacionValida } from './bodega.js';
 
 export const resumen = () => repo.resumen();
 
@@ -19,7 +20,7 @@ export async function sinUbicacion({ limite, pagina, q } = {}) {
   return { total: filas[0]?.total ?? 0, pagina: p, limite: l, items: filas.map(({ total, ...f }) => f) };
 }
 
-// Texto recortado de hasta 40 caracteres; vacío o solo espacios = quitar la ubicación (NULL).
+// Texto recortado de hasta 40 caracteres (luego se comprueba contra la estructura de la bodega); vacío o solo espacios = quitar la ubicación (NULL).
 export function validarUbicacion(v) {
   if (v === null || v === undefined) return null;
   if (typeof v !== 'string') throw new AppError(400, 'La ubicación debe ser texto', 'VALIDACION');
@@ -33,6 +34,7 @@ export async function ubicarEn(client, req, sku, valor) {
   const ubicacion = validarUbicacion(valor);
   const antes = await repo.ubicacionActual(sku, client);
   if (antes === undefined) throw new AppError(404, `Producto sin inventario: ${sku}`, 'NO_ENCONTRADO');
+  if (ubicacion) await exigirUbicacionValida(client, ubicacion);
   if (antes !== ubicacion) {
     await repo.fijarUbicacion(sku, ubicacion, client);
     await auditar(req, { idUsuario: req.usuario.id_usuario, tabla: 'inventario', accion: 'UBICACION',
