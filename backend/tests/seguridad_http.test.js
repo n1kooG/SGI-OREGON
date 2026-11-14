@@ -18,7 +18,6 @@ const MATRIZ = [
   ['GET', '/api/pedidos/resumen', ['admin', 'bodega']],
   ['GET', `/api/pedidos/${NOEXISTE}`, ['admin', 'bodega']],
   ['GET', `/api/pedidos/${NOEXISTE}/etiqueta`, ['admin', 'bodega']],
-  ['POST', '/api/pedidos/etiquetas', ['admin']],
   ['PUT', `/api/pedidos/${NOEXISTE}/etiqueta`, ['admin']],
   ['DELETE', `/api/pedidos/${NOEXISTE}/etiqueta`, ['admin']],
   ['PATCH', `/api/pedidos/${NOEXISTE}/documento`, ['admin'], { numero_documento: '1' }],

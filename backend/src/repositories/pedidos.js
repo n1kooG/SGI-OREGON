@@ -130,13 +130,7 @@ export const documentoActual = async (c, id) => {
 };
 export const fijarDocumento = (c, id, numero) => c.query(`UPDATE orden_venta SET numero_documento_sii = $2 WHERE id_orden = $1`, [id, numero]);
 
-// Etiquetas importadas. La coincidencia con el N° de orden del marketplace usa la misma normalización que `normalizarCodigo` (pdf/leerOrden.js).
-// shortcut: recorre orden_venta sin índice funcional; suficiente para el volumen de la tienda, indexar si crece a cientos de miles de pedidos.
-const NORM_CODIGO_SQL = `regexp_replace(regexp_replace(upper(codigo_externo), '\\s+', '', 'g'), '^(#|ORD-?)*0*', '')`;
-export async function buscarPorCodigo(norm) {
-  const { rows } = await query(`SELECT id_orden, codigo_externo, (url_etiqueta IS NOT NULL) AS tiene_etiqueta FROM orden_venta WHERE ${NORM_CODIGO_SQL} = $1 LIMIT 2`, [norm]);
-  return rows;
-}
+// Etiquetas asignadas a mano.
 // Bloquea la orden y devuelve su etiqueta actual (o null si el pedido no existe).
 export async function etiquetaActual(c, id) {
   const { rows } = await c.query(`SELECT codigo_externo, url_etiqueta, etiqueta_nombre_archivo FROM orden_venta WHERE id_orden = $1 FOR UPDATE`, [id]);

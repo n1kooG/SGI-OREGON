@@ -115,8 +115,7 @@ anteriores quedan sin etiqueta.
 
 | Método y ruta | Permiso | Cuerpo → respuesta |
 |---|---|---|
-| `POST /api/pedidos/etiquetas` | `pedidos:etiquetas` (ADMIN) | multipart, campo `archivos` repetido (hasta 100 PDF de ≤ 2 MB). Lee el «Nº de orden» de cada PDF y lo busca en `codigo_externo` (sin espacios, mayúsculas, sin `#`/`ORD-` ni ceros iniciales). → 200 `{ total, resultados: [{ archivo, estado, id_orden?, codigo_externo?, motivo? }] }` con `estado` = `ASOCIADA` \| `REEMPLAZADA` \| `NO_RECONOCIDA` (sin N° de orden legible) \| `PEDIDO_NO_ENCONTRADO` (sin pedido, o más de uno) \| `INVALIDO` (no es PDF, vacío, > 2 MB, ilegible). Un archivo malo no aborta el lote. 400 sin archivos o con más de 100; 413 si un archivo supera 3 MB; audita `ETIQUETA_IMPORTADA` por asociación |
-| `PUT /api/pedidos/:id/etiqueta` | `pedidos:etiquetas` (ADMIN) | multipart, campo `archivo` (un PDF): asigna a mano sin leer su texto. → `{ id_orden, estado: "ASOCIADA" \| "REEMPLAZADA", etiqueta_nombre_archivo, etiqueta_importada_en }`. 400 `ARCHIVO_INVALIDO`, 404; audita `ETIQUETA_IMPORTADA` con `manual: true` |
+| `PUT /api/pedidos/:id/etiqueta` | `pedidos:etiquetas` (ADMIN) | multipart, campo `archivo` (un PDF de ≤ 2 MB): el administrador lo asigna a mano al pedido (las etiquetas las genera cada marketplace; el sistema no las lee ni las asocia solo). → `{ id_orden, estado: "ASOCIADA" \| "REEMPLAZADA", etiqueta_nombre_archivo, etiqueta_importada_en }`. 400 `ARCHIVO_INVALIDO`, 404; audita `ETIQUETA_IMPORTADA` con `manual: true` |
 | `DELETE /api/pedidos/:id/etiqueta` | `pedidos:etiquetas` (ADMIN) | → `{ id_orden }`; borra el archivo y limpia las columnas. 404 `SIN_ETIQUETA` / `NO_ENCONTRADO`; audita `ETIQUETA_ELIMINADA` |
 | `GET /api/pedidos/:id/etiqueta` | `pedidos:preparar` o `pedidos:leer` | → PDF (`application/pdf`, `attachment; filename="etiqueta_<codigo_externo>.pdf"`). 404 `SIN_ETIQUETA` si el pedido no tiene; audita `ETIQUETA` |
 
@@ -126,7 +125,6 @@ anteriores quedan sin etiqueta.
 Almacenamiento: con S3 activo el PDF queda en `etiquetas/<id_orden>.pdf` (clave determinista, reemplaza la anterior). Con
 `STORAGE_ENABLED=false` (desarrollo) se guarda en disco en `ETIQUETAS_DIR` (por defecto `backend/storage-local/etiquetas/`, ignorado
 por git) como `<id_orden>.pdf`. El nombre del archivo subido solo se guarda como texto (sin rutas); nunca forma parte de una ruta.
-Para reconocer otro marketplace se agrega un patrón a `PATRONES_ORDEN` en `src/pdf/leerOrden.js`.
 
 ## Reprogramar entrega, ruta con paradas programadas y productos sin ubicación
 

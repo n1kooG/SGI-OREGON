@@ -6,9 +6,9 @@ import { IcoPdf, IcoSubir } from './etiquetaComun.jsx';
 const MAX_ARCHIVOS = 100;
 const MAX_BYTES = 2 * 1024 * 1024;
 // Los que necesitan una acción de la jefatura van primero.
-const PRIORIDAD = { NO_RECONOCIDA: 0, PEDIDO_NO_ENCONTRADO: 1, INVALIDO: 2, ASOCIADA: 3, REEMPLAZADA: 4 };
+const PRIORIDAD = { POR_ASIGNAR: 0, INVALIDO: 1, ASOCIADA: 3, REEMPLAZADA: 4 };
 const necesitaAccion = (r) => PRIORIDAD[r.estado] < 3;
-const ROTULO = { NO_RECONOCIDA: ['aviso', 'No reconocida'], PEDIDO_NO_ENCONTRADO: ['mal', 'Pedido no encontrado'], INVALIDO: ['mal', 'Archivo inválido'], REEMPLAZADA: ['info', 'Reemplazada'] };
+const ROTULO = { POR_ASIGNAR: ['aviso', 'Por asignar'], INVALIDO: ['mal', 'Archivo inválido'], REEMPLAZADA: ['info', 'Reemplazada'] };
 const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
 
 // Misma regla que el servidor, para no subir lo que sabemos que va a rechazar.
@@ -75,7 +75,7 @@ function FilaArchivo({ r, pedidos, archivo, onAsignada }) {
   const [tono, rotulo] = ROTULO[r.estado] ?? ['ok', `Asociada a #${r.codigo_externo}`];
   const mensaje = r.estado === 'ASOCIADA' ? (ped ? `Pedido de ${ped.nombre_cliente} · ${ped.comuna ?? 'Sin comuna'}` : `Pedido #${r.codigo_externo}`)
     : r.estado === 'REEMPLAZADA' ? 'Reemplazó la etiqueta anterior de este pedido.'
-    : r.motivo;
+    : r.estado === 'POR_ASIGNAR' ? 'Elige el pedido al que pertenece esta etiqueta.' : r.motivo;
   return (
     <li className="etq-archivo">
       <div className="etq-fila">
@@ -83,7 +83,7 @@ function FilaArchivo({ r, pedidos, archivo, onAsignada }) {
         <div className="etq-texto"><span className="dato">{r.archivo}</span><span>{mensaje}</span></div>
         <span className={`badge ${tono}`}>{rotulo}</span>
       </div>
-      {r.estado === 'NO_RECONOCIDA' && (
+      {r.estado === 'POR_ASIGNAR' && (
         <div className="etq-asignar">
           <div className="etq-asignar-fila">
             <SelectorPedido pedidos={pedidos} valor={pedido} onElegir={setPedido} />
@@ -100,30 +100,19 @@ function FilaArchivo({ r, pedidos, archivo, onAsignada }) {
 export default function ImportarEtiquetas({ pedidos, onClose, onCambio }) {
   const entrada = useRef(null);
   const archivos = useRef(new Map()); // nombre → File: «Asignar» reenvía el mismo archivo sin pedirlo otra vez
-  const [fase, setFase] = useState('elegir'); // elegir | enviando | resultado
+  const [fase, setFase] = useState('elegir'); // elegir | resultado
   const [arrastrando, setArrastrando] = useState(false);
   const [resultados, setResultados] = useState([]);
   const [error, setError] = useState('');
-  const [enviados, setEnviados] = useState(0);
 
-  async function procesar(lista) {
+  // Las etiquetas las genera cada marketplace y se asignan a mano: aquí solo se revisan y queda cada una por asignar.
+  function procesar(lista) {
     setError('');
     if (!lista.length) return;
     if (lista.length > MAX_ARCHIVOS) return setError(`Seleccionaste ${lista.length} archivos: el máximo por carga es ${MAX_ARCHIVOS}.`);
-    const locales = [], validos = [];
-    for (const f of lista) { const m = invalido(f); (m ? locales.push({ archivo: f.name, estado: 'INVALIDO', motivo: m }) : validos.push(f)); }
-    archivos.current = new Map(validos.map((f) => [f.name, f]));
-    setEnviados(validos.length); setFase('enviando');
-    let remotos = [];
-    if (validos.length) {
-      try {
-        const f = new FormData();
-        validos.forEach((a) => f.append('archivos', a));
-        remotos = (await api('/pedidos/etiquetas', { metodo: 'POST', cuerpo: f })).data.resultados;
-        onCambio();
-      } catch (e) { setError(mensajeError(e)); return setFase('elegir'); }
-    }
-    setResultados([...locales, ...remotos].sort((a, b) => PRIORIDAD[a.estado] - PRIORIDAD[b.estado]));
+    const nuevos = lista.map((f) => { const m = invalido(f); return m ? { archivo: f.name, estado: 'INVALIDO', motivo: m } : { archivo: f.name, estado: 'POR_ASIGNAR' }; });
+    archivos.current = new Map(lista.map((f) => [f.name, f]));
+    setResultados(nuevos.sort((a, b) => PRIORIDAD[a.estado] - PRIORIDAD[b.estado]));
     setFase('resultado');
   }
   const elegidos = (e) => { procesar([...e.target.files]); e.target.value = ''; };
@@ -132,7 +121,7 @@ export default function ImportarEtiquetas({ pedidos, onClose, onCambio }) {
 
   const pendientes = resultados.filter(necesitaAccion).length;
   const cuenta = (e) => resultados.filter((r) => r.estado === e).length;
-  const resumen = [cuenta('ASOCIADA') && plural(cuenta('ASOCIADA'), 'asociada', 'asociadas'), cuenta('REEMPLAZADA') && plural(cuenta('REEMPLAZADA'), 'reemplazada', 'reemplazadas'), pendientes && `${pendientes} sin asociar`].filter(Boolean).join(' · ');
+  const resumen = [cuenta('ASOCIADA') && plural(cuenta('ASOCIADA'), 'asociada', 'asociadas'), cuenta('REEMPLAZADA') && plural(cuenta('REEMPLAZADA'), 'reemplazada', 'reemplazadas'), pendientes && `${pendientes} por asignar`].filter(Boolean).join(' · ');
 
   const pie = fase === 'resultado'
     ? <><Boton onClick={() => setFase('elegir')}><IcoSubir />Importar más</Boton><Boton variante="primario" onClick={onClose} data-inicial>Listo</Boton></>
@@ -140,23 +129,13 @@ export default function ImportarEtiquetas({ pedidos, onClose, onCambio }) {
 
   return (
     <Modal className="modal-etq" titulo="Importar etiquetas" onClose={onClose} pie={pie}
-      subtitulo={fase === 'resultado' ? 'Resultado de la última carga. Revisa los archivos que necesitan acción.' : 'Sube los PDF que exportaste desde cada marketplace.'}>
+      subtitulo={fase === 'resultado' ? 'Asigna cada etiqueta a su pedido.' : 'Sube los PDF que descargaste de cada marketplace y asígnalos a sus pedidos.'}>
       {fase !== 'resultado' && (
         <div className={`etq-zona ${arrastrando ? 'sobre' : ''}`} onDragOver={(e) => { e.preventDefault(); setArrastrando(true); }} onDragLeave={() => setArrastrando(false)} onDrop={soltados}>
           <span className="etq-icono grande"><IcoPdf /></span>
-          {fase === 'enviando' ? (
-            <div role="status" aria-live="polite" className="etq-progreso">
-              <h3>Importando {plural(enviados, 'archivo', 'archivos')}…</h3>
-              <p>Leyendo el N° de orden de cada PDF. No cierres esta ventana.</p>
-              <progress aria-label="Importando etiquetas" />
-            </div>
-          ) : (
-            <>
-              <h3>Arrastra los PDF de etiquetas de tus marketplaces o selecciónalos</h3>
-              <p>Se asocian solos por el N° de orden que lee el sistema dentro del PDF. Máx. 100 archivos de 2 MB.</p>
-              <Boton variante="primario" data-inicial onClick={() => entrada.current.click()}><IcoSubir />Seleccionar archivos</Boton>
-            </>
-          )}
+          <h3>Arrastra los PDF de etiquetas de tus marketplaces o selecciónalos</h3>
+          <p>Después eliges a qué pedido pertenece cada una. Máx. 100 archivos de 2 MB.</p>
+          <Boton variante="primario" data-inicial onClick={() => entrada.current.click()}><IcoSubir />Seleccionar archivos</Boton>
           <input ref={entrada} type="file" multiple accept="application/pdf,.pdf" hidden onChange={elegidos} />
         </div>
       )}
@@ -167,7 +146,7 @@ export default function ImportarEtiquetas({ pedidos, onClose, onCambio }) {
             <span className={`etq-check ${pendientes ? 'pend' : ''}`}><Icono n="check" /></span>
             <strong>{resumen || 'Sin archivos procesados'}</strong>
           </div>
-          <p className="etq-nota">{plural(resultados.length, 'archivo procesado', 'archivos procesados')}, primero los que necesitan atención.</p>
+          <p className="etq-nota">{plural(resultados.length, 'archivo procesado', 'archivos procesados')}, primero los que faltan por asignar.</p>
           <ul className="etq-lista">
             {resultados.map((r) => <FilaArchivo key={r.archivo} r={r} pedidos={pedidos} archivo={archivos.current.get(r.archivo)} onAsignada={actualizar} />)}
           </ul>

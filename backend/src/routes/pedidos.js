@@ -38,15 +38,14 @@ router.post('/importaciones', autenticar, importar, conArchivo, ah(async (req, r
   res.status(201).json(await imp.importar(req, req.file.buffer, req.file.originalname, req.body?.canal));
 }));
 
-// Etiquetas PDF exportadas del marketplace. El tope por archivo es holgado a propósito: los PDF de más de 2 MB se informan como INVALIDO en el lote sin abortarlo.
-const subidaPdf = multer({ storage: multer.memoryStorage(), limits: { fileSize: 3 * 1024 * 1024, files: etq.MAX_ARCHIVOS, fields: 5, parts: etq.MAX_ARCHIVOS + 10 } });
-const conPdf = (campo, varios) => (req, res, next) => (varios ? subidaPdf.array(campo, etq.MAX_ARCHIVOS) : subidaPdf.single(campo))(req, res, (e) => {
+// Etiqueta PDF del marketplace, de a un archivo (se asigna a mano a un pedido).
+const subidaPdf = multer({ storage: multer.memoryStorage(), limits: { fileSize: 3 * 1024 * 1024, files: 1, fields: 5, parts: 10 } });
+const conPdf = (campo) => (req, res, next) => subidaPdf.single(campo)(req, res, (e) => {
   if (!e) return next();
   const grande = e.code === 'LIMIT_FILE_SIZE';
-  next(e instanceof AppError ? e : new AppError(grande ? 413 : 400, grande ? 'Un archivo supera el tamaño máximo' : e.code === 'LIMIT_FILE_COUNT' || e.code === 'LIMIT_UNEXPECTED_FILE' ? `Máximo ${etq.MAX_ARCHIVOS} archivos por solicitud` : 'Archivos inválidos', 'ARCHIVO_INVALIDO'));
+  next(e instanceof AppError ? e : new AppError(grande ? 413 : 400, grande ? 'Un archivo supera el tamaño máximo' : e.code === 'LIMIT_FILE_COUNT' || e.code === 'LIMIT_UNEXPECTED_FILE' ? 'Sube un solo archivo por solicitud' : 'Archivos inválidos', 'ARCHIVO_INVALIDO'));
 });
 const etiquetas = requierePermiso('pedidos:etiquetas');
-router.post('/etiquetas', autenticar, etiquetas, conPdf('archivos', true), ah(async (req, res) => res.json(await etq.importar(req, req.files))));
 
 // HU05 / CU-10 (Bodega) y CU-06 (Administrador). `:id` numérico para no chocar con /importaciones/*.
 const id = (req) => Number(req.params.id);
@@ -67,7 +66,7 @@ router.get('/:id(\\d+)/etiqueta', autenticar, ver, ah(async (req, res) => {
     'Cache-Control': 'private, no-store',
   }).type('application/pdf').send(pdf);
 }));
-router.put('/:id(\\d+)/etiqueta', autenticar, etiquetas, conPdf('archivo', false), ah(async (req, res) => res.json(await etq.asignar(req, id(req), req.file))));
+router.put('/:id(\\d+)/etiqueta', autenticar, etiquetas, conPdf('archivo'), ah(async (req, res) => res.json(await etq.asignar(req, id(req), req.file))));
 router.delete('/:id(\\d+)/etiqueta', autenticar, etiquetas, ah(async (req, res) => res.json(await etq.quitar(req, id(req)))));
 router.patch('/:id(\\d+)/documento', autenticar, requierePermiso('pedidos:documentar'), ah(async (req, res) => res.json(await svc.documentar(req, id(req), req.body?.numero_documento))));
 router.post('/:id(\\d+)/asignar-chofer', autenticar, requierePermiso('pedidos:asignar_chofer'), ah(async (req, res) => res.json(await svc.asignarChofer(req, id(req), req.body?.id_chofer))));
