@@ -1,30 +1,94 @@
-/* Selector Pasillo → Rack → Piso */
-.sel-ubi { display: flex; flex-direction: column; gap: 10px; }
-.sel-ubi-nivel > span { display: block; font: 500 12px/16px var(--f-ui, Inter, sans-serif); color: var(--ink-2); margin-bottom: 4px; }
-.sel-ubi-nivel > div { display: flex; flex-wrap: wrap; gap: 6px; }
-.sel-ubi-nivel em { font-size: 13px; color: var(--ink-3); font-style: normal; }
-.sel-ubi-chip { height: 38px; min-width: 64px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font-weight: 500; cursor: pointer; }
-.sel-ubi-chip.activo { background: var(--accent-ink); border-color: var(--accent-ink); color: var(--on-dark); }
-.sel-ubi-chip:disabled { opacity: .45; cursor: not-allowed; }
-.sel-ubi-vista { display: flex; align-items: center; gap: 8px; margin: 2px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--accent-soft); color: var(--accent-ink); font: 500 14px/20px var(--f-dato, monospace); }
-.sel-ubi-vista.vacia { background: var(--bg); color: var(--ink-3); }
+/* Estructura de la bodega: medidas tomadas del diseño de Figma («Oregón · Flujos — Estructura de bodega»). */
 
-/* Administrador · Bodega */
-.bodega-adm .resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 16px 0 20px; }
-.bodega-adm .resumen > div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
-.bodega-adm .resumen strong { display: block; font: 500 26px/32px Poppins, sans-serif; }
-.bodega-adm .resumen span { font-size: 13px; color: var(--ink-3); }
-.bodega-adm .pasillo { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; }
-.bodega-adm .pasillo-cab { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; }
-.bodega-adm .pasillo-cab h2 { margin: 0; font: 500 18px/24px Poppins, sans-serif; }
-.bodega-adm .racks { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
-.bodega-adm .rack { border: 1px solid var(--line-strong); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-.bodega-adm .rack-cab { display: flex; justify-content: space-between; align-items: center; }
-.bodega-adm .rack-cab strong { font: 500 16px/22px Poppins, sans-serif; }
-.bodega-adm .piso { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 8px; background: var(--bg); font: 400 13px/18px var(--f-dato, monospace); }
-.bodega-adm .rack-pie { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.bodega-adm .stepper { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
-.bodega-adm .rack-nuevo { border: 1.5px dashed var(--line-strong); background: none; border-radius: 12px; min-height: 120px; color: var(--ink-2); cursor: pointer; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 8px; }
+/* Insignias del diseño */
+.bd { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 3px 8px; border-radius: 6px; background: var(--line); color: var(--ink-2); font: 500 12px/16px var(--f-ui); white-space: nowrap; flex: none; }
+.bd.info { background: var(--teal-soft); color: var(--teal-ink); }
+.bd.info::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* ───── Administrador · Bodega ───── */
+.bodega-adm { display: flex; flex-direction: column; gap: 28px; }
+.bodega-adm .cab-bodega { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.bodega-adm .cab-bodega h1 { font: 500 30px/45px var(--f-titulo); letter-spacing: 0; margin: 0; }
+.bodega-adm .cab-bodega p { margin: 6px 0 0; font: 400 14px/17px var(--f-ui); color: var(--ink-3); }
+.bodega-adm .resumen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 0; }
+.bodega-adm .dato-res { display: flex; flex-direction: column; gap: 6px; padding: 16px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.bodega-adm .dato-res > span { font: 500 11px/13px var(--f-ui); color: var(--ink-3); letter-spacing: .08em; text-transform: uppercase; }
+.bodega-adm .dato-res > div { display: flex; align-items: center; gap: 12px; height: 42px; }
+.bodega-adm .dato-res strong { font: 500 28px/42px var(--f-titulo); color: var(--ink); }
+.bodega-adm .dato-res.alerta-sin strong, .bodega-adm .dato-res a { color: var(--accent-ink); }
+.bodega-adm .dato-res a { font: 500 13px/16px var(--f-ui); text-decoration: none; }
+
+.bodega-adm .pasillo { display: flex; flex-direction: column; gap: 16px; padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; margin: 0; }
+.bodega-adm .pasillo-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; }
+.bodega-adm .pasillo-cab > div { display: flex; align-items: center; gap: 12px; }
+.bodega-adm .pasillo-cab h2 { font: 500 22px/33px var(--f-titulo); margin: 0; }
+.bodega-adm .enlace-peligro { display: block; padding: 0; border: 0; background: none; color: var(--danger); font: 500 13px/16px var(--f-ui); cursor: pointer; }
+.bodega-adm .enlace-peligro:hover { text-decoration: underline; }
+.bodega-adm .racks { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; align-items: stretch; }
+.bodega-adm .rack { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; }
+.bodega-adm .rack-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.bodega-adm .rack-cab h3 { font: 500 18px/27px var(--f-titulo); margin: 0; }
+.bodega-adm .rack-cab p { margin: 2px 0 0; font: 400 13px/16px var(--f-ui); color: var(--ink-3); }
+.bodega-adm .pisos-ctl { display: inline-flex; align-items: center; height: 32px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; }
+.bodega-adm .pisos-ctl button { width: 30px; height: 30px; display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--ink-2); font: 500 14px/17px var(--f-ui); cursor: pointer; }
+.bodega-adm .pisos-ctl button:disabled { opacity: .4; cursor: not-allowed; }
+.bodega-adm .pisos-ctl output { width: 30px; text-align: center; font: 500 14px/18px var(--f-dato); color: var(--ink); }
+.bodega-adm .pisos-rack { display: flex; flex-direction: column; gap: 8px; }
+.bodega-adm .piso { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; }
+.bodega-adm .piso > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.bodega-adm .piso b { font: 500 14px/17px var(--f-ui); color: var(--ink); }
+.bodega-adm .piso small { font: 400 11px/15px var(--f-dato); color: var(--ink-3); overflow-wrap: anywhere; }
+.bodega-adm .base-rack { height: 6px; border-radius: 3px; background: var(--nav); }
+.bodega-adm .rack-nuevo { display: flex; align-items: center; justify-content: center; min-height: 120px; border: 1.5px dashed var(--line-strong); border-radius: 12px; background: none; color: var(--accent-ink); font: 500 14px/17px var(--f-ui); cursor: pointer; }
 .bodega-adm .rack-nuevo:hover { background: var(--bg); }
-.bodega-adm .lista-skus { margin: 10px 0 0; padding-left: 18px; font: 400 13px/20px var(--f-dato, monospace); }
+
+/* ───── Modales de Bodega (520 px, relleno 28, radio 18, separación 20) ───── */
+.s1 .modal.modal-bodega { max-width: 520px; padding: 28px; gap: 20px; border-radius: 18px; }
+.s1 .modal.modal-bodega:not(.lado) .modal-cab { padding: 0; align-items: flex-start; }
+.s1 .modal.modal-bodega:not(.lado) .modal-cab h2 { font: 500 24px/36px var(--f-titulo); letter-spacing: 0; }
+.s1 .modal.modal-bodega:not(.lado) .modal-cab p { margin: 4px 0 0; font: 400 13px/16px var(--f-ui); color: var(--ink-3); }
+.s1 .modal.modal-bodega:not(.lado) .modal-cab .btn.icono-solo { width: 36px; height: 36px; border: 1px solid var(--line-strong); border-radius: 8px; color: var(--ink-2); }
+.s1 .modal.modal-bodega:not(.lado) .modal-cuerpo { padding: 0; display: flex; flex-direction: column; gap: 20px; overflow: visible; }
+.s1 .modal.modal-bodega:not(.lado) .modal-pie { padding: 0; gap: 12px; }
+.s1 .modal.modal-bodega:not(.lado) .modal-pie .btn { height: 40px; }
+
+.aviso-rechazo { display: flex; flex-direction: column; gap: 4px; padding: 16px; background: var(--danger-bg); border-radius: 12px; }
+.aviso-rechazo strong { font: 500 14px/17px var(--f-ui); color: var(--danger); }
+.aviso-rechazo span { font: 400 13px/16px var(--f-ui); color: var(--ink-2); }
+.productos-ocupados { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 12px; }
+.productos-ocupados li { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
+.productos-ocupados b { flex: none; width: 120px; font: 500 13px/17px var(--f-dato); color: var(--ink); overflow-wrap: anywhere; }
+.productos-ocupados span { font: 400 14px/17px var(--f-ui); color: var(--ink-2); }
+
+.modal-bodega .campo { margin: 0; gap: 6px; }
+.modal-bodega .campo > label { font: 500 12px/15px var(--f-ui); color: var(--ink-2); }
+.modal-bodega .campo .ayuda, .modal-bodega .ayuda { font: 400 12px/15px var(--f-ui); color: var(--ink-3); }
+.modal-bodega .campo .entrada { height: 44px; padding: 0 14px; border-radius: 10px; font: 400 14px/17px var(--f-ui); color: var(--ink); }
+.modal-bodega [data-letra] { font-family: var(--f-dato); }
+.modal-bodega .fila-letra-pisos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.stepper-pisos { display: flex; align-items: center; height: 44px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; }
+.stepper-pisos button { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--ink-2); font: 500 16px/19px var(--f-ui); cursor: pointer; }
+.stepper-pisos button:disabled { opacity: .4; cursor: not-allowed; }
+.stepper-pisos output { flex: 1; text-align: center; font: 500 16px/21px var(--f-dato); color: var(--ink); }
+.vista-previa { display: flex; flex-direction: column; gap: 10px; padding: 16px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; }
+.vista-previa > span { font: 500 11px/13px var(--f-ui); color: var(--ink-3); letter-spacing: .08em; text-transform: uppercase; }
+.vista-previa div { padding: 8px 12px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; font: 400 13px/17px var(--f-dato); color: var(--ink); }
+
+/* ───── Selector Pasillo → Rack → Piso ───── */
+.sel-ubi { display: flex; flex-direction: column; gap: 12px; }
+.sel-ubi-titulo { font: 500 12px/15px var(--f-ui); color: var(--ink-2); }
+.sel-ubi-nivel { display: flex; flex-direction: column; gap: 6px; }
+.sel-ubi-nivel > span { font: 500 11px/13px var(--f-ui); color: var(--ink-3); letter-spacing: .08em; text-transform: uppercase; }
+.sel-ubi-nivel > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.sel-ubi-chip { width: 52px; height: 48px; padding: 0; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font: 400 16px/21px var(--f-dato); cursor: pointer; }
+.sel-ubi-chip.activo { background: #fff1eb; border: 2px solid var(--accent); color: var(--accent-ink); font-weight: 500; }
+.sel-ubi-chip:disabled { opacity: .6; color: var(--line-strong); cursor: not-allowed; }
+.sel-ubi-vista { display: flex; align-items: center; margin: 0; padding: 12px 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; color: var(--ink); font: 500 13px/17px var(--f-dato); }
+.sel-ubi-vista.vacia { color: var(--ink-3); font: 400 13px/16px var(--f-ui); }
+.sel-ubi-ayuda { margin: 0; font: 400 12px/15px var(--f-ui); color: var(--ink-2); }
+
+@media (max-width: 900px) {
+  .bodega-adm .resumen { grid-template-columns: repeat(2, 1fr); }
+  .bodega-adm .cab-bodega { flex-wrap: wrap; }
+}
 .grid2 > .ancho-completo { grid-column: 1 / -1; }

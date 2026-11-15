@@ -164,7 +164,7 @@ function Conteo({ factura: f, onVolver, onListo, esc }) {
                 <button type="button" className="mas" aria-label={`Sumar una unidad de ${l.sku}`} onClick={() => cuenta(i, l.contada + 1)}><Icono n="plus" /></button>
               </div>
             </div>
-            <div className="campo-ubi"><span>Ubicación (opcional)</span>
+            <div className="campo-ubi">
               <SelectorUbicacion etiqueta={`Ubicación de ${l.sku}`} valor={l.ubi} onChange={(v) => poner(i, 'ubi', v)} />
             </div>
           </article>
@@ -244,7 +244,7 @@ function Manual({ onVolver }) {
             <Campo etiqueta="SKU" value={b.sku} onChange={setB(i, 'sku')} onBlur={() => precargar(i)} required />
             <Campo etiqueta="Cantidad" type="number" inputMode="numeric" min="0" step="1" value={b.cantidad} onChange={setB(i, 'cantidad')} required />
             <Boton className="icono-solo" aria-label="Quitar bulto" icono="x" disabled={bultos.length === 1} onClick={() => setBultos(bultos.filter((_, j) => j !== i))} />
-            <div className="campo bulto-ubi"><label>Ubicación (opcional)</label><SelectorUbicacion key={b.ubi0} valor={b.ubi} onChange={(v) => setBultos((bs) => bs.map((x, j) => (j === i ? { ...x, ubi: v } : x)))} /></div>
+            <div className="campo bulto-ubi"><SelectorUbicacion etiqueta="Ubicación (opcional)" key={b.ubi0} valor={b.ubi} onChange={(v) => setBultos((bs) => bs.map((x, j) => (j === i ? { ...x, ubi: v } : x)))} /></div>
           </div>
         ))}
         <Boton icono="plus" onClick={() => setBultos([...bultos, fila()])}>Agregar SKU</Boton>

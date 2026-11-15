@@ -69,7 +69,7 @@
 /* Buscador: campo de ubicación en línea (móvil y escritorio) */
 .editor-ubi { display: contents; }
 .campo-ubicacion .icono { width: 16px; height: 16px; flex: none; color: var(--ink-3); }
-.acciones-ubi .btn.primario:disabled, .movil.bodega .acciones-ubi .btn.primario:disabled { opacity: 1; background: var(--bg); border: 1px dashed var(--line-strong); color: var(--ink-3); }
+.acciones-ubi .btn.primario:disabled, .movil.bodega .acciones-ubi .btn.primario:disabled { opacity: .45; }
 
 /* Buscador: sección «Sin ubicación» */
 .bs-sin-sec { display: flex; flex-direction: column; gap: 8px; }
@@ -91,7 +91,7 @@
 .tarjeta-sin .marca-fila { margin: 0; align-items: baseline; }
 .tarjeta-sin .btn, .tarjeta-sin .editor-ubi { width: 100%; }
 .tarjeta-sin > .btn { height: 44px; font-weight: 500; }
-.tarjeta-sin .acciones-ubi .btn { height: 44px; }
+.tarjeta-sin .acciones-ubi .btn { height: 50px; }
 .tarjeta-sin .ayuda { font-size: 13px; line-height: 18px; }
 .tarjeta-sin .campo-ubicacion { height: 44px; margin-bottom: 4px; }
 .tarjeta-sin .editor-ubi { display: flex; flex-direction: column; gap: 8px; }

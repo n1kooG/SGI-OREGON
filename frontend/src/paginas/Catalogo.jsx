@@ -176,7 +176,7 @@ function FormProducto({ producto, onClose, onCambios }) {
         <div className="grid2">
           {verCostos && <Campo etiqueta="Costo de adquisición neto ($)" type="number" min="0" inputMode="decimal" value={f.costo} onChange={set('costo')} error={err.costo} placeholder="0" />}
           <Campo etiqueta="Stock mínimo (un.)" type="number" min="0" value={f.stock_minimo} onChange={set('stock_minimo')} error={err.stock_minimo} />
-          <div className="campo ancho-completo"><label>Ubicación en bodega</label><SelectorUbicacion valor={f.ubicacion} onChange={(v) => setF((x) => ({ ...x, ubicacion: v }))} /></div>
+          <div className="campo ancho-completo"><SelectorUbicacion valor={f.ubicacion} onChange={(v) => setF((x) => ({ ...x, ubicacion: v }))} /></div>
           <Campo etiqueta="Stock físico (un.)" value={producto?.stock_fisico ?? 0} readOnly />
         </div>
         {/* Un producto nuevo siempre nace activo: el interruptor solo se opera al editar. */}
