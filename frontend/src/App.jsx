@@ -4,6 +4,7 @@ import { MovilBodega, Oficina } from './componentes/Layouts.jsx';
 import Login from './paginas/Login.jsx';
 import Dashboard from './paginas/Dashboard.jsx';
 import Auditoria from './paginas/Auditoria.jsx';
+import Bodega from './paginas/Bodega.jsx';
 import Catalogo from './paginas/Catalogo.jsx';
 import Usuarios from './paginas/Usuarios.jsx';
 import Recepcion from './paginas/Recepcion.jsx';
@@ -38,6 +39,7 @@ export default function App() {
         <Route element={<Oficina />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/catalogo" element={<Catalogo />} />
+          <Route path="/bodega-estructura" element={<Bodega />} />
           <Route path="/compras" element={<Recepcion />} />
           <Route path="/importacion" element={<Importacion />} />
           <Route path="/pedidos" element={<Pedidos />} />

@@ -3,6 +3,7 @@ import { api, mensajeError } from '../api.js';
 import { Alerta, Boton, Campo, Icono, Modal, Tabla, clp, pct, useAviso } from '../componentes/ui.jsx';
 import '../estilos/sprint1.css';
 import { useSesion } from '../sesion.jsx';
+import SelectorUbicacion from '../componentes/SelectorUbicacion.jsx';
 
 const LIM = 10;
 const CANALES = [['WEB', 'Web'], ['MARKETPLACE', 'Marketplace'], ['MAYORISTA', 'Mayorista']];
@@ -137,7 +138,7 @@ function FormProducto({ producto, onClose, onCambios }) {
     const pasoProducto = () => editar
       ? api(`/productos/${sku}`, { metodo: 'PUT', cuerpo: { ...datos, estado: f.activo ? 'ACTIVO' : 'INACTIVO', ...(verCostos && { costo_adquisicion_neto: num(f.costo) }) } })
       : api('/productos', { metodo: 'POST', cuerpo: { sku, ...datos, costo_adquisicion_neto: num(f.costo), ubicacion_bodega: f.ubicacion } });
-    const cambiaUbicacion = editar && f.ubicacion.trim() !== (producto.ubicacion_bodega ?? '');
+    const cambiaUbicacion = editar && f.ubicacion && f.ubicacion !== (producto.ubicacion_bodega ?? '');
     const pasoUbicacion = async () => { if (cambiaUbicacion) await api(`/inventario/${sku}/ubicacion`, { metodo: 'PUT', cuerpo: { ubicacion_bodega: f.ubicacion } }); };
     // Un costo mayor exige fijar primero los precios; en los demás casos el producto va primero.
     const costoSube = editar && verCostos && num(f.costo) > Number(producto.costo_adquisicion_neto);
@@ -175,7 +176,7 @@ function FormProducto({ producto, onClose, onCambios }) {
         <div className="grid2">
           {verCostos && <Campo etiqueta="Costo de adquisición neto ($)" type="number" min="0" inputMode="decimal" value={f.costo} onChange={set('costo')} error={err.costo} placeholder="0" />}
           <Campo etiqueta="Stock mínimo (un.)" type="number" min="0" value={f.stock_minimo} onChange={set('stock_minimo')} error={err.stock_minimo} />
-          <Campo etiqueta="Ubicación en bodega" value={f.ubicacion} onChange={set('ubicacion')} maxLength={40} placeholder="Ej. Pasillo A - Estante 2" />
+          <div className="campo ancho-completo"><label>Ubicación en bodega</label><SelectorUbicacion valor={f.ubicacion} onChange={(v) => setF((x) => ({ ...x, ubicacion: v }))} /></div>
           <Campo etiqueta="Stock físico (un.)" value={producto?.stock_fisico ?? 0} readOnly />
         </div>
         {/* Un producto nuevo siempre nace activo: el interruptor solo se opera al editar. */}

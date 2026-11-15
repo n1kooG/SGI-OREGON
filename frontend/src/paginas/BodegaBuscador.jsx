@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, mensajeError } from '../api.js';
 import { Alerta, Badge, Boton, Icono, useAviso } from '../componentes/ui.jsx';
+import SelectorUbicacion from '../componentes/SelectorUbicacion.jsx';
 import { useEscritorio } from '../componentes/useEscritorio.js';
 
-const MAX_UBI = 40;
 const LOTE_SIN = { escritorio: 4, movil: 3 }; // filas visibles de «Sin ubicación» antes de «Ver los N restantes»
 const TOPE_SIN = 100; // máximo que acepta el endpoint por consulta
 const ubi = (u) => u.replace(' - ', ' · ');
 
-// Campo de ubicación en línea (máx. 40): sirve a los resultados y a los productos sin ubicación.
+// Selector de ubicación en línea: sirve a los resultados y a los productos sin ubicación.
 function EditorUbicacion({ sku, onGuardado, onCancelar }) {
   const aviso = useAviso();
   const [valor, setValor] = useState('');
@@ -17,23 +17,18 @@ function EditorUbicacion({ sku, onGuardado, onCancelar }) {
   async function guardar() {
     setError(''); setOcupado(true);
     try {
-      const { data } = await api(`/inventario/${encodeURIComponent(sku)}/ubicacion`, { metodo: 'PUT', cuerpo: { ubicacion_bodega: valor.trim() } });
+      const { data } = await api(`/inventario/${encodeURIComponent(sku)}/ubicacion`, { metodo: 'PUT', cuerpo: { ubicacion_bodega: valor } });
       aviso(`Ubicación de ${sku} actualizada.`);
       onGuardado(data.ubicacion_bodega);
     } catch (e) { setError(mensajeError(e)); setOcupado(false); }
   }
   return (
     <div className="editor-ubi">
-      <div className="campo-ubicacion">
-        <Icono n="pin" />
-        <input className="entrada" autoFocus aria-label="Nueva ubicación" placeholder="Ej. Pasillo A - Estante 2" maxLength={MAX_UBI} value={valor} onChange={(e) => setValor(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && valor.trim() && !ocupado && guardar()} />
-        <span className="dato">{valor.length}/{MAX_UBI}</span>
-      </div>
-      <span className="ayuda">Máximo {MAX_UBI} caracteres</span>
+      <SelectorUbicacion valor={valor} onChange={setValor} />
       <Alerta>{error}</Alerta>
       <div className="acciones-ubi">
         <Boton onClick={onCancelar} disabled={ocupado}>Cancelar</Boton>
-        <Boton variante="primario" onClick={guardar} disabled={ocupado || !valor.trim()}>{ocupado ? 'Guardando…' : 'Guardar'}</Boton>
+        <Boton variante="primario" onClick={guardar} disabled={ocupado || !valor}>{ocupado ? 'Guardando…' : 'Guardar'}</Boton>
       </div>
     </div>
   );
@@ -119,8 +114,8 @@ function SinUbicacion({ escritorio, sin, error, onVerMas, onAsignado, cargando }
   const restantes = sin.total - sin.items.length;
   return (
     <section className="bs-sin-sec">
-      <div className="bs-sin-cab"><h2>Sin ubicación ({sin.total})</h2>{sin.total > 0 && <span className="badge aviso">{escritorio ? 'Falta pasillo y estante' : 'Falta ubicar'}</span>}</div>
-      <p className="tenue">{escritorio ? 'Productos con stock en bodega que todavía no tienen una ubicación asignada.' : 'Productos con stock que todavía no tienen pasillo ni estante.'}</p>
+      <div className="bs-sin-cab"><h2>Sin ubicación ({sin.total})</h2>{sin.total > 0 && <span className="badge aviso">{escritorio ? 'Falta pasillo, rack y piso' : 'Falta ubicar'}</span>}</div>
+      <p className="tenue">{escritorio ? 'Productos con stock en bodega que todavía no tienen una ubicación asignada.' : 'Productos con stock que todavía no tienen pasillo ni rack.'}</p>
       <Alerta>{error}</Alerta>
       {sin.total === 0 ? (
         <div className="sin-nada bs-vacio">

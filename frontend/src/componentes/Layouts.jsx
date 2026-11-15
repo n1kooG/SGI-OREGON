@@ -9,7 +9,7 @@ import '../paginas/bodega.css';
 export const ROL = { ADMINISTRADOR: 'Administrador', BODEGA: 'Bodega', CHOFER: 'Chofer' };
 
 // Panel de oficina: menú del diseño aprobado.
-const ITEMS = [['/dashboard', 'Dashboard General', 'panel'], ['/catalogo', 'Catálogo Maestro', 'caja'], ['/compras', 'Compras y Facturas', 'factura'], ['/importacion', 'Carga Masiva', 'subir'], ['/pedidos', 'Pedidos y Despachos', 'camion'], ['/auditoria', 'Reportes y Auditoría', 'escudo'], ['/usuarios', 'Usuarios y Roles', 'usuarios']];
+const ITEMS = [['/dashboard', 'Dashboard General', 'panel'], ['/catalogo', 'Catálogo Maestro', 'caja'], ['/bodega-estructura', 'Bodega', 'casa'], ['/compras', 'Compras y Facturas', 'factura'], ['/importacion', 'Carga Masiva', 'subir'], ['/pedidos', 'Pedidos y Despachos', 'camion'], ['/auditoria', 'Reportes y Auditoría', 'escudo'], ['/usuarios', 'Usuarios y Roles', 'usuarios']];
 
 export function Oficina() {
   const { usuario, logout } = useSesion();

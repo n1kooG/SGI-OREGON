@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, mensajeError } from '../api.js';
 import { Alerta, Badge, Boton, Campo, Icono, Tabla, useAviso } from '../componentes/ui.jsx';
 import { fechaCorta } from './Pedidos.jsx';
+import SelectorUbicacion from '../componentes/SelectorUbicacion.jsx';
 import { useEscritorio } from '../componentes/useEscritorio.js';
 
 // Días calendario desde la recepción: define el color del aviso de antigüedad.
@@ -80,7 +81,7 @@ function Conteo({ factura: f, onVolver, onListo, esc }) {
   async function confirmar() {
     setError(''); setOcupado(true);
     try {
-      const cuerpo = { numero_factura: f.numero_factura, bultos: lineas.map((l) => ({ sku: l.sku, cantidad: l.contada, ...(l.ubi.trim() !== l.ubi0.trim() && { ubicacion: l.ubi }) })), ...(rut && { rut_proveedor: rut }) };
+      const cuerpo = { numero_factura: f.numero_factura, bultos: lineas.map((l) => ({ sku: l.sku, cantidad: l.contada, ...(l.ubi && l.ubi !== l.ubi0 && { ubicacion: l.ubi }) })), ...(rut && { rut_proveedor: rut }) };
       const { data } = await api('/compras/descargas', { metodo: 'POST', cuerpo });
       aviso(data.estado_documento === 'CONFORME' ? `Factura ${f.numero_factura} confirmada: conforme.` : `Factura ${f.numero_factura} confirmada con discrepancia.`);
       onListo();
@@ -119,7 +120,7 @@ function Conteo({ factura: f, onVolver, onListo, esc }) {
                   <input type="number" inputMode="numeric" min="0" step="1" aria-label={`Contadas de ${l.sku}`} value={l.contada} onChange={(e) => cuenta(i, e.target.valueAsNumber)} />
                   <button type="button" className="mas" aria-label={`Sumar una unidad de ${l.sku}`} onClick={() => cuenta(i, l.contada + 1)}><Icono n="plus" /></button>
                 </div>
-                <span className="con-icono"><Icono n="pin" /><input className="entrada" aria-label={`Ubicación de ${l.sku}`} maxLength={40} value={l.ubi} onChange={(e) => poner(i, 'ubi', e.target.value)} placeholder="Pasillo y estante" /></span>
+                <SelectorUbicacion etiqueta={`Ubicación de ${l.sku}`} valor={l.ubi} onChange={(v) => poner(i, 'ubi', v)} />
               </div>
             );
           })}
@@ -163,9 +164,9 @@ function Conteo({ factura: f, onVolver, onListo, esc }) {
                 <button type="button" className="mas" aria-label={`Sumar una unidad de ${l.sku}`} onClick={() => cuenta(i, l.contada + 1)}><Icono n="plus" /></button>
               </div>
             </div>
-            <label className="campo-ubi"><span>Ubicación (opcional)</span>
-              <span className="con-icono"><Icono n="pin" /><input className="entrada" maxLength={40} value={l.ubi} onChange={(e) => poner(i, 'ubi', e.target.value)} placeholder="Ej. Pasillo A - Estante 2" /></span>
-            </label>
+            <div className="campo-ubi"><span>Ubicación (opcional)</span>
+              <SelectorUbicacion etiqueta={`Ubicación de ${l.sku}`} valor={l.ubi} onChange={(v) => poner(i, 'ubi', v)} />
+            </div>
           </article>
         );
       })}
@@ -206,7 +207,7 @@ function Manual({ onVolver }) {
     e.preventDefault();
     setError(''); setRes(null); setOcupado(true);
     try {
-      const cuerpo = { numero_factura: numero, bultos: bultos.map((b) => ({ sku: b.sku, cantidad: Number(b.cantidad), ...(b.ubi.trim() !== b.ubi0.trim() && { ubicacion: b.ubi }) })), ...(rut && { rut_proveedor: rut }) };
+      const cuerpo = { numero_factura: numero, bultos: bultos.map((b) => ({ sku: b.sku, cantidad: Number(b.cantidad), ...(b.ubi && b.ubi !== b.ubi0 && { ubicacion: b.ubi }) })), ...(rut && { rut_proveedor: rut }) };
       setRes((await api('/compras/descargas', { metodo: 'POST', cuerpo })).data);
       setNumero(''); setRut(''); setPedirRut(false); setBultos([fila()]);
     } catch (err) {
@@ -243,7 +244,7 @@ function Manual({ onVolver }) {
             <Campo etiqueta="SKU" value={b.sku} onChange={setB(i, 'sku')} onBlur={() => precargar(i)} required />
             <Campo etiqueta="Cantidad" type="number" inputMode="numeric" min="0" step="1" value={b.cantidad} onChange={setB(i, 'cantidad')} required />
             <Boton className="icono-solo" aria-label="Quitar bulto" icono="x" disabled={bultos.length === 1} onClick={() => setBultos(bultos.filter((_, j) => j !== i))} />
-            <Campo className="bulto-ubi" etiqueta="Ubicación (opcional)" value={b.ubi} onChange={setB(i, 'ubi')} maxLength={40} placeholder="Ej. Pasillo A - Estante 2" />
+            <div className="campo bulto-ubi"><label>Ubicación (opcional)</label><SelectorUbicacion key={b.ubi0} valor={b.ubi} onChange={(v) => setBultos((bs) => bs.map((x, j) => (j === i ? { ...x, ubi: v } : x)))} /></div>
           </div>
         ))}
         <Boton icono="plus" onClick={() => setBultos([...bultos, fila()])}>Agregar SKU</Boton>
