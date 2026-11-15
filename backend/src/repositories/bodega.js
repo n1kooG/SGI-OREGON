@@ -30,6 +30,8 @@ export const borrarRack = (n, letra, client) => client.query(`DELETE FROM bodega
 
 // Productos ubicados en las etiquetas dadas (para impedir que la estructura deje ubicaciones huérfanas).
 export async function productosEn(etiquetas, client) {
-  const { rows } = await client.query(`SELECT count(*)::int AS n FROM inventario WHERE ubicacion_bodega = ANY($1)`, [etiquetas]);
-  return rows[0].n;
+  const { rows } = await client.query(
+    `SELECT i.sku, p.nombre, i.ubicacion_bodega AS ubicacion FROM inventario i JOIN producto p USING (sku)
+      WHERE i.ubicacion_bodega = ANY($1) ORDER BY i.ubicacion_bodega, i.sku`, [etiquetas]);
+  return rows;
 }

@@ -69,7 +69,9 @@ test('pasillos y racks: se crean (letra libre automática o elegida), se validan
 
 test('no deja ubicaciones huérfanas: pisos, rack y pasillo con productos se rechazan (409); vacíos sí se pueden cambiar', async () => {
   const n = nuevoPasillo, l = t.rackEnUso;
-  assert.equal((await t.http('PUT', `/api/bodega/pasillos/${n}/racks/${l}`, t.admin, { pisos: 2 })).status, 409); // el producto está en el piso 3
+  const r409 = await t.http('PUT', `/api/bodega/pasillos/${n}/racks/${l}`, t.admin, { pisos: 2 }); // el producto está en el piso 3
+  assert.equal(r409.status, 409);
+  assert.equal(r409.body.detalle.productos[0].sku, SKU); // el modal lista qué hay que mover
   assert.equal(await rack(n, l), 3);
   assert.equal((await t.http('DELETE', `/api/bodega/pasillos/${n}/racks/${l}`, t.admin)).status, 409);
   assert.equal((await t.http('DELETE', `/api/bodega/pasillos/${n}`, t.admin)).status, 409);

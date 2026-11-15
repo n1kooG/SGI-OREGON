@@ -5,7 +5,7 @@ import { auditar } from '../audit.js';
 import { AppError } from '../errors.js';
 
 const bad = (m) => new AppError(400, m, 'VALIDACION');
-const conflicto = (m, codigo = 'CONFLICTO') => new AppError(409, m, codigo);
+const conflicto = (m, codigo = 'CONFLICTO', detalle) => Object.assign(new AppError(409, m, codigo), detalle && { detalle });
 const entero = (v, campo, min, max) => {
   const n = typeof v === 'string' && /^\d+$/.test(v) ? Number(v) : v;
   if (!Number.isInteger(n) || n < min || n > max) throw bad(`${campo} debe ser un entero entre ${min} y ${max}`);
@@ -53,8 +53,8 @@ export async function borrarPasillo(req, n) {
     if (!(await repo.pasilloExiste(numero, c))) throw new AppError(404, `No existe el pasillo ${numero}`, 'NO_ENCONTRADO');
     const racks = await repo.racksDePasillo(numero, c);
     const etiquetas = racks.flatMap((r) => Array.from({ length: r.pisos }, (_, i) => etiquetaUbicacion(numero, r.letra, i + 1)));
-    const ocupados = etiquetas.length ? await repo.productosEn(etiquetas, c) : 0;
-    if (ocupados) throw conflicto(`El pasillo ${numero} tiene ${ocupados} producto(s) ubicados: muévelos antes de eliminarlo`, 'UBICACION_OCUPADA');
+    const ocupados = etiquetas.length ? await repo.productosEn(etiquetas, c) : [];
+    if (ocupados.length) throw conflicto(`El pasillo ${numero} tiene ${ocupados.length} producto(s) ubicados: muévelos antes de eliminarlo`, 'UBICACION_OCUPADA', { productos: ocupados });
     for (const r of racks) await repo.borrarRack(numero, r.letra, c);
     await repo.borrarPasillo(numero, c);
     await registrar(req, c, 'BORRAR_PASILLO', null, { numero, racks });
@@ -90,7 +90,7 @@ export async function cambiarPisos(req, n, letraParam, body = {}) {
     if (pisos < antes) {
       const quitadas = Array.from({ length: antes - pisos }, (_, i) => etiquetaUbicacion(numero, letra, pisos + i + 1));
       const ocupados = await repo.productosEn(quitadas, c);
-      if (ocupados) throw conflicto(`Hay ${ocupados} producto(s) ubicados en los pisos que se quitan: muévelos antes`, 'UBICACION_OCUPADA');
+      if (ocupados.length) throw conflicto(`Hay ${ocupados.length} producto(s) ubicados en los pisos que se quitan: muévelos antes`, 'UBICACION_OCUPADA', { productos: ocupados });
     }
     if (pisos !== antes) {
       await repo.fijarPisos(numero, letra, pisos, c);
@@ -107,7 +107,7 @@ export async function borrarRack(req, n, letraParam) {
     if (pisos === undefined) throw new AppError(404, `No existe el rack ${letra} en el pasillo ${numero}`, 'NO_ENCONTRADO');
     const etiquetas = Array.from({ length: pisos }, (_, i) => etiquetaUbicacion(numero, letra, i + 1));
     const ocupados = await repo.productosEn(etiquetas, c);
-    if (ocupados) throw conflicto(`El rack ${letra} tiene ${ocupados} producto(s) ubicados: muévelos antes de eliminarlo`, 'UBICACION_OCUPADA');
+    if (ocupados.length) throw conflicto(`El rack ${letra} tiene ${ocupados.length} producto(s) ubicados: muévelos antes de eliminarlo`, 'UBICACION_OCUPADA', { productos: ocupados });
     await repo.borrarRack(numero, letra, c);
     await registrar(req, c, 'BORRAR_RACK', null, { pasillo: numero, letra, pisos });
     return { pasillo: numero, letra };

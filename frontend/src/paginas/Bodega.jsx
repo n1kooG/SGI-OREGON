@@ -30,7 +30,7 @@ export default function Bodega() {
   async function ejecutar(ruta, metodo, cuerpo, exito) {
     setOcupado(true);
     try { await api(ruta, { metodo, cuerpo }); aviso(exito); cerrar(); await cargar(); }
-    catch (e) { if (e.codigo === 'UBICACION_OCUPADA') setDlg({ tipo: 'ocupado', mensaje: e.message }); else { cerrar(); setError(mensajeError(e)); } }
+    catch (e) { if (e.codigo === 'UBICACION_OCUPADA') setDlg({ tipo: 'ocupado', mensaje: e.message, productos: e.detalle?.productos ?? [] }); else { cerrar(); setError(mensajeError(e)); } }
     finally { setOcupado(false); }
   }
 
@@ -98,8 +98,13 @@ export default function Bodega() {
         </Modal>
       )}
       {dlg?.tipo === 'ocupado' && (
-        <Modal chico titulo="No se puede quitar" onClose={cerrar} pie={<Boton variante="primario" data-inicial onClick={cerrar}>Entendido</Boton>}>
+        <Modal chico titulo="No se puede quitar" subtitulo="Hay productos guardados en esa ubicación." onClose={cerrar} pie={<Boton variante="primario" data-inicial onClick={cerrar}>Entendido</Boton>}>
           <Alerta>{dlg.mensaje}</Alerta>
+          {dlg.productos.length > 0 && (
+            <ul className="lista-skus">
+              {dlg.productos.map((x) => <li key={x.sku}><strong>{x.sku}</strong> · {x.nombre}<br /><span className="tenue">{x.ubicacion}</span></li>)}
+            </ul>
+          )}
           <p>Cambia la ubicación de esos productos desde «Catálogo Maestro» y vuelve a intentarlo.</p>
         </Modal>
       )}
