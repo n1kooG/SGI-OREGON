@@ -1,0 +1,25 @@
+/* Modal «Importar catálogo»: reutiliza las clases etq-* del modal de etiquetas (etiquetas.css). */
+.modal-cat .cat-lista { margin-top: 16px; }
+.modal-cat .etq-nota { margin: 16px 0 0; }
+.modal-cat .etq-nota.cat-sin-margen { margin: 16px 0 16px; color: var(--ink); }
+.modal-cat .cat-omitidas { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; padding: 12px 16px; border-radius: 12px; background: var(--bg); font-size: 13px; line-height: 16px; color: var(--ink-2); }
+.modal-cat .cat-omitidas ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; overflow-wrap: anywhere; }
+.modal-cat .cat-error { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border: 1px solid #f3c5c1; border-radius: 12px; background: var(--danger-bg); font-size: 15px; line-height: 20px; color: var(--ink); }
+.modal-cat .cat-error-ico { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 24px; height: 24px; border-radius: 12px; background: var(--surface); color: var(--danger); font-weight: 700; }
+.modal-cat .etq-resumen strong { overflow-wrap: anywhere; }
+
+/* Botón «Importar catálogo» junto a «Crear producto» */
+.s1 .cabecera .acciones-cab { display: flex; gap: 12px; align-items: center; flex: none; }
+
+@media (max-width: 899px) {
+  .s1 .cabecera { flex-wrap: wrap; gap: 12px; }
+  .s1 .cabecera .acciones-cab { width: 100%; }
+  .s1 .cabecera .acciones-cab .btn { flex: 1; }
+  .modal-cat .modal-cab { padding: 20px 20px 0; }
+  .modal-cat .modal-cuerpo { padding: 16px 20px 0; }
+  .modal-cat .modal-pie { flex-wrap: wrap; padding: 16px 20px 20px; }
+  .modal-cat .modal-pie .btn { flex: 1 1 auto; }
+  .modal-cat .etq-zona { padding: 28px 16px; }
+  .modal-cat .etq-zona h3 { font-size: 18px; line-height: 24px; }
+  .modal-cat .etq-fila { flex-wrap: wrap; }
+}
