@@ -47,7 +47,12 @@ SELECT format('CREATE ROLE %I LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLIC
 
 SELECT format('ALTER ROLE %I LOGIN PASSWORD %L', :'owner_role', :'owner_password') WHERE :'owner_password' <> '' \gexec
 SELECT format('ALTER ROLE %I NOLOGIN', :'owner_role') WHERE :'owner_password' = '' \gexec
-SELECT format('ALTER ROLE %I LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD %L', :'app_role', :'app_password') \gexec
+-- Sin ser superusuario (RDS) PostgreSQL rechaza hasta un NOSUPERUSER redundante: los atributos ya quedaron fijados en el CREATE ROLE.
+\if :es_super
+  SELECT format('ALTER ROLE %I LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD %L', :'app_role', :'app_password') \gexec
+\else
+  SELECT format('ALTER ROLE %I LOGIN PASSWORD %L', :'app_role', :'app_password') \gexec
+\endif
 
 -- ---- Propiedad: todo el esquema pasa al propietario (las funciones de extensiones no se tocan) ----
 -- (las secuencias de columnas IDENTITY siguen a su tabla)
