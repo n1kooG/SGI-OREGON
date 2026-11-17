@@ -10,3 +10,6 @@ documentacion/
 
 # Etiquetas importadas guardadas en disco (desarrollo, sin S3)
 storage-local/
+
+# Paquete de Elastic Beanstalk generado
+despliegue/*.zip

@@ -22,6 +22,8 @@ export const config = {
   loginVentanaSeg: entero(process.env.LOGIN_VENTANA_SEGUNDOS, 900),
   loginMaxPorIp: entero(process.env.LOGIN_MAX_POR_IP, 100),
   loginMaxPorCorreo: entero(process.env.LOGIN_MAX_POR_CORREO, 20),
+  // Con HTTPS (por defecto) se fuerza TLS: HSTS y upgrade-insecure-requests. FORZAR_HTTPS=false solo si el sitio se sirve por HTTP (p. ej. Learner Lab sin certificado): con HTTP los assets se romperían.
+  forzarHttps: process.env.FORZAR_HTTPS !== 'false',
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
   maxIntentos: Number(process.env.MAX_INTENTOS ?? 5),
   bloqueoMinutos: Number(process.env.BLOQUEO_MINUTOS ?? 15),
@@ -32,6 +34,8 @@ export const config = {
   // Con true, cerrar una entrega como ENTREGADO exige la firma o el nombre del receptor; por defecto son opcionales.
   exigirReceptorEntrega: process.env.EXIGIR_RECEPTOR_ENTREGA === 'true',
   // Sin S3 (desarrollo) las etiquetas importadas se guardan en disco, en este directorio.
+  // Carpeta del frontend compilado (npm run build). Si existe, la API también lo sirve (despliegue de una sola plataforma).
+  frontendDist: process.env.FRONTEND_DIST || fileURLToPath(new URL('../../frontend/dist/', import.meta.url)),
   etiquetasDir: process.env.ETIQUETAS_DIR || fileURLToPath(new URL('../storage-local/etiquetas/', import.meta.url)),
   s3Region: process.env.S3_REGION ?? 'sa-east-1',
 };

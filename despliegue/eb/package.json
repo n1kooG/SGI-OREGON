@@ -1,0 +1,10 @@
+{
+  "name": "sgi-oregon-eb",
+  "private": true,
+  "description": "Raíz del paquete de Elastic Beanstalk: instala el backend y lo arranca; el backend sirve frontend/dist.",
+  "scripts": {
+    "postinstall": "npm --prefix backend ci --omit=dev",
+    "start": "node backend/src/server.js"
+  },
+  "engines": { "node": ">=20" }
+}

@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -20,7 +22,10 @@ export function crearApp() {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', config.trustProxy); // sin proxy (false) X-Forwarded-For se ignora y no se puede falsificar la IP
-  app.use(helmet());
+  app.use(helmet(config.forzarHttps ? {} : {
+    hsts: false,
+    contentSecurityPolicy: { directives: { ...helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests': null } },
+  }));
   app.use(cors({ origin: config.corsOrigin, exposedHeaders: ['X-Total-Count', 'Content-Disposition', 'X-Cache'] }));
   app.use(express.json({ limit: '100kb' }));
 
@@ -38,6 +43,14 @@ export function crearApp() {
   app.use('/api/usuarios', usuariosRouter);
 
   app.use('/api', noEncontrado);
+
+  // PWA compilada: los assets con hash se cachean un año; index.html y sw.js nunca, para que cada despliegue se vea al recargar.
+  const { frontendDist } = config;
+  if (existsSync(join(frontendDist, 'index.html'))) {
+    const sinCache = (res) => res.setHeader('Cache-Control', 'no-cache');
+    app.use(express.static(frontendDist, { index: false, setHeaders: (res, ruta) => { if (/assets[\\/]/.test(ruta)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); else sinCache(res); } }));
+    app.get('*', (_req, res) => { sinCache(res); res.sendFile(join(frontendDist, 'index.html')); }); // rutas de React Router
+  }
   app.use(manejadorErrores);
   return app;
 }
