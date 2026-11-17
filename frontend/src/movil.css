@@ -1,0 +1,28 @@
+/* Ajustes finales para teléfono y PWA instalada. Va al final: corrige modales y medidas que usaban 100vh. */
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; } /* sin zoom por doble toque */
+@media (max-width: 899px) {
+  /* iOS hace zoom al enfocar un campo con letra menor a 16 px */
+  input, select, textarea { font-size: 16px; }
+  /* 100vh en iOS incluye la barra del navegador: el modal se salía por abajo */
+  .velo-modal { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  .modal { max-height: calc(100dvh - 32px); }
+  .s1 .modal:not(.lado) { max-height: calc(100dvh - 136px); }
+  .modal.modal-rep { max-height: calc(100dvh - 16px); }
+  .nav-inferior { padding-bottom: env(safe-area-inset-bottom); }
+  /* Mi cuenta: hoja inferior. La regla de Bodega móvil la empujaba 188 px hacia abajo y tapaba los botones. */
+  .velo-modal:has(.modal.mi-cuenta), .movil.bodega .velo-modal:has(.modal.mi-cuenta), .s1 .velo-modal:has(.modal.mi-cuenta) { align-items: flex-end; padding: 0; }
+  .modal.mi-cuenta, .movil.bodega .modal.mi-cuenta { max-width: none; max-height: 92dvh; padding: 0; gap: 0; border-radius: 20px 20px 0 0; }
+  .movil.bodega .modal.mi-cuenta .modal-cab { padding: 24px 20px 8px; }
+  .movil.bodega .modal.mi-cuenta .modal-cab p { font: 400 14px/20px var(--f-ui); margin-top: 4px; }
+  .movil.bodega .modal.mi-cuenta .modal-cuerpo { padding: 12px 20px max(24px, env(safe-area-inset-bottom)); }
+  /* Cabeceras de página: el título ocupa todo el ancho y las acciones bajan debajo */
+  .vista .cabecera, .dashboard .cabecera { flex-wrap: wrap; gap: 12px; }
+  .vista .cabecera > :first-child, .dashboard .cabecera > div:first-child { flex: 1 1 100%; min-width: 0; }
+  /* Banner de quiebres y paneles con acción */
+  .banner-cab { flex-wrap: wrap; gap: 8px 12px; }
+  .banner-texto { flex: 1 1 0; min-width: 0; }
+  .banner-alternar { flex: 1 1 100%; justify-content: center; }
+  .panel-titulo { flex-wrap: wrap; gap: 12px; }
+  .panel-titulo > div { flex: 1 1 100%; min-width: 0; }
+  .panel-titulo .btn { width: 100%; }
+}

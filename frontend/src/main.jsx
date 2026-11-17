@@ -12,6 +12,7 @@ import { SesionProvider } from './sesion.jsx';
 import { AvisosProvider } from './componentes/ui.jsx';
 import './styles.css';
 import './paginas/operacion.css';
+import './movil.css';
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
