@@ -26,3 +26,19 @@ html { touch-action: manipulation; -webkit-text-size-adjust: 100%; } /* sin zoom
   .panel-titulo > div { flex: 1 1 100%; min-width: 0; }
   .panel-titulo .btn { width: 100%; }
 }
+
+/* Sensación de app nativa en pantallas táctiles: sin selección de texto de interfaz, sin menú de pulsación larga,
+   sin destello azul al tocar y con respuesta visible al presionar. Los campos y los códigos (.dato) siguen seleccionables. */
+@media (hover: none) and (pointer: coarse) {
+  html { -webkit-tap-highlight-color: transparent; }
+  body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  input, textarea, select, [contenteditable], .dato { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+  img, svg, a { -webkit-user-drag: none; }
+  .btn, button, a, .nav-inferior a, [role="button"], [role="tab"] { touch-action: manipulation; transition: transform .12s ease, opacity .12s ease; }
+  .btn:active, button:active, .nav-inferior a:active, .tarjeta-pedido:active { transform: scale(.97); opacity: .85; }
+  .btn:disabled:active, button:disabled:active { transform: none; opacity: 1; }
+  * { scrollbar-width: none; }
+  *::-webkit-scrollbar { display: none; }
+  .contenido, .ch-principal, .modal-cuerpo { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+}
+@media (prefers-reduced-motion: reduce) { .btn, button, a { transition: none; } }
