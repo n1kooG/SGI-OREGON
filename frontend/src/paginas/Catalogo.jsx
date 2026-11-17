@@ -4,6 +4,8 @@ import { Alerta, Boton, Campo, Icono, Modal, Tabla, clp, pct, useAviso } from '.
 import '../estilos/sprint1.css';
 import { useSesion } from '../sesion.jsx';
 import SelectorUbicacion from '../componentes/SelectorUbicacion.jsx';
+import { IcoSubir } from './etiquetaComun.jsx';
+import ImportarCatalogo from './ImportarCatalogo.jsx';
 
 const LIM = 10;
 const CANALES = [['WEB', 'Web'], ['MARKETPLACE', 'Marketplace'], ['MAYORISTA', 'Mayorista']];
@@ -19,6 +21,8 @@ export default function Catalogo() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [panel, setPanel] = useState(null); // null | { producto?: fila } (sin producto = crear)
+  const [importando, setImportando] = useState(false);
+  const { puede } = useSesion();
 
   useEffect(() => { const t = setTimeout(() => { setBusca(q.trim()); setPagina(1); }, 300); return () => clearTimeout(t); }, [q]);
 
@@ -43,7 +47,10 @@ export default function Catalogo() {
           <h1>Catálogo Maestro de Productos</h1>
           <p>Identificación única con SKU inmutable, costos de adquisición y precios por canal.</p>
         </div>
-        <Boton variante="primario" icono="plus" onClick={() => setPanel({})}>Crear producto</Boton>
+        <div className="acciones-cab">
+          {puede('catalogo:escribir') && <Boton onClick={() => setImportando(true)}><IcoSubir />Importar catálogo</Boton>}
+          <Boton variante="primario" icono="plus" onClick={() => setPanel({})}>Crear producto</Boton>
+        </div>
       </div>
 
       <div className="barra-herr">
@@ -56,7 +63,7 @@ export default function Catalogo() {
 
       <Alerta>{error}</Alerta>
       <Tabla
-        columnas={['SKU', 'Descripción / Modelo', 'Marca', 'Ubicación', { t: 'Costo neto ($)', d: 1 }, { t: 'Precio Web ($)', d: 1 }, { t: 'Precio Mayorista ($)', d: 1 }, { t: 'Stock físico', d: 1 }, 'Acción']}
+        columnas={['SKU', 'Descripción / Modelo', 'Marca', 'Ubicación', { t: 'Costo neto ($)', d: 1 }, { t: 'Precio Web ($)', d: 1 }, { t: 'Precio Marketplace ($)', d: 1 }, { t: 'Precio Mayorista ($)', d: 1 }, { t: 'Stock físico', d: 1 }, 'Acción']}
         vacio={!cargando && !filas.length && !error ? (busca ? 'Sin resultados para la búsqueda.' : 'Aún no hay productos.') : cargando ? 'Cargando…' : null}
       >
         {filas.map((p) => {
@@ -69,6 +76,7 @@ export default function Catalogo() {
               <td>{p.ubicacion_bodega ? <Ubicacion texto={p.ubicacion_bodega} /> : <span className="celda-sec">Sin ubicación</span>}</td>
               <td className="dato derecha costo">{clp(p.costo_adquisicion_neto) ?? '—'}</td>
               <td className="dato derecha">{clp(precioDe(p, 'WEB')) ?? '—'}</td>
+              <td className="dato derecha">{clp(precioDe(p, 'MARKETPLACE')) ?? '—'}</td>
               <td className="dato derecha">{clp(precioDe(p, 'MAYORISTA')) ?? '—'}</td>
               <td className="dato derecha" style={bajo ? { color: 'var(--danger)' } : undefined}>{bajo && '● '}{p.stock_fisico ?? 0} un.</td>
               <td><Boton className="icono-solo" aria-label={`Editar ${p.sku}`} onClick={() => setPanel({ producto: p })}><Icono n="pencil" /></Boton></td>
@@ -86,6 +94,7 @@ export default function Catalogo() {
         </div>
       </div>
 
+      {importando && <ImportarCatalogo onClose={() => setImportando(false)} onCambio={cargar} />}
       {panel && <FormProducto producto={panel.producto} onClose={cerrar} onCambios={cargar} />}
     </div>
   );
