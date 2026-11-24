@@ -10,7 +10,7 @@ La inmutabilidad de `audit_log` solo es real si la API **no** es dueña de las t
 | Rol | Uso | Privilegios |
 |---|---|---|
 | `sgi_owner` (migración) | Crear/modificar el esquema y correr `scripts/*.mjs` de administración | Dueño de tablas, vistas, funciones y triggers. Sin superusuario. **No** se usa en la API. |
-| `sgi_app` (aplicación) | `DATABASE_URL` de la API | Solo los `GRANT` que usa el código: `audit_log` SELECT/INSERT; nada de DELETE ni TRUNCATE en ninguna tabla; `usuario` solo actualiza rol, estado, clave e intentos/bloqueo. |
+| `sgi_app` (aplicación) | `DATABASE_URL` de la API | Solo los `GRANT` que usa el código: `audit_log` SELECT/INSERT; DELETE solo en `producto`, `inventario` y `lista_precio` (borrar un producto sin historial) y en la estructura de la bodega, nunca TRUNCATE; `usuario` solo actualiza rol, estado, clave e intentos/bloqueo. |
 
 Los nombres son parametrizables. Las claves se pasan por entorno y nunca se guardan en el repositorio.
 

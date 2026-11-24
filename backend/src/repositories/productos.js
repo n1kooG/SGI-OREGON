@@ -68,3 +68,18 @@ export async function hayPrecioNoSuperaCosto(db, sku) {
   const { rowCount } = await db.query(`SELECT 1 FROM lista_precio WHERE sku = $1 AND margen_porcentual <= 0`, [sku]);
   return rowCount > 0;
 }
+
+// Historial que impide borrar: filas de compras/ventas que referencian el SKU y stock físico.
+export async function historial(db, sku) {
+  const { rows: [h] } = await db.query(
+    `SELECT (SELECT count(*)::int FROM detalle_recepcion WHERE sku = $1) AS compras,
+            (SELECT count(*)::int FROM detalle_venta WHERE sku = $1) AS ventas,
+            COALESCE((SELECT stock_fisico FROM inventario WHERE sku = $1), 0) AS stock`, [sku]);
+  return h;
+}
+
+export async function borrar(db, sku) {
+  await db.query(`DELETE FROM lista_precio WHERE sku = $1`, [sku]);
+  await db.query(`DELETE FROM inventario WHERE sku = $1`, [sku]);
+  await db.query(`DELETE FROM producto WHERE sku = $1`, [sku]);
+}

@@ -72,14 +72,16 @@ SELECT format('GRANT CONNECT ON DATABASE %I TO %I', current_database(), :'app_ro
 SELECT format('GRANT USAGE ON SCHEMA public TO %I', :'app_role') \gexec
 
 -- audit_log: solo SELECT e INSERT (sin UPDATE/DELETE/TRUNCATE/TRIGGER).
--- Lo mínimo que usan los repositorios (backend/src/repositories). Sin DELETE ni TRUNCATE salvo la estructura de la bodega:
--- la aplicación no borra datos (las bajas son lógicas) y las claves de las columnas IDENTITY no requieren
+-- Lo mínimo que usan los repositorios (backend/src/repositories). Sin DELETE ni TRUNCATE salvo la estructura de la bodega
+-- y el borrado de un producto sin historial (producto, inventario, lista_precio): el resto de los datos solo tiene bajas
+-- lógicas, y las claves de las columnas IDENTITY no requieren
 -- privilegios sobre la secuencia.
 SELECT format('GRANT SELECT ON rol, v_stock_critico TO %I', :'app_role') \gexec
 SELECT format('GRANT SELECT, INSERT ON audit_log, detalle_recepcion, detalle_venta TO %I', :'app_role') \gexec
 SELECT format('GRANT SELECT, INSERT, UPDATE ON producto, inventario, lista_precio, recepcion_compra,
                                                lote_importacion, orden_venta, despacho TO %I', :'app_role') \gexec
 SELECT format('GRANT SELECT, INSERT, UPDATE, DELETE ON bodega_pasillo, bodega_rack TO %I', :'app_role') \gexec
+SELECT format('GRANT DELETE ON producto, inventario, lista_precio TO %I', :'app_role') \gexec
 SELECT format('GRANT SELECT, INSERT ON usuario TO %I', :'app_role') \gexec
 SELECT format('GRANT UPDATE (id_rol, activo, password_hash, intentos_fallidos, bloqueado_hasta, ultimo_acceso, clave_cambiada_en) ON usuario TO %I', :'app_role') \gexec
 
