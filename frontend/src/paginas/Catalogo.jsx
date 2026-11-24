@@ -6,6 +6,7 @@ import { useSesion } from '../sesion.jsx';
 import SelectorUbicacion from '../componentes/SelectorUbicacion.jsx';
 import { IcoSubir } from './etiquetaComun.jsx';
 import ImportarCatalogo from './ImportarCatalogo.jsx';
+import EliminarProducto from './EliminarProducto.jsx';
 
 const LIM = 10;
 const CANALES = [['WEB', 'Web'], ['MARKETPLACE', 'Marketplace'], ['MAYORISTA', 'Mayorista']];
@@ -69,9 +70,9 @@ export default function Catalogo() {
         {filas.map((p) => {
           const bajo = p.stock_minimo > 0 && p.stock_fisico < p.stock_minimo;
           return (
-            <tr key={p.sku}>
+            <tr key={p.sku} className={p.estado === 'INACTIVO' ? 'fila-inactiva' : undefined}>
               <td className="dato">{p.sku}</td>
-              <td>{p.nombre}<div className="dato celda-sec">{p.modelo}</div></td>
+              <td>{p.nombre}<div className="dato celda-sec">{p.modelo}</div>{p.estado === 'INACTIVO' && <span className="etiqueta-inactivo">Inactivo</span>}</td>
               <td>{p.marca}</td>
               <td>{p.ubicacion_bodega ? <Ubicacion texto={p.ubicacion_bodega} /> : <span className="celda-sec">Sin ubicación</span>}</td>
               <td className="dato derecha costo">{clp(p.costo_adquisicion_neto) ?? '—'}</td>
@@ -117,6 +118,8 @@ function FormProducto({ producto, onClose, onCambios }) {
   const [err, setErr] = useState({});
   const [alerta, setAlerta] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
+  const sinCierre = useCallback(() => {}, []); // mientras se confirma el borrado, Esc/clic fuera solo cierran la confirmación
   const set = (k) => (e) => { setF({ ...f, [k]: k === 'sku' ? e.target.value.toUpperCase() : e.target.value }); setErr({ ...err, [k]: undefined }); };
 
   function validar() {
@@ -164,8 +167,11 @@ function FormProducto({ producto, onClose, onCambios }) {
   }
 
   return (
-    <Modal lado titulo={editar ? 'Editar producto' : 'Crear producto'} subtitulo={editar ? `${producto.sku} · ${producto.nombre}` : 'Completa los datos del nuevo producto'} onClose={onClose}
-      pie={<><Boton onClick={onClose}>Cancelar</Boton><Boton variante="primario" type="submit" form="form-producto" disabled={enviando}>{enviando ? 'Guardando…' : editar ? 'Guardar cambios' : 'Crear producto'}</Boton></>}>
+    <>
+    <Modal lado titulo={editar ? 'Editar producto' : 'Crear producto'} subtitulo={editar ? `${producto.sku} · ${producto.nombre}` : 'Completa los datos del nuevo producto'} onClose={eliminando ? sinCierre : onClose}
+      pie={<>
+        {editar && puede('catalogo:escribir') && <Boton variante="peligro" className="pie-izq" onClick={() => setEliminando(true)}>Eliminar producto</Boton>}
+        <Boton onClick={onClose}>Cancelar</Boton><Boton variante="primario" type="submit" form="form-producto" disabled={enviando}>{enviando ? 'Guardando…' : editar ? 'Guardar cambios' : 'Crear producto'}</Boton></>}>
       <form id="form-producto" onSubmit={guardar} noValidate>
         <Alerta>{alerta}</Alerta>
         <div className="seccion etiqueta">Identificación</div>
@@ -208,5 +214,7 @@ function FormProducto({ producto, onClose, onCambios }) {
         {verCostos && <p className="tenue" style={{ fontSize: 13 }}>El margen se calcula automáticamente con el costo registrado y solo lo ve el Administrador.</p>}
       </form>
     </Modal>
+    {eliminando && <EliminarProducto producto={producto} onClose={() => setEliminando(false)} onHecho={(aviso) => { avisar(aviso); onCambios(); onClose(); }} />}
+    </>
   );
 }
