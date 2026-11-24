@@ -48,6 +48,11 @@ router.put('/:sku', autenticar, requierePermiso('catalogo:escribir'), ah(async (
   res.json(await svc.editar(req, req.params.sku, req.body));
 }));
 
+// Borra un producto sin historial; con historial responde 409 PRODUCTO_CON_HISTORIAL (usar PUT estado=INACTIVO).
+router.delete('/:sku', autenticar, requierePermiso('catalogo:escribir'), ah(async (req, res) => {
+  res.json(await svc.eliminar(req, req.params.sku));
+}));
+
 // Solo precio por canal: el margen lo calcula la BD (HU02).
 router.put('/:sku/precios/:canal', autenticar, requierePermiso('precios:escribir'), ah(async (req, res) => {
   res.json(await svc.fijarPrecio(req, req.params.sku, req.params.canal, req.body));

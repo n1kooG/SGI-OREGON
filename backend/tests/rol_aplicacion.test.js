@@ -73,3 +73,17 @@ test('la asignación de un despacho (trigger con FOR SHARE sobre usuario) funcio
   assert.equal(r.rowCount, 1);
   await assert.rejects(() => intentar(`UPDATE usuario SET clave_cambiada_en = NULL, email = 'x@x.cl'`), { code: '42501' }); // sigue sin poder tocar otras columnas
 });
+
+test('borrar un producto sin historial: DELETE solo en producto, inventario y lista_precio', opts, async () => {
+  const tiene = async (t) => (await c.query(`SELECT has_table_privilege(current_user, $1, 'DELETE') AS ok`, [t])).rows[0].ok;
+  for (const t of ['producto', 'inventario', 'lista_precio']) assert.equal(await tiene(t), true, t);
+  for (const t of ['audit_log', 'detalle_recepcion', 'detalle_venta', 'recepcion_compra', 'orden_venta', 'usuario']) assert.equal(await tiene(t), false, t);
+  await denegado(`DELETE FROM detalle_recepcion`);
+  await c.query('BEGIN');
+  try {
+    await c.query(`INSERT INTO producto (sku, modelo, nombre, marca, costo_adquisicion_neto) VALUES ('ZZ-DEL','m','n','x',1000)`);
+    await c.query(`INSERT INTO inventario (sku) VALUES ('ZZ-DEL')`);
+    assert.equal((await c.query(`DELETE FROM inventario WHERE sku = 'ZZ-DEL'`)).rowCount, 1);
+    assert.equal((await c.query(`DELETE FROM producto WHERE sku = 'ZZ-DEL'`)).rowCount, 1);
+  } finally { await c.query('ROLLBACK'); }
+});

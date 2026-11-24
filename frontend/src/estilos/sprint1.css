@@ -123,3 +123,11 @@
 .bienvenida hr { width: 100%; height: 1px; margin: 0; border: 0; background: var(--line); }
 .bienvenida p.tenue { font-size: 14px; line-height: 20px; }
 @media (min-width: 900px) { .bienvenida { max-width: 480px; } }
+
+/* Eliminar producto: botón rojo a la izquierda del pie del panel; fila inactiva atenuada con etiqueta */
+.s1 .modal-pie { flex-wrap: wrap; }
+.s1 .modal-pie .pie-izq { margin-right: auto; }
+@media (max-width: 520px) { .s1 .modal-pie .pie-izq { flex: 1 0 100%; margin-right: 0; } }
+.s1 .fila-inactiva td:not(:last-child) { opacity: .5; }
+.etiqueta-inactivo { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 1px 8px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); color: var(--ink-3); font-size: 12px; line-height: 18px; }
+.etiqueta-inactivo::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); }

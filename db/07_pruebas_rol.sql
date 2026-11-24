@@ -85,6 +85,20 @@ SELECT pg_temp.espera_error('PRV-05', 'rol: no puede crear roles de negocio', '4
 SELECT pg_temp.espera_error('PRV-06', 'ALTER TABLE usuario rechazado', '42501', $q$ALTER TABLE usuario DISABLE TRIGGER ALL$q$);
 SELECT pg_temp.espera_error('PRV-07', 'detalle_venta: UPDATE rechazado (no se usa)', '42501', $q$UPDATE detalle_venta SET cantidad_vendida = 1$q$);
 SELECT pg_temp.espera_error('PRV-08', 'No puede crear roles', '42501', $q$CREATE ROLE intruso$q$);
+SELECT pg_temp.espera_error('PRV-09', 'detalle_recepcion: DELETE rechazado', '42501', $q$DELETE FROM detalle_recepcion$q$);
+SELECT pg_temp.espera_error('PRV-10', 'recepcion_compra: DELETE rechazado', '42501', $q$DELETE FROM recepcion_compra$q$);
+SELECT pg_temp.espera_error('PRV-11', 'orden_venta: DELETE rechazado', '42501', $q$DELETE FROM orden_venta$q$);
+
+-- ---- Borrar un producto sin historial: DELETE solo sobre producto, inventario y lista_precio ----
+SELECT pg_temp.espera_ok('DEL-01', 'producto, inventario y lista_precio: DELETE permitido (producto sin historial)',
+  $q$WITH p AS (INSERT INTO producto (sku, modelo, nombre, marca, costo_adquisicion_neto) VALUES ('ZZ-DEL','m','n','x',1000) RETURNING sku),
+          i AS (INSERT INTO inventario (sku) SELECT sku FROM p RETURNING sku),
+          l AS (INSERT INTO lista_precio (sku, canal_venta, precio_venta_neto) SELECT sku, 'WEB', 2000 FROM p RETURNING sku)
+     SELECT 1 FROM p, i, l$q$);
+SELECT pg_temp.espera_valor('DEL-02', 'privilegio DELETE sobre producto, inventario y lista_precio', '3',
+  $q$SELECT count(*)::text FROM unnest(ARRAY['producto','inventario','lista_precio']) t WHERE has_table_privilege(current_user, t, 'DELETE')$q$);
+SELECT pg_temp.espera_valor('DEL-03', 'sin DELETE sobre audit_log, detalle_recepcion, detalle_venta, recepcion_compra, orden_venta, despacho, usuario', '0',
+  $q$SELECT count(*)::text FROM unnest(ARRAY['audit_log','detalle_recepcion','detalle_venta','recepcion_compra','orden_venta','despacho','lote_importacion','usuario']) t WHERE has_table_privilege(current_user, t, 'DELETE')$q$);
 
 -- ---- El flujo normal de la aplicación sí funciona --------------------------------------------
 SELECT pg_temp.espera_ok('OK-01', 'audit_log: INSERT permitido (auditar)', $q$INSERT INTO audit_log (id_usuario, tabla_afectada, accion, ip_origen) VALUES (NULL, 'usuario', 'PRUEBA_ROL', '127.0.0.1')$q$);

@@ -104,6 +104,22 @@ export async function editar(req, skuParam, body = {}) {
   return obtener(req.usuario.permisos, sku);
 }
 
+// Sin historial (compras, ventas, stock) se borra de verdad; con historial 409 y la app ofrece inactivar.
+export async function eliminar(req, skuParam) {
+  const sku = normSku(skuParam);
+  return conTransaccion(async (db) => {
+    const antes = await repo.obtenerParaAuditoria(db, sku, true); // FOR UPDATE: una recepción o venta concurrente espera
+    if (!antes) throw new AppError(404, 'Producto no encontrado', 'NO_ENCONTRADO');
+    const detalle = await repo.historial(db, sku);
+    if (detalle.compras || detalle.ventas || detalle.stock > 0) {
+      throw Object.assign(new AppError(409, 'El producto tiene historial: no se puede eliminar, solo dar de baja', 'PRODUCTO_CON_HISTORIAL'), { detalle });
+    }
+    await repo.borrar(db, sku);
+    await auditar(req, { idUsuario: req.usuario.id_usuario, tabla: 'producto', accion: 'ELIMINAR', antes }, db);
+    return { sku };
+  });
+}
+
 export async function fijarPrecio(req, skuParam, canalParam, body = {}) {
   const sku = normSku(skuParam);
   const canal = String(canalParam ?? '').toUpperCase();
