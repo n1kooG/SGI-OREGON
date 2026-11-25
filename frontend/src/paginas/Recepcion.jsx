@@ -179,7 +179,7 @@ export default function Recepcion() {
        <div className="panel">
         <div className="seccion">2. Detalle de ítems y unidades físicas facturadas</div>
         <div className="captura">
-          <SelectorProducto etiqueta="Producto / modelo *" valor={cap.producto} onElegir={(producto) => setCap({ ...cap, producto })} error={errCap} />
+          <SelectorProducto etiqueta="Producto / modelo *" valor={cap.producto} onElegir={(producto) => setCap({ ...cap, producto, precio: producto?.costo_adquisicion_neto != null ? String(Number(producto.costo_adquisicion_neto)) : '' })} error={errCap} />
           <Campo etiqueta="Cantidad *" type="number" min="1" step="1" value={cap.cantidad} onChange={(e) => setCap({ ...cap, cantidad: e.target.value })} />
           <Campo etiqueta="Precio unitario neto ($) *" type="number" min="0" step="0.01" value={cap.precio} onChange={(e) => setCap({ ...cap, precio: e.target.value })} />
           <Boton onClick={anadir} disabled={f.lineas.length >= 200}>Añadir ítem a factura</Boton>
