@@ -30,7 +30,7 @@ export async function leerCatalogo(buffer) {
   let filas = 0;
   ws.eachRow((r, i) => {
     if (i <= cab) return;
-    const sku = txt(r.getCell(2).value).toUpperCase();
+    const sku = txt(r.getCell(2).value).replace(/\s+/g, '').toUpperCase(); // igual que el resto del sistema: sin espacios
     const nombre = txt(r.getCell(3).value), marca = txt(r.getCell(1).value);
     const costo = num(r.getCell(4).value), pvp = num(r.getCell(5).value);
     if (!sku && !nombre) return; // fila vacía

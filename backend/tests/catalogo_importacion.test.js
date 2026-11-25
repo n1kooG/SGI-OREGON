@@ -68,6 +68,14 @@ test('aplicar crea con stock 0 y precios, actualiza existentes sin tocar stock n
   assert.equal(bit[0].valores_nuevos.archivo, 'catalogo.xlsx');
 });
 
+test('un código con espacios se guarda sin ellos y se puede eliminar', async () => {
+  await limpiar();
+  const r = await subir('/api/productos/importacion', ctx.admin, await xlsx([['Thomas', 'zz - ic1', 'Hervidor', 10000, 23800]]));
+  assert.equal(r.status, 201);
+  assert.ok(await fila('ZZ-IC1'));
+  assert.equal((await ctx.http('DELETE', '/api/productos/ZZ-IC1', ctx.admin)).status, 200);
+});
+
 test('precio <= costo: simular lo informa y aplicar responde 422 sin escribir nada', async () => {
   await limpiar();
   // PVP 10 con costo 20000: WEB y MARKETPLACE quedan bajo el costo.
